@@ -69,11 +69,8 @@ button,select,input{font-family:inherit}
     repeating-linear-gradient(90deg,transparent 0 13px,rgba(255,255,255,.18) 13px 14px),
     repeating-linear-gradient(90deg,#2f8433 0 35px,#277a2c 35px 70px),
     linear-gradient(#3d9b41,#1c5a20);
-  border-bottom:2px solid #0d3311;box-shadow:inset 0 -10px 18px rgba(0,0,0,.35)}
-.hdr-in,#lgnav{padding-inline:max(16px,calc((100% - 1320px) / 2 + 12px))}
-#lgnav a:first-child{margin-left:auto;border-left:1px solid rgba(0,0,0,.4)}
-#lgnav a:last-child{margin-right:auto}
-.hdr-in::after{content:"";position:absolute;inset:auto 0 0 0;height:4px;background:linear-gradient(90deg,var(--red),var(--red2) 50%,var(--red))}
+  border-bottom:0;box-shadow:inset 0 -10px 18px rgba(0,0,0,.35)}
+.hdr-in{padding-inline:max(16px,calc((100% - 1320px) / 2 + 12px))}
 .brand{display:flex;flex-direction:column;line-height:1;text-decoration:none!important;transform:skewX(-8deg);flex:none}
 .brand .bt{font:400 34px/1 var(--f-var);letter-spacing:1px;white-space:nowrap}
 .brand .b1{background:linear-gradient(#ffffff 0%,#e9edf2 40%,#8d96a5 52%,#dfe4ea 70%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #000) drop-shadow(0 0 6px rgba(0,0,0,.6))}
@@ -98,16 +95,6 @@ button,select,input{font-family:inherit}
 #burger{display:none;flex:none;width:38px;height:34px;border:1px solid #071636;border-radius:4px;color:#fff;font-size:20px;cursor:pointer;
   background:linear-gradient(#4a6fb5,#1b3c80 48%,#0f2a62 52%,#163a7f);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 3px rgba(0,0,0,.4)}
 
-/* League nav bar */
-#lgnav{display:flex;overflow-x:auto;scrollbar-width:none;
-  background:linear-gradient(#3e64ad 0%,#1a3a7d 48%,#0d2558 52%,#15357a 100%);border-top:1px solid #6d8ccc;border-bottom:1px solid #050f26;
-  box-shadow:0 3px 6px rgba(0,0,0,.45)}
-#lgnav::-webkit-scrollbar{display:none}
-#lgnav a{flex:none;color:#fff;font:italic 600 14px/34px var(--f-head);text-transform:uppercase;letter-spacing:1px;padding:0 16px;border-right:1px solid rgba(0,0,0,.4);
-  box-shadow:inset -1px 0 0 rgba(255,255,255,.12);text-shadow:0 1px 0 #000;text-decoration:none;white-space:nowrap}
-#lgnav a:hover{background:linear-gradient(rgba(255,255,255,.2),rgba(255,255,255,.05))}
-#lgnav a.on{background:linear-gradient(#ff5a6e,#d81e36 48%,#b3001b 52%,#d0172f);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
-#lgnav a .star{color:var(--gold2)}
 .stripes{height:6px;background:repeating-linear-gradient(-45deg,var(--red) 0 6px,#fff 6px 12px,var(--navy) 12px 18px,#fff 18px 24px);box-shadow:0 2px 4px rgba(0,0,0,.4)}
 
 /* ---------- Layout ---------- */
@@ -360,6 +347,9 @@ footer b{color:var(--gold2)}
 
 /* ---------- Sidebar ---------- */
 .sb-lgs{list-style:none;margin:0;padding:0}
+.sbs .ph{cursor:pointer;user-select:none}
+.sbs.closed > :not(.ph){display:none}
+.sbs.closed .tog{transform:rotate(-90deg)}
 .sb-lgs a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #c9d1de;color:var(--navy);font:italic 600 14px var(--f-head);text-transform:uppercase;letter-spacing:.4px;background:linear-gradient(#fff,#e9edf3);text-decoration:none}
 .sb-lgs a:hover{background:var(--hover)}
 .sb-lgs a.on{color:#fff;background:linear-gradient(#ff5a6e,#d81e36 48%,#b3001b 52%,#d0172f);text-shadow:0 1px 0 #000}
@@ -442,7 +432,6 @@ footer b{color:var(--gold2)}
       <label class="season">Temporada <select id="seasonSel" aria-label="Temporada"></select></label>
     </div>
   </div>
-  <nav id="lgnav"></nav>
 </header>
 <div class="stripes"></div>
 
@@ -599,6 +588,7 @@ const state = {
   filter: 'all', standMode: 'div', sideLg: 'nfl', sideKey: '',
   collapsed: new Set((() => { try{ return JSON.parse(localStorage.getItem('nfa:collapsed') || '[]'); }catch(e){ return []; } })()),
   readyP: null,
+  sbClosed: new Set((() => { try{ return JSON.parse(localStorage.getItem('nfa:sbClosed') || '[]'); }catch(e){ return []; } })()),
 };
 const visible = () => LEAGUES.filter(l => l.ok);
 const curSeason = lg => lg?.cur?.season || guessSeason();
@@ -625,7 +615,7 @@ async function probeLeague(lg){
 function ready(){
   if(!state.readyP){
     state.readyP = Promise.all(LEAGUES.map(probeLeague)).then(() => {
-      renderNav(); renderTicker();
+      renderTicker();
       if(!visible().length){ state.readyP = null; throw new ApiError('No se pudo obtener información de ninguna liga. Puede ser un problema de red o que tu navegador esté bloqueando las peticiones a ESPN (CORS).', 0, ''); }
     });
   }
@@ -882,29 +872,26 @@ function gameRow(g){
 /* =========================================================================
    NAV / SIDEBAR / TICKER / TEMPORADAS
    ========================================================================= */
-function renderNav(){
-  const r = state.route;
-  const items = [`<a href="#/hoy" class="${r.view === 'day' && !r.lg ? 'on' : ''}"><span class="star">★</span> Hoy</a>`]
-    .concat(visible().map(l => `<a href="#/${l.key}/partidos" class="${r.lg === l.key && !(r.view === 'day' && !r.lg) ? 'on' : ''}">${esc(l.name)}</a>`));
-  $('#lgnav').innerHTML = items.join('');
-}
-
 async function renderSidebar(force){
   const lg = LG[state.sideLg] && LG[state.sideLg].ok !== false ? LG[state.sideLg] : (visible()[0] || LG.nfl);
   const r = state.route;
   const sel = state.season && state.season !== curSeason(lg) ? state.season : null;
-  const key = lg.key + '|' + (sel || '') + '|' + (r.view === 'team' ? r.id : '') + '|' + visible().length;
+  const active = r.lg || (r.view === 'day' ? 'home' : '');
+  const key = lg.key + '|' + active + '|' + (sel || '') + '|' + (r.view === 'team' ? r.id : '') + '|' + visible().length;
   if(!force && key === state.sideKey) return;
   state.sideKey = key;
   const side = $('#side');
-  const lgList = visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === lg.key ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>`).join('');
+  const lgList = `<li><a href="#/hoy" class="${active === 'home' ? 'on' : ''}"><span class="lgbadge">★</span> Hoy · Todas</a></li>`
+    + visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === active ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>`).join('');
+  const sbc = k => state.sbClosed.has(k) ? 'closed' : '';
   const s = sel || curSeason(lg);
-  side.innerHTML = `<div class="ph sm">★ Ligas</div><ul class="sb-lgs">${lgList || '<li class="empty">Sin ligas</li>'}</ul>
+  side.innerHTML = `<section class="sbs ${sbc('ligas')}"><div class="ph sm" onclick="App.toggleSb('ligas',this)">★ Ligas<span class="sp"></span><span class="tog">▼</span></div><ul class="sb-lgs">${lgList}</ul></section>
+    <section class="sbs ${sbc('equipos')}"><div class="ph sm" onclick="App.toggleSb('equipos',this)">${esc(lg.name)} · Equipos<span class="sp"></span><span class="tog">▼</span></div>
     <div class="sb-links">
       <a class="btn" href="#/${lg.key}/hoy">Hoy</a><a class="btn" href="#/${lg.key}/partidos/${s}">Partidos</a>
       <a class="btn" href="#/${lg.key}/posiciones/${s}">Posiciones</a><a class="btn" href="#/${lg.key}/stats/${s}">Stats</a>
     </div>
-    <div class="ph sm">${esc(lg.name)} · Equipos</div><div id="sbTeams">${spinner('', true)}</div>`;
+    <div id="sbTeams">${spinner('', true)}</div></section>`;
   const tail = sel ? `/plantel/${sel}` : '';
   const teamLink = (t, rec) => `<a class="sb-team ${r.view === 'team' && String(r.id) === String(t.id) ? 'on' : ''}" href="#/${lg.key}/team/${t.id}${tail}">${logo(t)}<span>${esc(t.displayName || tName(t))}</span>${rec ? `<span class="r">${esc(rec)}</span>` : ''}</a>`;
   let html = '';
@@ -1012,7 +999,6 @@ async function route(silent = false){
   try{
     await ready();
     if(!alive(ctx)) return;
-    renderNav();
     renderSidebar();
     renderSeasonSelect();
     if(r.lg && LG[r.lg].ok === false){ paint(ctx, el, errorBox(LG[r.lg].err || new ApiError('Esta liga no está disponible en este momento.', 404), `${LG[r.lg].name} no disponible`)); return; }
@@ -1041,7 +1027,13 @@ async function fetchDay(lg, date){
   // Próximo partido de la liga después de este día (para ligas sin partidos hoy)
   const end = addDays(startOfDay(date), 1);
   const cands = all.concat(arr(lg.probe?.events).map(e => normGame(e, lg.key))).filter(g => g.date >= end && g.state === 'pre' && !/POSTPONED|CANCEL/.test(g.statusName));
-  const next = cands.sort((a, b) => a.date - b.date)[0] || null;
+  let next = cands.sort((a, b) => a.date - b.date)[0] || null;
+  if(!next && !games.length){
+    try{
+      const nd = await API.get(sbUrl(lg, {dates: `${ymd(addDays(date, 1))}-${ymd(addDays(date, 12))}`, ...lim}));
+      next = arr(nd.events).map(e => normGame(e, lg.key)).filter(g => g.date >= end && g.state === 'pre' && !/POSTPONED|CANCEL/.test(g.statusName)).sort((a, b) => a.date - b.date)[0] || null;
+    }catch(e){}
+  }
   return {games, next};
 }
 /* Jerarquía de ligas en el Home: NFL, universitarias, UFL, CFL */
@@ -1762,6 +1754,11 @@ window.App = {
   setFilter(k){ state.filter = k; route(true); },
   setStand(m){ state.standMode = m; route(true); },
   pickDate(v, base){ if(/^\d{4}-\d{2}-\d{2}$/.test(v)) go(`${base}/${v.replace(/-/g, '')}`); },
+  toggleSb(k, h){
+    const sec = h.closest('.sbs'); sec.classList.toggle('closed');
+    if(sec.classList.contains('closed')) state.sbClosed.add(k); else state.sbClosed.delete(k);
+    try{ localStorage.setItem('nfa:sbClosed', JSON.stringify([...state.sbClosed])); }catch(e){}
+  },
   toggleBlk(k, h){
     const sec = h.closest('.blk'); sec.classList.toggle('closed');
     if(sec.classList.contains('closed')) state.collapsed.add(k); else state.collapsed.delete(k);
