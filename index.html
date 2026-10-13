@@ -159,6 +159,9 @@ footer b{color:var(--gold2)}
 .blk{margin-bottom:12px}
 .blk .ph{cursor:pointer;user-select:none}
 .blk.closed .box{display:none}
+.blk.off .ph{cursor:default;background:linear-gradient(#9aa6ba,#6e7c94 48%,#5a6880 52%,#67758d);border-color:#3b4659;border-top-color:#c9d2e0}
+.blk.off .ph::before{background:linear-gradient(#c7ccd4,#8d96a5)}
+.offrow{padding:7px 10px;font:12px Arial;color:var(--muted)}
 .blk.closed .tog{transform:rotate(-90deg)}
 .lglogo{width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 0 2px rgba(255,255,255,.8))}
 .lgbadge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 3px;border-radius:3px;background:linear-gradient(#fff,#cfd5de);color:var(--navy);font:italic 700 10px var(--f-head);text-shadow:none;border:1px solid #071636}
@@ -1026,11 +1029,20 @@ const VIEWS = {};
 async function fetchDay(lg, date){
   const from = ymd(addDays(date, -1)), to = ymd(addDays(date, 1));
   let d;
-  try{ d = await API.get(sbUrl(lg, {dates: `${from}-${to}`})); }
-  catch(e){ d = await API.get(sbUrl(lg, {dates: ymd(date)})); }
+  const lim = lg.group ? {} : {limit: 500};
+  try{ d = await API.get(sbUrl(lg, {dates: `${from}-${to}`, ...lim})); }
+  catch(e){ d = await API.get(sbUrl(lg, {dates: ymd(date), ...lim})); }
+  const all = arr(d.events).map(e => normGame(e, lg.key));
   // Filtra por el día en la zona horaria local del navegador
-  return arr(d.events).map(e => normGame(e, lg.key)).filter(g => sameDay(g.date, date)).sort((a, b) => a.date - b.date);
+  const games = all.filter(g => sameDay(g.date, date)).sort((a, b) => a.date - b.date);
+  // Próximo partido de la liga después de este día (para ligas sin partidos hoy)
+  const end = addDays(startOfDay(date), 1);
+  const cands = all.concat(arr(lg.probe?.events).map(e => normGame(e, lg.key))).filter(g => g.date >= end && g.state === 'pre' && !/POSTPONED|CANCEL/.test(g.statusName));
+  const next = cands.sort((a, b) => a.date - b.date)[0] || null;
+  return {games, next};
 }
+/* Jerarquía de ligas en el Home: NFL, universitarias, UFL, CFL */
+const LG_PRIORITY = ['nfl', 'fbs', 'fcs', 'ufl', 'cfl'];
 const FILTERS = [['all', 'Todos'], ['in', 'En vivo'], ['post', 'Finalizados'], ['pre', 'Próximos']];
 const passFilter = g => state.filter === 'all' || g.state === state.filter;
 
@@ -1052,7 +1064,8 @@ VIEWS.day = async (r, el, ctx) => {
     </div>
     <h1 class="dayttl">${esc(fmtLong(date))}${isToday ? ' · Hoy' : ''}<small>${r.lg ? esc(LG[r.lg].full) : 'Todas las ligas'} · horarios en tu zona local</small></h1>`;
   if(!ctx.silent) paint(ctx, el, head + `<div class="filters">${FILTERS.map(([k, t]) => `<span class="btn ${state.filter === k ? 'on' : ''}">${t}</span>`).join('')}</div>` + skeleton(8));
-  const results = await Promise.all(lgs.map(lg => fetchDay(lg, date).then(games => ({lg, games}), err => ({lg, err}))));
+  const results = (await Promise.all(lgs.map(lg => fetchDay(lg, date).then(({games, next}) => ({lg, games, next}), err => ({lg, err})))))
+    .sort((a, b) => LG_PRIORITY.indexOf(a.lg.key) - LG_PRIORITY.indexOf(b.lg.key));
   if(!alive(ctx)) return;
   if(results.length && results.every(x => x.err)) throw results[0].err;
   const all = results.flatMap(x => x.games || []);
@@ -1063,6 +1076,14 @@ VIEWS.day = async (r, el, ctx) => {
   for(const x of results){
     if(x.err){ blocks += `<section class="blk"><div class="ph red">${lgLogo(x.lg)} ${esc(x.lg.name)}</div><div class="box">${errorBox(x.err, 'Error al cargar ' + x.lg.name)}</div></section>`; continue; }
     const gs = x.games.filter(passFilter);
+    if(!x.games.length && state.filter === 'all'){
+      // La liga se muestra igual, en su lugar de la jerarquía, con su próximo partido
+      const n = x.next;
+      const nextTxt = n ? `Próximo: <a href="${base}/${ymd(n.date)}"><b>${esc(fmtLong(n.date))}</b> · ${esc(fmtTime(n.date))} · ${esc(tAbbr(n.away.team))} @ ${esc(tAbbr(n.home.team))} ›</a>` : `<a href="#/${x.lg.key}/partidos">Ver calendario de la liga ›</a>`;
+      blocks += `<section class="blk off" data-lg="${x.lg.key}"><div class="ph">${lgLogo(x.lg)} ${esc(x.lg.name)} <span class="cnt">· sin partidos este día</span><span class="sp"></span><a class="more" href="#/${x.lg.key}/partidos">Liga ›</a></div>
+        <div class="box"><div class="offrow">${nextTxt}</div></div></section>`;
+      continue;
+    }
     if(!gs.length) continue;
     const live = gs.filter(g => g.state === 'in').length;
     const closed = state.collapsed.has(x.lg.key);
@@ -1071,6 +1092,7 @@ VIEWS.day = async (r, el, ctx) => {
         <span class="sp"></span><a class="more" href="#/${x.lg.key}/partidos" onclick="event.stopPropagation()">Liga ›</a> <span class="tog">▼</span></div>
       <div class="box">${gs.map(gameRow).join('')}</div></section>`;
   }
+  if(!all.length && blocks) blocks = `<div class="legend" style="text-align:center;font-size:12px">No hay partidos este día en ninguna liga.</div>` + blocks;
   if(!blocks){
     const links = lgs.map(l => `<a class="btn" href="#/${l.key}/partidos">${esc(l.name)} · semana actual</a>`).join(' ');
     blocks = all.length
