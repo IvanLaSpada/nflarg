@@ -164,7 +164,7 @@ footer b{color:var(--gold2)}
 .lgbadge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 3px;border-radius:3px;background:linear-gradient(#fff,#cfd5de);color:var(--navy);font:italic 700 10px var(--f-head);text-shadow:none;border:1px solid #071636}
 .dayh{font:700 11px Arial;text-transform:uppercase;color:var(--navy);background:linear-gradient(#f4f6fa,#dce2eb);border-bottom:1px solid #b9c3d3;padding:4px 10px;letter-spacing:.3px}
 .dayh:not(:first-child){border-top:1px solid #b9c3d3}
-.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 92px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
+.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 128px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
 .g:nth-child(even){background:var(--row2)}
 .g:hover{background:var(--hover)!important;box-shadow:inset 4px 0 0 var(--red)}
 .g:last-child{border-bottom:0}
@@ -192,6 +192,8 @@ footer b{color:var(--gold2)}
 .sc i{font-style:normal;color:#9aa3b1}
 .sc .at{font:italic 700 16px var(--f-head);color:#9aa3b1}
 .g .tv{font:10px Arial;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis}
+.g .tv{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.g .tv b.ar{color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border-color:#5a9bd0;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .g .tv b{display:inline-block;color:var(--navy);background:linear-gradient(#fff,#dde2ea);border:1px solid #aab3c2;border-radius:2px;padding:0 3px;font-weight:700}
 .g .sub{grid-column:2/6;font:11px Arial;color:#333;padding-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .g .sub.note{color:var(--muted);font-style:italic}
@@ -642,10 +644,17 @@ async function seasonsFor(lg){
 async function teamsOf(lg){
   if(lg.teams) return lg.teams;
   const q = lg.group ? `?groups=${lg.group}&limit=1000` : '?limit=1000';
-  const d = await getSite(`${SITE}/${lg.slug}/teams${q}`, {ttl: LONG_TTL});
   let list = [];
-  for(const s of arr(d.sports)) for(const l of arr(s.leagues)) for(const t of arr(l.teams)) list.push(t.team || t);
+  try{
+    const d = await getSite(`${SITE}/${lg.slug}/teams${q}`, {ttl: LONG_TTL});
+    for(const s of arr(d.sports)) for(const l of arr(s.leagues)) for(const t of arr(l.teams)) list.push(t.team || t);
+  }catch(e){
+    // /teams no siempre permite CORS: se arma la lista desde las posiciones
+    const groups = await standingsOf(lg, curSeason(lg), lg.college ? 'conf' : 'div');
+    list = groups.flatMap(g => g.entries.map(x => x.team));
+  }
   list = list.filter(t => t && t.id);
+  if(!list.length) throw new ApiError('No se pudo obtener la lista de equipos.', 0, '');
   lg.teams = list;
   lg.teamIdx = Object.fromEntries(list.map(t => [String(t.id), t]));
   return list;
@@ -724,6 +733,18 @@ function getTV(c){
   arr(c?.geoBroadcasts).forEach(b => { if(b?.media?.shortName) out.push(b.media.shortName); });
   return [...new Set(out.filter(Boolean))].slice(0, 3).join(' / ');
 }
+/* Dónde verlo en Argentina: ESPN no lo informa, es una estimación según los derechos habituales */
+function arTV(lgKey, usTv){
+  const us = String(usTv || '');
+  if(lgKey === 'nfl') return 'ESPN · Disney+';
+  if(lgKey === 'cfl') return 'CFL+';
+  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return 'Disney+';
+  return '';
+}
+const AR_TIP = 'Dónde verlo en Argentina (estimado: ESPN solo informa la TV de EE.UU.)';
+function tvBadges(g){
+  return `${g.tv ? `<b title="TV en EE.UU.">${esc(g.tv)}</b>` : ''}${g.tvAR ? `<b class="ar" title="${AR_TIP}">AR · ${esc(g.tvAR)}</b>` : ''}`;
+}
 function normGame(ev, lgKey){
   const comp = arr(ev?.competitions)[0] || ev || {};
   const status = comp.status || ev?.status || {};
@@ -751,6 +772,7 @@ function normGame(ev, lgKey){
     venue: comp.venue || null, note: arr(comp.notes)[0]?.headline || '',
     week: ev?.week, stype: num(ev?.seasonType?.type) || num(ev?.season?.type) || null,
   };
+  g.tvAR = arTV(lgKey, g.tv);
   // Ganador
   const a = parseFloat(g.away.score), h = parseFloat(g.home.score);
   if(g.state === 'post'){
@@ -840,15 +862,15 @@ function gameRow(g){
     const si = g.situation;
     const pTeam = g.away.possession ? g.away.team : g.home.possession ? g.home.team : null;
     const dd = si.downDistanceText || si.shortDownDistanceText || '';
-    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}${g.tv ? `<span class="tvm">· ${esc(g.tv)}</span>` : ''}</div>`;
+    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}${g.tv || g.tvAR ? `<span class="tvm">· ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span>` : ''}</div>`;
   } else if(g.note){
-    sub = `<div class="sub note">${esc(g.note)}${g.tv ? `<span class="tvm"> · ${esc(g.tv)}</span>` : ''}</div>`;
-  } else if(g.tv && pre){
-    sub = `<div class="sub note"><span class="tvm">📺 ${esc(g.tv)}</span></div>`;
+    sub = `<div class="sub note">${esc(g.note)}${g.tv || g.tvAR ? `<span class="tvm"> · ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span>` : ''}</div>`;
+  } else if((g.tv || g.tvAR) && pre){
+    sub = `<div class="sub note"><span class="tvm">📺 ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span></div>`;
   }
   return `<a class="g st-${g.state}" href="#/${g.lg}/game/${esc(g.id)}" title="${esc(tName(g.away.team))} @ ${esc(tName(g.home.team))}${g.situation?.lastPlay?.text ? ' — ' + esc(g.situation.lastPlay.text) : ''}">
     <div class="stc">${s.html}</div>${team(g.away, 'a')}${score}${team(g.home, 'h')}
-    <div class="tv">${g.tv ? `<b>${esc(g.tv)}</b>` : ''}</div>${sub}</a>`;
+    <div class="tv">${tvBadges(g)}</div>${sub}</a>`;
 }
 
 /* =========================================================================
@@ -1231,6 +1253,7 @@ VIEWS.game = async (r, el, ctx) => {
   if(g.situation?.possession != null){ const p = String(g.situation.possession); g.away.possession = p === g.away.id; g.home.possession = p === g.home.id; }
   if(g.state !== 'in'){ g.away.possession = g.home.possession = false; }
   if(!g.tv) g.tv = getTV({broadcasts: d.broadcasts}) || '';
+  g.tvAR = arTV(r.lg, g.tv);
   state.liveInView = g.state === 'in' || isSoon(g);
   const s = statusInfo(g);
   const A = g.away, H = g.home;
@@ -1247,7 +1270,7 @@ VIEWS.game = async (r, el, ctx) => {
       <div class="mid">
         ${pre ? `<div class="ledrow"><span class="led" style="font-size:30px">@</span></div>` : `<div class="ledrow"><span class="led ${H.win ? 'lose' : ''}">${esc(A.score ?? '0')}</span><span class="led ${A.win ? 'lose' : ''}">${esc(H.score ?? '0')}</span></div>`}
         <div class="stat">${g.state === 'in' ? '<span class="live">EN VIVO</span> ' : ''}${esc(stTxt)}</div>
-        <div class="info">${esc(g.tv ? '📺 ' + g.tv : '')}${g.tv && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
+        <div class="info">${esc(g.tv ? '📺 EE.UU.: ' + g.tv : '')}${g.tvAR ? `${g.tv ? ' · ' : ''}<span title="${AR_TIP}">🇦🇷 Argentina: ${esc(g.tvAR)}*</span>` : ''}${(g.tv || g.tvAR) && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
       </div>
       ${side(H)}
     </div>`;
@@ -1349,7 +1372,8 @@ VIEWS.game = async (r, el, ctx) => {
   const kv = [];
   if(vtxt) kv.push(['Estadio', vtxt]);
   kv.push(['Fecha', `${fmtLong(g.date)} · ${fmtTime(g.date)}`]);
-  if(g.tv) kv.push(['TV', g.tv]);
+  if(g.tv) kv.push(['TV EE.UU.', g.tv]);
+  if(g.tvAR) kv.push(['TV Argentina', g.tvAR + (r.lg === 'nfl' ? ' · todos los partidos en NFL Game Pass (DAZN)' : '') + ' (estimado)']);
   if(gi.attendance) kv.push(['Asistencia', Number(gi.attendance).toLocaleString('es-AR')]);
   if(gi.weather) kv.push(['Clima', [gi.weather.displayValue, gi.weather.temperature != null ? gi.weather.temperature + '°F (' + Math.round((gi.weather.temperature - 32) * 5 / 9) + '°C)' : ''].filter(Boolean).join(' · ')]);
   if(odds?.details) kv.push(['Línea', odds.details + (odds.overUnder ? ` · O/U ${odds.overUnder}` : '')]);
@@ -1370,13 +1394,19 @@ function sideOf(pos){ for(const [k, v] of Object.entries(POS_SIDE)) if(v.include
 const metricH = a => a?.height ? ` <small style="color:#888">(${(a.height * 0.0254).toFixed(2)} m)</small>` : '';
 const metricW = a => a?.weight ? ` <small style="color:#888">(${Math.round(a.weight * 0.4536)} kg)</small>` : '';
 
+async function teamInfo(lg, id, season){
+  try{ const td = await getSite(`${SITE}/${lg.slug}/teams/${encodeURIComponent(id)}`); if(td.team?.id) return td.team; }catch(e){}
+  for(const y of [season, curSeason(lg)]){
+    try{ const t = await API.get(`${CORE}/${lg.slug}/seasons/${y}/teams/${encodeURIComponent(id)}`, {ttl: LONG_TTL}); if(t?.id) return t; }catch(e){}
+  }
+  await teamsOf(lg).catch(() => {});
+  return lg.teamIdx?.[String(id)] || {id: String(id)};
+}
 VIEWS.team = async (r, el, ctx) => {
   const lg = LG[r.lg];
   const season = r.season || state.season || curSeason(lg);
   if(!ctx.silent) paint(ctx, el, spinner('Cargando equipo'));
-  let t = {};
-  try{ const td = await getSite(`${SITE}/${lg.slug}/teams/${encodeURIComponent(r.id)}`); t = td.team || {}; }
-  catch(e){ await teamsOf(lg).catch(() => {}); t = lg.teamIdx?.[r.id]; if(!t) throw e; }
+  const t = await teamInfo(lg, r.id, season);
   if(!alive(ctx)) return;
   let rec = '', pos = '';
   const isCur = season === curSeason(lg);
@@ -1419,14 +1449,44 @@ VIEWS.team = async (r, el, ctx) => {
 
 async function fetchRoster(lg, id, season){
   const q = season ? '?season=' + season : '';
-  try{ return await getSite(`${SITE}/${lg.slug}/teams/${id}/roster${q}`); }
-  catch(e){
-    // Último recurso: el endpoint del equipo con el plantel embebido
+  try{ return await getSite(`${SITE}/${lg.slug}/teams/${id}/roster${q}`); }catch(e){}
+  try{
     const d = await getSite(`${SITE}/${lg.slug}/teams/${id}?enable=roster${season ? '&season=' + season : ''}`);
-    const t = d.team || {};
-    if(!arr(t.athletes).length) throw e;
-    return {athletes: t.athletes, coach: t.coach};
+    if(arr(d.team?.athletes).length) return {athletes: d.team.athletes, coach: d.team.coach};
+  }catch(e){}
+  return coreRoster(lg, id, season || curSeason(lg));
+}
+/* Plantel desde la API core (referencias $ref resueltas en paralelo) */
+async function coreRoster(lg, id, season){
+  const d = await API.get(`${CORE}/${lg.slug}/seasons/${season}/teams/${id}/athletes?limit=300`, {ttl: LONG_TTL});
+  const refs = arr(d.items).map(i => i.$ref).filter(Boolean);
+  if(!refs.length) return {athletes: []};
+  const aths = (await pool(refs, 12, u => API.get(u, {ttl: LONG_TTL}))).filter(a => a && a.id);
+  const colRefs = [...new Set(aths.map(a => a.college?.$ref).filter(Boolean))];
+  const cols = await pool(colRefs, 12, u => API.get(u, {ttl: LONG_TTL}));
+  const cmap = Object.fromEntries(colRefs.map((u, i) => [u, cols[i]]));
+  return {athletes: aths.map(a => {
+    const c = a.college?.$ref ? cmap[a.college.$ref] : a.college;
+    return {...a, college: c ? {name: c.name || c.displayName || c.shortDisplayName} : null};
+  })};
+}
+/* Fixture armado desde los scoreboards semanales (cuando /schedule no responde) */
+async function scheduleFromScoreboards(lg, id, season){
+  const first = await API.get(sbUrl(lg, {dates: season, seasontype: 2, week: 1}));
+  const cal = arr(arr(first.leagues)[0]?.calendar).filter(c => c && typeof c === 'object' && ['1', '2', '3'].includes(String(c.value)));
+  const jobs = [];
+  for(const c of cal) for(const e of arr(c.entries)) if(num(e.value)) jobs.push({t: num(c.value), w: num(e.value)});
+  if(!jobs.length) for(let w = 1; w <= 18; w++) jobs.push({t: 2, w});
+  const res = await pool(jobs, 6, j => API.get(sbUrl(lg, {dates: season, seasontype: j.t, week: j.w})).then(d => ({...j, d})));
+  const mine = ev => arr(arr(ev.competitions)[0]?.competitors).some(c => String(c.id || c.team?.id) === String(id));
+  const out = [1, 2, 3].map(t => ({t, d: {events: res.filter(x => x && x.t === t).flatMap(x => arr(x.d.events).filter(mine).map(ev => ({...ev, week: {...(ev.week || {}), number: x.w}})))}}));
+  if(lg.key === 'nfl'){
+    const played = new Set(out[1].d.events.map(ev => num(ev.week?.number)));
+    const regWeeks = jobs.filter(j => j.t === 2 && res.some(x => x && x.t === 2 && x.w === j.w && arr(x.d.events).length)).map(j => j.w);
+    const bye = regWeeks.find(w => !played.has(w));
+    if(bye) out[1].d.byeWeek = bye;
   }
+  return out;
 }
 async function teamRoster(lg, id, season, isCur){
   let d;
@@ -1463,8 +1523,11 @@ async function teamRoster(lg, id, season, isCur){
 }
 
 async function teamFixture(lg, id, season, ctx){
-  const res = await Promise.all([1, 2, 3].map(t => getSite(`${SITE}/${lg.slug}/teams/${id}/schedule?season=${season}&seasontype=${t}`).then(d => ({t, d}), () => ({t, d: null}))));
-  if(res.every(x => !x.d)) throw new ApiError('No se pudo cargar el calendario del equipo.', 0, '');
+  let res = await Promise.all([1, 2, 3].map(t => getSite(`${SITE}/${lg.slug}/teams/${id}/schedule?season=${season}&seasontype=${t}`).then(d => ({t, d}), () => ({t, d: null}))));
+  if(res.every(x => !arr(x.d?.events).length)){
+    try{ res = await scheduleFromScoreboards(lg, id, season); }
+    catch(e){ if(res.every(x => !x.d)) throw e; }
+  }
   const seen = new Set();
   const byType = {};
   let bye = null;
@@ -1487,7 +1550,7 @@ async function teamFixture(lg, id, season, ctx){
     for(const {g, ev} of list){
       if(g.state === 'in' || isSoon(g)) live = true;
       const wk = num(ev.week?.number);
-      if(t === 2 && bye && !byeDone && wk && wk > bye){ rows += `<tr class="bye"><td>${bye}</td><td colspan="5" class="l">Semana libre (BYE)</td></tr>`; byeDone = true; }
+      if(t === 2 && bye && !byeDone && wk && wk > bye){ rows += `<tr class="bye"><td>${bye}</td><td colspan="6" class="l">Semana libre (BYE)</td></tr>`; byeDone = true; }
       const me = g.home.id === String(id) ? g.home : g.away;
       const op = me === g.home ? g.away : g.home;
       const at = me === g.home ? 'vs' : '@';
@@ -1503,9 +1566,9 @@ async function teamFixture(lg, id, season, ctx){
       const wlabel = ev.week?.text ? weekLabel(ev.week.text) : (wk ? wk : '-');
       rows += `<tr onclick="location.hash='#/${lg.key}/game/${esc(g.id)}'" style="cursor:pointer"><td>${esc(wlabel)}</td><td class="l">${esc(fmtShort(g.date))}</td>
         <td class="l"><span class="tmc"><span style="color:#888;width:16px">${at}</span>${logo(op.team)}<a href="#/${lg.key}/game/${esc(g.id)}">${esc(op.team.displayName || tName(op.team))}</a></span></td>
-        <td class="l">${result}</td><td class="hm">${esc(g.tv || '')}</td><td class="hm">${esc(me.record || '')}</td></tr>`;
+        <td class="l">${result}</td><td class="hm">${esc(g.tv || '')}</td><td class="hm">${esc(g.tvAR || '')}</td><td class="hm">${esc(me.record || '')}</td></tr>`;
     }
-    html += `<div class="sect"><div class="ph">${esc(STYPE[t] || 'Partidos')} <span class="cnt">· ${list.length} partidos</span></div><div class="box tw"><table class="tbl"><thead><tr><th>Sem</th><th class="l">Fecha</th><th class="l">Rival</th><th class="l">Resultado</th><th class="hm">TV</th><th class="hm">Récord</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    html += `<div class="sect"><div class="ph">${esc(STYPE[t] || 'Partidos')} <span class="cnt">· ${list.length} partidos</span></div><div class="box tw"><table class="tbl"><thead><tr><th>Sem</th><th class="l">Fecha</th><th class="l">Rival</th><th class="l">Resultado</th><th class="hm">TV EE.UU.</th><th class="hm" title="${AR_TIP}">TV AR*</th><th class="hm">Récord</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
   if(alive(ctx)) state.liveInView = live;
   return html;
@@ -1523,10 +1586,14 @@ function findCats(d){
   return arr(found);
 }
 async function teamStats(lg, id, season, isCur){
-  let d;
-  try{ d = await getSite(`${SITE}/${lg.slug}/teams/${id}/statistics${isCur ? '' : '?season=' + season}`); }
-  catch(e){ if(e.status === 404) return emptyBox('Sin estadísticas', 'ESPN no tiene estadísticas de este equipo para la temporada.'); throw e; }
-  const cats = findCats(d).filter(c => arr(c.stats).length);
+  let d = null, err = null, cats = [];
+  try{ d = await getSite(`${SITE}/${lg.slug}/teams/${id}/statistics${isCur ? '' : '?season=' + season}`); cats = findCats(d).filter(c => arr(c.stats).length); }
+  catch(e){ err = e; }
+  if(!cats.length){
+    try{ const c = await API.get(`${CORE}/${lg.slug}/seasons/${season}/types/2/teams/${id}/statistics`); cats = findCats(c).filter(x => arr(x.stats).length); }
+    catch(e){ err = err || e; }
+  }
+  if(!cats.length && err && err.status !== 404 && !d) throw err;
   if(!cats.length) return emptyBox('Sin estadísticas', 'ESPN no devolvió estadísticas para este equipo.');
   const cards = cats.map(c => {
     const hasRank = c.stats.some(s => s.rankDisplayValue);
@@ -1538,11 +1605,19 @@ async function teamStats(lg, id, season, isCur){
 }
 
 /* ---------- Jugador ---------- */
+async function coreAthlete(lg, id){
+  const a = {...await API.get(`${CORE}/${lg.slug}/athletes/${encodeURIComponent(id)}`, {ttl: LONG_TTL})};
+  if(a.team?.$ref) a.team = await API.get(a.team.$ref, {ttl: LONG_TTL}).catch(() => ({}));
+  if(a.college?.$ref) a.college = await API.get(a.college.$ref, {ttl: LONG_TTL}).catch(() => null);
+  if(a.position?.$ref) a.position = await API.get(a.position.$ref, {ttl: LONG_TTL}).catch(() => null);
+  if(a.status?.$ref) delete a.status;
+  return {athlete: a};
+}
 VIEWS.player = async (r, el, ctx) => {
   const lg = LG[r.lg];
   if(!ctx.silent) paint(ctx, el, spinner('Cargando jugador'));
   const [pd, sd] = await Promise.all([
-    API.get(`${WEB}/${lg.slug}/athletes/${encodeURIComponent(r.id)}`),
+    API.get(`${WEB}/${lg.slug}/athletes/${encodeURIComponent(r.id)}`).catch(e => coreAthlete(lg, r.id).catch(() => { throw e; })),
     API.get(`${WEB}/${lg.slug}/athletes/${encodeURIComponent(r.id)}/stats`).catch(() => null),
   ]);
   if(!alive(ctx)) return;
