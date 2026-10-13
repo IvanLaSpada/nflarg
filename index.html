@@ -570,6 +570,15 @@ const API = (() => {
   return {get, clear(){ mem.clear(); try{ ssPrune(); }catch(e){} }};
 })();
 
+/* Endpoints del sitio: si site.api falla (red/CORS), se reintenta en site.web.api, que sirve lo mismo */
+const ALT_SITE = u => u.replace('https://site.api.espn.com/apis/site/v2/', 'https://site.web.api.espn.com/apis/site/v2/');
+async function getAny(urls, opt){
+  let last;
+  for(const u of [...new Set(urls)]){ try{ return await API.get(u, opt); }catch(e){ last = e; } }
+  throw last;
+}
+const getSite = (url, opt) => getAny([url, ALT_SITE(url)], opt);
+
 /* URL builders */
 function qs(o){ return Object.entries(o).filter(([, v]) => v != null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&'); }
 function sbUrl(lg, p = {}){ const q = {...p}; if(lg.group){ q.groups = lg.group; q.limit = 300; } const s = qs(q); return `${SITE}/${lg.slug}/scoreboard${s ? '?' + s : ''}`; }
@@ -633,7 +642,7 @@ async function seasonsFor(lg){
 async function teamsOf(lg){
   if(lg.teams) return lg.teams;
   const q = lg.group ? `?groups=${lg.group}&limit=1000` : '?limit=1000';
-  const d = await API.get(`${SITE}/${lg.slug}/teams${q}`, {ttl: LONG_TTL});
+  const d = await getSite(`${SITE}/${lg.slug}/teams${q}`, {ttl: LONG_TTL});
   let list = [];
   for(const s of arr(d.sports)) for(const l of arr(s.leagues)) for(const t of arr(l.teams)) list.push(t.team || t);
   list = list.filter(t => t && t.id);
@@ -809,7 +818,7 @@ function errorBox(e, title = 'No se pudieron cargar los datos'){
   const hint = (e?.status === 0)
     ? 'Si abriste el archivo directamente y tu navegador bloquea las peticiones, probá servirlo con un servidor local (por ejemplo: <code>python3 -m http.server</code>) o revisá tu conexión.'
     : (e?.status === 404 ? 'ESPN no tiene datos para esta consulta (puede que la temporada o el recurso no existan).' : 'Puede ser un problema momentáneo de ESPN.');
-  return `<div class="err"><div class="ph red">⚠ ${esc(title)}</div><p>${esc(msg)}</p><small>${hint}</small><button class="btn on" onclick="App.retry()">↻ Reintentar</button></div>`;
+  return `<div class="err"><div class="ph red">⚠ ${esc(title)}</div><p>${esc(msg)}</p><small>${hint}</small>${e?.url ? `<small style="word-break:break-all;font-family:monospace">${esc(String(e.url).replace(/^https:\/\//, ''))}</small>` : ''}<button class="btn on" onclick="App.retry()">↻ Reintentar</button></div>`;
 }
 function emptyBox(title, sub = ''){ return `<div class="box" style="border-top:1px solid #9aa7bd"><div class="empty"><b>${esc(title)}</b>${sub}</div></div>`; }
 
@@ -1213,7 +1222,7 @@ function numVal(s){
 VIEWS.game = async (r, el, ctx) => {
   const lg = LG[r.lg];
   if(!ctx.silent) paint(ctx, el, spinner('Cargando partido'));
-  const d = await API.get(`${SITE}/${lg.slug}/summary?event=${encodeURIComponent(r.id)}`);
+  const d = await getSite(`${SITE}/${lg.slug}/summary?event=${encodeURIComponent(r.id)}`);
   if(!alive(ctx)) return;
   const hc = arr(d.header?.competitions)[0] || {};
   const g = normGame({id: r.id, competitions: [hc], date: hc.date, week: d.header?.week, seasonType: d.header?.season}, r.lg);
@@ -1366,7 +1375,7 @@ VIEWS.team = async (r, el, ctx) => {
   const season = r.season || state.season || curSeason(lg);
   if(!ctx.silent) paint(ctx, el, spinner('Cargando equipo'));
   let t = {};
-  try{ const td = await API.get(`${SITE}/${lg.slug}/teams/${encodeURIComponent(r.id)}`); t = td.team || {}; }
+  try{ const td = await getSite(`${SITE}/${lg.slug}/teams/${encodeURIComponent(r.id)}`); t = td.team || {}; }
   catch(e){ await teamsOf(lg).catch(() => {}); t = lg.teamIdx?.[r.id]; if(!t) throw e; }
   if(!alive(ctx)) return;
   let rec = '', pos = '';
@@ -1408,15 +1417,26 @@ VIEWS.team = async (r, el, ctx) => {
   paint(ctx, el, head + body);
 };
 
+async function fetchRoster(lg, id, season){
+  const q = season ? '?season=' + season : '';
+  try{ return await getSite(`${SITE}/${lg.slug}/teams/${id}/roster${q}`); }
+  catch(e){
+    // Último recurso: el endpoint del equipo con el plantel embebido
+    const d = await getSite(`${SITE}/${lg.slug}/teams/${id}?enable=roster${season ? '&season=' + season : ''}`);
+    const t = d.team || {};
+    if(!arr(t.athletes).length) throw e;
+    return {athletes: t.athletes, coach: t.coach};
+  }
+}
 async function teamRoster(lg, id, season, isCur){
   let d;
-  try{ d = await API.get(`${SITE}/${lg.slug}/teams/${id}/roster${isCur ? '' : '?season=' + season}`); }
+  try{ d = await fetchRoster(lg, id, isCur ? null : season); }
   catch(e){ if(isCur) throw e; d = null; }
   let groups = arr(d?.athletes);
   let note = '';
   if(!groups.length && !isCur){
     note = `<div class="legend">ESPN no tiene el plantel de ${season}; se muestra el plantel actual.</div>`;
-    d = await API.get(`${SITE}/${lg.slug}/teams/${id}/roster`);
+    d = await fetchRoster(lg, id, null);
     groups = arr(d?.athletes);
   }
   if(groups.length && !groups[0].items){
@@ -1443,7 +1463,7 @@ async function teamRoster(lg, id, season, isCur){
 }
 
 async function teamFixture(lg, id, season, ctx){
-  const res = await Promise.all([1, 2, 3].map(t => API.get(`${SITE}/${lg.slug}/teams/${id}/schedule?season=${season}&seasontype=${t}`).then(d => ({t, d}), () => ({t, d: null}))));
+  const res = await Promise.all([1, 2, 3].map(t => getSite(`${SITE}/${lg.slug}/teams/${id}/schedule?season=${season}&seasontype=${t}`).then(d => ({t, d}), () => ({t, d: null}))));
   if(res.every(x => !x.d)) throw new ApiError('No se pudo cargar el calendario del equipo.', 0, '');
   const seen = new Set();
   const byType = {};
@@ -1504,7 +1524,7 @@ function findCats(d){
 }
 async function teamStats(lg, id, season, isCur){
   let d;
-  try{ d = await API.get(`${SITE}/${lg.slug}/teams/${id}/statistics${isCur ? '' : '?season=' + season}`); }
+  try{ d = await getSite(`${SITE}/${lg.slug}/teams/${id}/statistics${isCur ? '' : '?season=' + season}`); }
   catch(e){ if(e.status === 404) return emptyBox('Sin estadísticas', 'ESPN no tiene estadísticas de este equipo para la temporada.'); throw e; }
   const cats = findCats(d).filter(c => arr(c.stats).length);
   if(!cats.length) return emptyBox('Sin estadísticas', 'ESPN no devolvió estadísticas para este equipo.');
