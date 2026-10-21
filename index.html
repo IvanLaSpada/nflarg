@@ -229,6 +229,30 @@ footer b{color:var(--gold2)}
 .tbl .logo-fb{width:20px;height:20px;font-size:7px}
 .tbl .pos{color:var(--muted);font-weight:700;width:22px}
 .tbl .clinch{font:700 9px Arial;color:var(--red);vertical-align:super;margin-left:2px}
+.fpost{display:grid;grid-template-columns:140px minmax(0,1fr);border-bottom:1px solid var(--line);background:#fff}
+.fpost:nth-child(even){background:#f6f8fb}
+.fpost .au{padding:10px 8px;border-right:1px solid var(--line);background:linear-gradient(#f4f6fa,#e2e7ef);text-align:center;font:12px Arial;display:flex;flex-direction:column;align-items:center;gap:4px}
+.fpost .au b{color:var(--navy);font:italic 700 14px var(--f-head);word-break:break-word}
+.fpost .bd{padding:8px 12px 12px;font:13px/1.55 Verdana,Arial,sans-serif;min-width:0;overflow-wrap:anywhere}
+.fpost .meta{font:10px Arial;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #c9d1de;padding-bottom:4px}
+.av{width:42px;height:42px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 20px var(--f-head);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);flex:none;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.chip .av{width:18px;height:18px;font-size:10px;border-width:1px}
+.fo-form{padding:12px;display:grid;gap:6px;background:#fff}
+.fo-form input,.fo-form textarea,.fo-form select{width:100%;font:13px Arial;padding:7px 8px;border:1px solid #8c97aa;border-radius:4px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);background:#fff;color:var(--ink)}
+.fo-form input:focus,.fo-form textarea:focus,.fo-form select:focus{outline:2px solid var(--gold2);border-color:var(--navy3)}
+.fo-form textarea{min-height:130px;resize:vertical}
+.fo-form label{font:700 11px Arial;text-transform:uppercase;color:var(--navy);margin-top:4px}
+.fo-msg{font:12px Arial;color:var(--loss)}
+.fo-user{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative;z-index:1;margin-left:auto}
+.pager{display:flex;gap:4px;justify-content:center;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+.pager .n{color:var(--muted)}
+.hero + .btnrow,.crumb + .btnrow{margin-top:0}
+@media (max-width:640px){
+  .fpost{grid-template-columns:1fr}
+  .fpost .au{flex-direction:row;text-align:left;border-right:0;border-bottom:1px solid var(--line);padding:6px 10px}
+  .fpost .au .av{width:26px;height:26px;font-size:13px}
+  .fo-user{margin-left:0;width:100%}
+}
 .pf{color:var(--win);font-weight:700}.nf{color:var(--loss);font-weight:700}
 .conf-h{margin:14px 0 6px;font:italic 700 20px var(--f-head);text-transform:uppercase;color:var(--navy);display:flex;align-items:center;gap:8px}
 .conf-h::after{content:"";flex:1;height:3px;background:linear-gradient(90deg,var(--red),transparent)}
@@ -876,13 +900,14 @@ async function renderSidebar(force){
   const lg = LG[state.sideLg] && LG[state.sideLg].ok !== false ? LG[state.sideLg] : (visible()[0] || LG.nfl);
   const r = state.route;
   const sel = state.season && state.season !== curSeason(lg) ? state.season : null;
-  const active = r.lg || (r.view === 'day' ? 'home' : '');
+  const active = r.lg || (r.view === 'day' ? 'home' : r.view === 'foro' ? 'foro' : '');
   const key = lg.key + '|' + active + '|' + (sel || '') + '|' + (r.view === 'team' ? r.id : '') + '|' + visible().length;
   if(!force && key === state.sideKey) return;
   state.sideKey = key;
   const side = $('#side');
   const lgList = `<li><a href="#/hoy" class="${active === 'home' ? 'on' : ''}"><span class="lgbadge">★</span> Hoy · Todas</a></li>`
-    + visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === active ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>`).join('');
+    + visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === active ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>`).join('')
+    + `<li><a href="#/foro" class="${active === 'foro' ? 'on' : ''}"><span class="lgbadge">✉</span> Foro</a></li>`;
   const sbc = k => state.sbClosed.has(k) ? 'closed' : '';
   const s = sel || curSeason(lg);
   side.innerHTML = `<section class="sbs ${sbc('ligas')}"><div class="ph sm" onclick="App.toggleSb('ligas',this)">★ Ligas<span class="sp"></span><span class="tog">▼</span></div><ul class="sb-lgs">${lgList}</ul></section>
@@ -971,6 +996,10 @@ async function refreshTicker(){
 function parseHash(){
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   if(!parts.length || parts[0] === 'hoy') return {view: 'day', lg: null, date: parts[1]};
+  if(parts[0] === 'foro'){
+    const sub = parts[1] || 'home';
+    return {view: 'foro', sub, cat: (sub === 'c' || sub === 'nuevo') ? parts[2] : null, id: sub === 't' ? parts[2] : null, page: num(parts[3])};
+  }
   const lg = parts[0];
   if(!LG[lg]) return {view: 'notfound'};
   const v = parts[1] || 'partidos';
@@ -997,7 +1026,8 @@ async function route(silent = false){
   const el = $('#view');
   if(!silent){ window.scrollTo(0, 0); document.body.classList.remove('menu'); }
   try{
-    await ready();
+    // El foro no depende de ESPN: no espera el sondeo de ligas
+    if(r.view === 'foro') ready().catch(() => {}); else await ready();
     if(!alive(ctx)) return;
     renderSidebar();
     renderSeasonSelect();
@@ -1684,6 +1714,289 @@ VIEWS.player = async (r, el, ctx) => {
   paint(ctx, el, html);
 };
 
+/* =========================================================================
+   FORO (Supabase) · usuario + contraseña, sin mail
+   ========================================================================= */
+// Datos del proyecto Supabase (Project Settings → API). La clave pública es segura de publicar:
+// los permisos los controla la base (supabase/foro.sql).
+const FORO_CFG = {url: '', key: ''};
+const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
+const FORO_MAIL = '@foro-nflarg.com';   // Supabase pide un mail: se arma solo a partir del usuario
+const FORO_CATS = [
+  {key: 'general', name: 'General', desc: 'Charla libre de fútbol americano'},
+  {key: 'nfl', name: 'NFL', desc: 'Partidos, equipos, draft y fantasy de la NFL'},
+  {key: 'ncaa', name: 'College (NCAA)', desc: 'FBS, FCS, rankings y bowls'},
+  {key: 'ufl', name: 'UFL', desc: 'United Football League'},
+  {key: 'cfl', name: 'CFL', desc: 'Canadian Football League'},
+];
+const FCAT = Object.fromEntries(FORO_CATS.map(c => [c.key, c]));
+const THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
+
+const Foro = {
+  sb: null, user: null, loading: null,
+  configured(){ return /^https:\/\/\S+$/.test(FORO_CFG.url) && String(FORO_CFG.key).length > 20; },
+  client(){
+    if(this.sb) return Promise.resolve(this.sb);
+    if(!this.loading){
+      this.loading = new Promise((res, rej) => {
+        if(window.supabase?.createClient) return res();
+        const s = document.createElement('script');
+        s.src = SB_JS; s.onload = res;
+        s.onerror = () => rej(new ApiError('No se pudo cargar la librería del foro. Revisá tu conexión.', 0, SB_JS));
+        document.head.appendChild(s);
+      }).then(async () => {
+        const sb = window.supabase.createClient(FORO_CFG.url, FORO_CFG.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'nfa-foro'}});
+        const {data} = await sb.auth.getSession();
+        this.setSession(data?.session);
+        sb.auth.onAuthStateChange((_ev, session) => this.setSession(session));
+        this.sb = sb;
+        return sb;
+      });
+      this.loading.catch(() => { this.loading = null; });
+    }
+    return this.loading;
+  },
+  setSession(s){
+    const u = s?.user;
+    this.user = u ? {id: u.id, username: u.user_metadata?.username || String(u.email || '').split('@')[0]} : null;
+  },
+  async q(promise){
+    const {data, error, count} = await promise;
+    if(error) throw new ApiError(foroErr(error), error.status || -1, '');
+    return {data, count};
+  },
+};
+
+function foroErr(e){
+  const m = String(e?.message || e || '');
+  if(/already registered|already exists|duplicate/i.test(m)) return 'Ese nombre de usuario ya está en uso.';
+  if(/invalid login credentials/i.test(m)) return 'Usuario o contraseña incorrectos.';
+  if(/password should be|weak password|at least/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
+  if(/database error saving new user/i.test(m)) return 'Ese nombre de usuario no es válido o ya está en uso.';
+  if(/signups? not allowed|signup.*disabled/i.test(m)) return 'El registro está desactivado en la configuración de Supabase.';
+  if(/email not confirmed/i.test(m)) return 'La cuenta quedó pendiente de confirmación: en Supabase hay que desactivar "Confirm email".';
+  if(/rate limit|too many/i.test(m)) return 'Demasiados intentos seguidos. Esperá unos minutos y probá de nuevo.';
+  if(/not_authenticated|JWT|row-level security/i.test(m)) return 'Tenés que entrar con tu usuario para publicar.';
+  if(/failed to fetch|network/i.test(m)) return 'No se pudo conectar con el foro. Revisá tu conexión.';
+  return m || 'Ocurrió un error en el foro.';
+}
+function timeAgo(iso){
+  const d = new Date(iso); const s = (Date.now() - d) / 1000;
+  if(isNaN(s)) return '';
+  if(s < 60) return 'recién';
+  if(s < 3600) return `hace ${Math.floor(s / 60)} min`;
+  if(s < 86400) return `hace ${Math.floor(s / 3600)} h`;
+  if(s < 7 * 86400) return `hace ${Math.floor(s / 86400)} d`;
+  return fmtDate(d);
+}
+function avatar(name){
+  const n = String(name || '?');
+  let h = 0; for(const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const hue = h % 360;
+  return `<span class="av" style="background:linear-gradient(hsl(${hue} 60% 48%),hsl(${hue} 65% 30%))">${esc(n.charAt(0).toUpperCase())}</span>`;
+}
+function postBody(txt){
+  return esc(txt).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`).replace(/\n/g, '<br>');
+}
+function pager(base, page, total, per){
+  const pages = Math.max(1, Math.ceil((total || 0) / per));
+  if(pages <= 1) return '';
+  let h = '<div class="pager">';
+  for(let i = 1; i <= pages; i++){
+    if(pages > 9 && i > 2 && i < pages - 1 && Math.abs(i - page) > 1){ if(!h.endsWith('…</span>')) h += '<span class="n">…</span>'; continue; }
+    h += `<a class="btn ${i === page ? 'on' : ''}" href="${base}/${i}">${i}</a>`;
+  }
+  return h + '</div>';
+}
+function foroHead(sub){
+  const u = Foro.user;
+  const who = u
+    ? `<span class="chip dark">${avatar(u.username)} ${esc(u.username)}</span><button class="btn" onclick="App.foroLogout()">Salir</button>`
+    : `<a class="btn on" href="#/foro/entrar">Entrar</a><a class="btn" href="#/foro/registro">Crear cuenta</a>`;
+  return `<div class="hero" style="--tc:#0f2a62">
+      <div style="position:relative;z-index:1"><h1>Foro NFLARG</h1><div class="meta"><span class="chip gold">★ ${esc(sub || 'Comunidad')}</span></div></div>
+      <div class="fo-user">${who}</div>
+    </div>`;
+}
+const foroCrumb = (...parts) => `<div class="crumb" style="margin-top:10px"><a href="#/foro">Foro</a>${parts.map(p => ' › ' + p).join('')}</div>`;
+
+function foroSetup(){
+  return foroHead('Sin configurar') + `<div class="box" style="border-top:1px solid #9aa7bd;margin-top:12px;padding:12px 16px;font:13px/1.6 Arial">
+    <b style="font:italic 700 18px var(--f-head);color:var(--navy);text-transform:uppercase">El foro todavía no está conectado</b>
+    <p>Para activarlo hace falta un proyecto gratuito de Supabase (la base de datos donde se guardan usuarios y mensajes):</p>
+    <ol>
+      <li>Creá una cuenta y un proyecto en <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a>.</li>
+      <li>En <b>SQL Editor</b>, pegá y ejecutá el contenido de <code>supabase/foro.sql</code> del repositorio.</li>
+      <li>En <b>Authentication → Sign In / Providers → Email</b>, desactivá <b>Confirm email</b>.</li>
+      <li>En <b>Project Settings → API</b>, copiá la <b>Project URL</b> y la clave pública (<i>anon</i> o <i>publishable</i>) y cargalas en <code>FORO_CFG</code> dentro de <code>index.html</code>.</li>
+    </ol></div>`;
+}
+
+VIEWS.foro = async (r, el, ctx) => {
+  if(!Foro.configured()){ paint(ctx, el, foroSetup()); return; }
+  if(!ctx.silent) paint(ctx, el, spinner('Cargando foro'));
+  const sb = await Foro.client();
+  if(!alive(ctx)) return;
+  renderSidebar(true);
+  if(r.sub === 'entrar' || r.sub === 'registro') return paint(ctx, el, foroLoginView(r.sub));
+  if(r.sub === 'nuevo') return paint(ctx, el, foroNewView(r.cat));
+  if(r.sub === 'c') return foroCatView(sb, r, el, ctx);
+  if(r.sub === 't') return foroThreadView(sb, r, el, ctx);
+  return foroHomeView(sb, el, ctx);
+};
+
+async function foroHomeView(sb, el, ctx){
+  const stats = await Promise.all(FORO_CATS.map(async c => {
+    const [cnt, last] = await Promise.all([
+      Foro.q(sb.from('threads').select('id', {count: 'exact', head: true}).eq('category', c.key)),
+      Foro.q(sb.from('threads').select('id,title,last_post_at').eq('category', c.key).order('last_post_at', {ascending: false}).limit(1)),
+    ]);
+    return {c, count: cnt.count || 0, last: arr(last.data)[0]};
+  }));
+  const recent = await Foro.q(sb.from('threads').select('id,title,category,last_post_at,post_count,profiles(username)').order('last_post_at', {ascending: false}).limit(10));
+  const rows = stats.map(({c, count, last}) => `<tr><td class="l"><a href="#/foro/c/${c.key}"><b>${esc(c.name)}</b></a><div style="font-size:11px;color:var(--muted)">${esc(c.desc)}</div></td>
+    <td>${count}</td><td class="l hm">${last ? `<a href="#/foro/t/${last.id}">${esc(last.title)}</a><div style="font-size:10px;color:var(--muted)">${esc(timeAgo(last.last_post_at))}</div>` : '<span style="color:#999">Sin hilos todavía</span>'}</td></tr>`).join('');
+  const rec = arr(recent.data).map(threadRow).join('');
+  paint(ctx, el, foroHead('Comunidad') + `<div class="btnrow" style="margin-top:12px"><a class="btn on" href="#/foro/nuevo">＋ Nuevo hilo</a></div>
+    <div class="ph">Categorías</div><div class="box tw"><table class="tbl"><thead><tr><th class="l">Categoría</th><th>Hilos</th><th class="l hm">Última actividad</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="ph">Últimos hilos con actividad</div><div class="box tw">${rec ? threadTable(rec, true) : '<div class="empty"><b>Todavía no hay hilos</b>Arrancá la charla con el primero.</div>'}</div>`);
+}
+function threadRow(t){
+  return `<tr><td class="l"><a href="#/foro/t/${t.id}"><b>${esc(t.title)}</b></a><div style="font-size:10px;color:var(--muted)">por ${esc(t.profiles?.username || '—')}</div></td>
+    ${t.category ? `<td class="hm">${esc(FCAT[t.category]?.name || t.category)}</td>` : ''}<td>${Math.max(0, (t.post_count || 1) - 1)}</td><td class="hm">${esc(timeAgo(t.last_post_at))}</td></tr>`;
+}
+function threadTable(rows, withCat){
+  return `<table class="tbl"><thead><tr><th class="l">Hilo</th>${withCat ? '<th class="hm">Categoría</th>' : ''}<th>Respuestas</th><th class="hm">Último mensaje</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function foroCatView(sb, r, el, ctx){
+  const c = FCAT[r.cat];
+  if(!c) return paint(ctx, el, emptyBox('Categoría inexistente', '<a class="btn" href="#/foro">Volver al foro</a>'));
+  const page = Math.max(1, r.page || 1), from = (page - 1) * THREADS_PER_PAGE;
+  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles(username)', {count: 'exact'})
+    .eq('category', c.key).order('last_post_at', {ascending: false}).range(from, from + THREADS_PER_PAGE - 1));
+  const rows = arr(data).map(t => threadRow({...t, category: null})).join('');
+  paint(ctx, el, foroHead(c.name) + foroCrumb(esc(c.name)) + `<div class="btnrow"><a class="btn on" href="#/foro/nuevo/${c.key}">＋ Nuevo hilo en ${esc(c.name)}</a></div>
+    <div class="ph">${esc(c.name)} <span class="cnt">· ${pluralize(count || 0, 'hilo', 'hilos')}</span></div>
+    <div class="box tw">${rows ? threadTable(rows, false) : `<div class="empty"><b>Todavía no hay hilos en ${esc(c.name)}</b>Arrancá el primero.</div>`}</div>
+    ${pager(`#/foro/c/${c.key}`, page, count, THREADS_PER_PAGE)}`);
+}
+
+async function foroThreadView(sb, r, el, ctx){
+  const id = num(r.id);
+  if(!id) return paint(ctx, el, emptyBox('Hilo inexistente', '<a class="btn" href="#/foro">Volver al foro</a>'));
+  const th = await Foro.q(sb.from('threads').select('id,title,category,created_at,post_count,profiles(username)').eq('id', id).maybeSingle());
+  const t = th.data;
+  if(!t) return paint(ctx, el, foroHead() + emptyBox('Ese hilo no existe', '<a class="btn" href="#/foro">Volver al foro</a>'));
+  const total = t.post_count || 0;
+  const pages = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
+  const page = r.page === -1 ? pages : Math.min(Math.max(1, r.page || 1), pages);
+  const from = (page - 1) * POSTS_PER_PAGE;
+  const {data, count} = await Foro.q(sb.from('posts').select('id,body,created_at,profiles(username)', {count: 'exact'}).eq('thread_id', id).order('id', {ascending: true}).range(from, from + POSTS_PER_PAGE - 1));
+  const c = FCAT[t.category] || {name: t.category, key: t.category};
+  const posts = arr(data).map((p, i) => {
+    const n = p.profiles?.username || '—';
+    return `<article class="fpost" id="p${p.id}"><div class="au">${avatar(n)}<b>${esc(n)}</b></div>
+      <div class="bd"><div class="meta"><span>${esc(fmtDate(new Date(p.created_at)))} ${esc(fmtTime(new Date(p.created_at)))} · ${esc(timeAgo(p.created_at))}</span><span>#${from + i + 1}</span></div>${postBody(p.body)}</div></article>`;
+  }).join('');
+  const base = `#/foro/t/${id}`;
+  const reply = Foro.user
+    ? `<form class="fo-form" onsubmit="App.foroReply(event, ${id})"><label for="foReply">Responder como ${esc(Foro.user.username)}</label>
+        <textarea id="foReply" maxlength="5000" required placeholder="Escribí tu respuesta…"></textarea>
+        <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar respuesta</button><span class="fo-msg" id="foMsg"></span></div></form>`
+    : `<div class="empty" style="padding:14px"><a class="btn on" href="#/foro/entrar" onclick="App.foroBack('${base}/-1')">Entrá</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack('${base}/-1')">creá una cuenta</a> para responder.</div>`;
+  paint(ctx, el, foroHead(c.name) + foroCrumb(`<a href="#/foro/c/${esc(c.key)}">${esc(c.name)}</a>`, esc(t.title)) +
+    `<div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
+    <div class="box">${posts || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
+    <div class="ph">Responder</div><div class="box">${reply}</div>`);
+  if(r.page === -1 && alive(ctx)){ const last = el.querySelector('.fpost:last-of-type'); if(last) last.scrollIntoView({block: 'start'}); }
+}
+
+function foroLoginView(mode){
+  const reg = mode === 'registro';
+  return foroHead(reg ? 'Crear cuenta' : 'Entrar') + foroCrumb(reg ? 'Crear cuenta' : 'Entrar') + `
+    <div class="btnrow"><a class="btn ${reg ? '' : 'on'}" href="#/foro/entrar">Entrar</a><a class="btn ${reg ? 'on' : ''}" href="#/foro/registro">Crear cuenta</a></div>
+    <div class="box" style="border-top:1px solid #9aa7bd;max-width:440px">
+    <form class="fo-form" onsubmit="App.foroAuth(event, ${reg})" autocomplete="on">
+      <label for="foUser">Nombre de usuario</label>
+      <input id="foUser" name="username" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="ej: chiefs_fan">
+      ${reg ? '<small style="color:var(--muted)">De 3 a 20 caracteres: letras, números o guion bajo.</small>' : ''}
+      <label for="foPass">Contraseña</label>
+      <input id="foPass" type="password" name="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required minlength="6">
+      ${reg ? '<label for="foPass2">Repetir contraseña</label><input id="foPass2" type="password" autocomplete="new-password" required minlength="6"><small style="color:var(--muted)">No hay forma de recuperar la contraseña, así que guardala bien.</small>' : ''}
+      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">${reg ? 'Crear cuenta' : 'Entrar'}</button><span class="fo-msg" id="foMsg"></span></div>
+    </form></div>`;
+}
+
+function foroNewView(cat){
+  if(!Foro.user) return foroHead('Nuevo hilo') + foroCrumb('Nuevo hilo') + `<div class="box" style="border-top:1px solid #9aa7bd"><div class="empty" style="padding:14px">Para abrir un hilo tenés que <a class="btn on" href="#/foro/entrar" onclick="App.foroBack('#/foro/nuevo/${esc(cat || '')}')">entrar</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack('#/foro/nuevo/${esc(cat || '')}')">crear una cuenta</a>.</div></div>`;
+  return foroHead('Nuevo hilo') + foroCrumb('Nuevo hilo') + `<div class="box" style="border-top:1px solid #9aa7bd">
+    <form class="fo-form" onsubmit="App.foroCreate(event)">
+      <label for="foCat">Categoría</label>
+      <select id="foCat">${FORO_CATS.map(c => `<option value="${c.key}" ${c.key === cat ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+      <label for="foTitle">Título</label>
+      <input id="foTitle" required minlength="3" maxlength="120" placeholder="¿De qué querés hablar?">
+      <label for="foBody">Mensaje</label>
+      <textarea id="foBody" required maxlength="5000" placeholder="Escribí el primer mensaje…"></textarea>
+      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar hilo</button><span class="fo-msg" id="foMsg"></span></div>
+    </form></div>`;
+}
+
+const ForoActions = {
+  _back: null,
+  foroBack(h){ ForoActions._back = h; },
+  async foroAuth(ev, reg){
+    ev.preventDefault();
+    const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
+    const user = $('#foUser', f).value.trim(), pass = $('#foPass', f).value;
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(user)){ msg.textContent = 'El usuario debe tener de 3 a 20 caracteres: letras, números o guion bajo.'; return; }
+    if(pass.length < 6){ msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+    if(reg && pass !== $('#foPass2', f).value){ msg.textContent = 'Las contraseñas no coinciden.'; return; }
+    btn.disabled = true; msg.textContent = '';
+    try{
+      const sb = await Foro.client();
+      const email = user.toLowerCase() + FORO_MAIL;
+      const res = reg
+        ? await sb.auth.signUp({email, password: pass, options: {data: {username: user}}})
+        : await sb.auth.signInWithPassword({email, password: pass});
+      if(res.error) throw res.error;
+      if(reg && !res.data?.session){ throw new Error('email not confirmed'); }
+      Foro.setSession(res.data.session);
+      const back = ForoActions._back; ForoActions._back = null;
+      go(back || '#/foro');
+    }catch(e){ msg.textContent = foroErr(e); btn.disabled = false; }
+  },
+  async foroLogout(){
+    try{ const sb = await Foro.client(); await sb.auth.signOut(); }catch(e){}
+    Foro.user = null; route();
+  },
+  async foroReply(ev, threadId){
+    ev.preventDefault();
+    const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
+    const body = $('#foReply', f).value.trim();
+    if(!body){ msg.textContent = 'El mensaje está vacío.'; return; }
+    btn.disabled = true; msg.textContent = 'Publicando…';
+    try{
+      const sb = await Foro.client();
+      await Foro.q(sb.from('posts').insert({thread_id: threadId, body, author: Foro.user.id}));
+      go(`#/foro/t/${threadId}/-1`);
+    }catch(e){ msg.textContent = e.message || foroErr(e); btn.disabled = false; }
+  },
+  async foroCreate(ev){
+    ev.preventDefault();
+    const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
+    const cat = $('#foCat', f).value, title = $('#foTitle', f).value.trim(), body = $('#foBody', f).value.trim();
+    if(title.length < 3){ msg.textContent = 'El título es muy corto.'; return; }
+    if(!body){ msg.textContent = 'El mensaje está vacío.'; return; }
+    btn.disabled = true; msg.textContent = 'Publicando…';
+    try{
+      const sb = await Foro.client();
+      const {data} = await Foro.q(sb.rpc('create_thread', {p_category: cat, p_title: title, p_body: body}));
+      go(`#/foro/t/${data}`);
+    }catch(e){ msg.textContent = e.message || foroErr(e); btn.disabled = false; }
+  },
+};
+
 VIEWS.notfound = async (r, el, ctx) => {
   paint(ctx, el, emptyBox('Página no encontrada', '<div class="btnrow" style="justify-content:center"><a class="btn on" href="#/hoy">Ir a Hoy</a></div>'));
 };
@@ -1749,6 +2062,7 @@ function parseSearch(d){
    ACCIONES GLOBALES + ARRANQUE
    ========================================================================= */
 window.App = {
+  ...ForoActions,
   retry(){ if(!visible().length) state.readyP = null; route(); },
   sideRetry(){ state.sideKey = ''; renderSidebar(true); },
   setFilter(k){ state.filter = k; route(true); },
