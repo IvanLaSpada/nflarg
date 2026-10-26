@@ -261,6 +261,7 @@ footer b{color:var(--gold2)}
 .rx.up.on{background:linear-gradient(#e2f6e7,#a9e0b7);border-color:#3d9b55}
 .rx.dn.on{background:linear-gradient(#fde4e7,#f3a7b1);border-color:#c8102e}
 .emo{display:flex;flex-wrap:wrap;gap:2px;padding:6px;background:#f4f6fa;border:1px solid #c9d1de;border-radius:4px;max-height:150px;overflow:auto}
+.emo[hidden]{display:none}
 .emo button{width:32px;height:32px;font-size:19px;border:0;background:none;cursor:pointer;border-radius:4px}
 .emo button:hover{background:var(--hover)}
 .teamstrip{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:8px;margin-top:10px;background:linear-gradient(#fff,#e9edf3);border:1px solid #9aa7bd;border-radius:4px}
@@ -1039,7 +1040,7 @@ function parseHash(){
       if(parts[3] === 'foro' && lg === 'nfl') return {view: 'team', lg, id: parts[2], tab: 'foro', season: null, ...parseForoRest(parts.slice(4))};
       return {view: 'team', lg, id: parts[2], tab: ['plantel', 'fixture', 'stats'].includes(parts[3]) ? parts[3] : 'plantel', season: num(parts[4])};
     case 'player': return {view: 'player', lg, id: parts[2]};
-    case 'game': return {view: 'game', lg, id: parts[2]};
+    case 'game': return {view: 'game', lg, id: parts[2], foroLink: parts[3] === 'foro', ...parseForoRest(parts[3] === 'foro' ? parts.slice(4) : [])};
     default: return {view: 'notfound'};
   }
 }
@@ -1455,7 +1456,17 @@ VIEWS.game = async (r, el, ctx) => {
   if(odds?.details) kv.push(['Línea', odds.details + (odds.overUnder ? ` · O/U ${odds.overUnder}` : '')]);
   if(pre && !L.length && !SP.length) html += emptyBox('El partido todavía no comenzó', 'Las estadísticas aparecerán cuando arranque.');
   html += `<div class="star-sep"><span>Info</span></div><div class="box" style="border-top:1px solid #9aa7bd"><dl class="kv">${kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>`;
+
+  // Foro del partido
+  let foro;
+  try{
+    foro = Foro.configured()
+      ? await forumBody(await Foro.client(), {forum: `game-${r.lg}-${r.id}`, base: `#/${r.lg}/game/${r.id}/foro`, name: `${tAbbr(A.team)} @ ${tAbbr(H.team)}`}, r, ctx)
+      : foroSetup();
+  }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro del partido'); }
+  html += `<div class="star-sep" id="foroSec"><span>Foro del partido</span></div>${foro}`;
   paint(ctx, el, html);
+  if(r.foroLink && !ctx.silent && alive(ctx)) $('#foroSec')?.scrollIntoView({block: 'start'});
 };
 
 /* ---------- Equipo ---------- */
@@ -2243,13 +2254,13 @@ function init(){
   qres.addEventListener('click', e => { if(e.target.closest('.qr')){ qres.classList.remove('on'); q.value = ''; } });
 
   // Auto-refresh cada 30s sólo si hay partidos en vivo en la vista actual
-  setInterval(() => { if(state.liveInView && !document.hidden) route(true); }, 30e3);
+  const typing = () => { const ta = $('#foText'); return !!ta && (!!ta.value || document.activeElement === ta); };
+  setInterval(() => { if(state.liveInView && !document.hidden && !typing()) route(true); }, 30e3);
   // Muro del foro: se actualiza solo cada 20 s (si no estás escribiendo)
   setInterval(() => {
     const r = state.route;
-    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro') && r.fsub === 'muro' && (r.page || 1) === 1;
-    const ta = $('#foText');
-    if(wall && Foro.sb && !document.hidden && (!ta || (!ta.value && document.activeElement !== ta))) route(true);
+    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro' || r.view === 'game' && !state.liveInView) && r.fsub === 'muro' && (r.page || 1) === 1;
+    if(wall && Foro.sb && !document.hidden && !typing()) route(true);
   }, 20e3);
   // Ticker: 30s si hay algo en vivo, si no cada 5 min
   let tick = 0;

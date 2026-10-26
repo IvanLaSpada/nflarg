@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Foro NFLARG · pegar completo en Supabase → SQL Editor → Run
 -- Se puede volver a ejecutar sin romper nada.
--- Foros: 'general' y uno por franquicia NFL ('nfl-<id de ESPN>').
+-- Foros: 'general', uno por franquicia NFL ('nfl-<id de ESPN>') y uno por partido ('game-<liga>-<id>').
 -- Cada foro tiene un muro de mensajes (posts sin thread_id) y temas (threads).
 -- =====================================================================
 
@@ -30,19 +30,22 @@ create unique index if not exists profiles_username_lower on public.profiles (lo
 -- Temas
 create table if not exists public.threads (
   id bigint generated always as identity primary key,
-  forum text not null check (forum ~ '^(general|nfl-[0-9]{1,4})$'),
+  forum text not null,
   title text not null check (char_length(title) between 3 and 120),
   author uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   created_at timestamptz not null default now(),
   last_post_at timestamptz not null default now(),
   post_count integer not null default 0
 );
+-- Foros válidos: general, franquicia NFL ('nfl-<id>') y partido ('game-<liga>-<id>')
+alter table public.threads drop constraint if exists threads_forum_check;
+alter table public.threads add constraint threads_forum_check check (forum ~ '^(general|nfl-[0-9]{1,4}|game-(nfl|fbs|fcs|ufl|cfl)-[0-9]{1,12})$');
 create index if not exists threads_forum_last on public.threads (forum, last_post_at desc);
 
 -- Mensajes: con thread_id = respuesta de un tema; sin thread_id = mensaje del muro
 create table if not exists public.posts (
   id bigint generated always as identity primary key,
-  forum text not null check (forum ~ '^(general|nfl-[0-9]{1,4})$'),
+  forum text not null,
   thread_id bigint references public.threads (id) on delete cascade,
   author uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   body text not null check (char_length(btrim(body)) between 1 and 5000),
@@ -50,6 +53,8 @@ create table if not exists public.posts (
   dislikes integer not null default 0,
   created_at timestamptz not null default now()
 );
+alter table public.posts drop constraint if exists posts_forum_check;
+alter table public.posts add constraint posts_forum_check check (forum ~ '^(general|nfl-[0-9]{1,4}|game-(nfl|fbs|fcs|ufl|cfl)-[0-9]{1,12})$');
 create index if not exists posts_wall on public.posts (forum, id desc) where thread_id is null;
 create index if not exists posts_thread on public.posts (thread_id, id);
 create index if not exists posts_author_time on public.posts (author, created_at desc);
