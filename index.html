@@ -1753,7 +1753,7 @@ VIEWS.player = async (r, el, ctx) => {
 const FORO_CFG = {url: 'https://qdcimhqpgobtvcfvxnpj.supabase.co', key: 'sb_publishable_2lUMRJE-VoAIgPv47XHarg_0yjp2pR_'};
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
 const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
-const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles(username,team_id)';
+const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_author_fkey(username,team_id)';
 const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
 
 const Foro = {
@@ -1920,7 +1920,7 @@ async function foroWall(sb, fc, r){
 
 async function foroTopics(sb, fc, r){
   const page = Math.max(1, r.page || 1), from = (page - 1) * THREADS_PER_PAGE;
-  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles(username,team_id)', {count: 'exact'})
+  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles!threads_author_fkey(username,team_id)', {count: 'exact'})
     .eq('forum', fc.forum).order('last_post_at', {ascending: false}).range(from, from + THREADS_PER_PAGE - 1));
   const rows = arr(data).map(t => `<tr><td class="l"><a href="${fc.base}/t/${t.id}"><b>${esc(t.title)}</b></a><div style="font-size:10px;color:var(--muted)">por ${esc(t.profiles?.username || '—')}</div></td>
     <td>${Math.max(0, (t.post_count || 1) - 1)}</td><td class="hm">${esc(timeAgo(t.last_post_at))}</td></tr>`).join('');
