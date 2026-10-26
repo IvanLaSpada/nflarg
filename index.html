@@ -1752,6 +1752,7 @@ VIEWS.player = async (r, el, ctx) => {
 // lo que cada uno puede hacer lo controla la base (supabase/foro.sql).
 const FORO_CFG = {url: 'https://qdcimhqpgobtvcfvxnpj.supabase.co', key: 'sb_publishable_2lUMRJE-VoAIgPv47XHarg_0yjp2pR_'};
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
+const FORO_MAIL = '@foro-nflarg.com';   // mail interno de cada cuenta (Supabase exige uno); el real es opcional
 const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
 const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_author_fkey(username,team_id)';
 const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
@@ -1800,11 +1801,12 @@ function foroErr(e){
   const m = String(e?.message || e || '');
   if(/does not exist|schema cache|could not find the (table|function)/i.test(m)) return 'La base del foro está desactualizada: volvé a ejecutar supabase/foro.sql completo en el SQL Editor de Supabase. (' + m + ')';
   if(/too_fast/i.test(m)) return 'Esperá unos segundos antes de volver a publicar.';
-  if(/already registered|already been registered/i.test(m)) return 'Ese mail ya tiene una cuenta.';
-  if(/invalid login credentials/i.test(m)) return 'Mail o contraseña incorrectos.';
+  if(/already registered|already been registered/i.test(m)) return 'Ese mail ya está registrado en otra cuenta.';
+  if(/invalid login credentials/i.test(m)) return 'Usuario/mail o contraseña incorrectos.';
   if(/password should be|weak password|at least/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
   if(/database error saving new user|duplicate key/i.test(m)) return 'Ese nombre de usuario ya está en uso.';
-  if(/invalid format|validate email|email address.*invalid/i.test(m)) return 'El mail no es válido.';
+  if(/invalid format/i.test(m)) return 'El mail no es válido.';
+  if(/validate email|email address.*invalid/i.test(m)) return 'Supabase rechazó la cuenta interna del usuario (' + m + ').';
   if(/signups? not allowed|signup.*disabled/i.test(m)) return 'El registro está desactivado en la configuración de Supabase.';
   if(/email not confirmed/i.test(m)) return 'La cuenta quedó pendiente de confirmación: en Supabase hay que desactivar "Confirm email".';
   if(/rate limit|too many/i.test(m)) return 'Demasiados intentos seguidos. Esperá unos minutos y probá de nuevo.';
@@ -1983,8 +1985,11 @@ function foroAccount(mode){
       ${reg ? `<label for="foUser">Nombre de usuario</label>
       <input id="foUser" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="ej: chiefs_fan">
       <small style="color:var(--muted)">De 3 a 20 caracteres: letras, números o guion bajo. Es el nombre que ven los demás.</small>` : ''}
-      <label for="foMail">Mail</label>
-      <input id="foMail" type="email" autocomplete="email" required placeholder="vos@ejemplo.com">
+      ${reg ? `<label for="foMail">Mail <span style="text-transform:none;font-weight:400;color:var(--muted)">(opcional)</span></label>
+      <input id="foMail" type="email" autocomplete="email" placeholder="vos@ejemplo.com">
+      <small style="color:var(--muted)">Si lo cargás, también podés entrar con tu mail. Nadie más lo ve.</small>`
+      : `<label for="foLogin">Usuario o mail</label>
+      <input id="foLogin" autocomplete="username" required placeholder="tu usuario o tu mail">`}
       <label for="foPass">Contraseña</label>
       <input id="foPass" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required minlength="6">
       ${reg ? `<label for="foPass2">Repetir contraseña</label><input id="foPass2" type="password" autocomplete="new-password" required minlength="6">
@@ -2044,8 +2049,10 @@ const ForoActions = {
   async foroAuth(ev, reg){
     ev.preventDefault();
     const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
-    const mail = $('#foMail', f).value.trim(), pass = $('#foPass', f).value;
+    const pass = $('#foPass', f).value;
     const user = reg ? $('#foUser', f).value.trim() : '';
+    const mail = reg ? $('#foMail', f).value.trim() : '';
+    const login = reg ? '' : $('#foLogin', f).value.trim();
     if(reg && !/^[A-Za-z0-9_]{3,20}$/.test(user)){ msg.textContent = 'El usuario debe tener de 3 a 20 caracteres: letras, números o guion bajo.'; return; }
     if(pass.length < 6){ msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
     if(reg && pass !== $('#foPass2', f).value){ msg.textContent = 'Las contraseñas no coinciden.'; return; }
@@ -2054,11 +2061,18 @@ const ForoActions = {
       const sb = await Foro.client();
       let res;
       if(reg){
+        if(mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw new Error('invalid format');
         const taken = await Foro.q(sb.from('profiles').select('id').ilike('username', user.replace(/_/g, '\\_')).limit(1));
         if(arr(taken.data).length) throw new Error('duplicate key');
-        res = await sb.auth.signUp({email: mail, password: pass, options: {data: {username: user, team_id: $('#foTeam', f).value || ''}}});
+        if(mail){ const used = await Foro.q(sb.rpc('login_email', {p_login: mail})); if(used.data) throw new Error('already registered'); }
+        res = await sb.auth.signUp({email: user.toLowerCase() + FORO_MAIL, password: pass, options: {data: {username: user, team_id: $('#foTeam', f).value || '', contact_email: mail}}});
         if(!res.error && !res.data?.session) throw new Error('email not confirmed');
-      } else res = await sb.auth.signInWithPassword({email: mail, password: pass});
+      } else {
+        // Usuario o mail → mail interno de la cuenta
+        const {data: internal} = await Foro.q(sb.rpc('login_email', {p_login: login}));
+        if(!internal) throw new Error('Invalid login credentials');
+        res = await sb.auth.signInWithPassword({email: internal, password: pass});
+      }
       if(res.error) throw res.error;
       await Foro.loadProfile(res.data.session);
       const back = ForoActions._back; ForoActions._back = null;

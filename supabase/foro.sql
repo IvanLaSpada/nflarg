@@ -62,14 +62,56 @@ create table if not exists public.reactions (
   primary key (post_id, user_id)
 );
 
--- Al registrarse se crea el perfil con el usuario y la franquicia elegidos
+-- Mail de contacto (opcional y privado: nadie lo puede leer desde la página).
+-- La cuenta usa por dentro un mail interno <usuario>@foro-nflarg.com; con este se puede entrar también.
+create table if not exists public.account_emails (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  email text not null check (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$')
+);
+create unique index if not exists account_emails_lower on public.account_emails (lower(email));
+
+-- Al registrarse se crea el perfil con el usuario, la franquicia y el mail opcional
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = '' as $$
+declare
+  contact text := nullif(btrim(new.raw_user_meta_data ->> 'contact_email'), '');
 begin
   insert into public.profiles (id, username, team_id)
   values (new.id, new.raw_user_meta_data ->> 'username', nullif(new.raw_user_meta_data ->> 'team_id', ''));
+  if contact is not null then
+    insert into public.account_emails (user_id, email) values (new.id, lower(contact));
+  end if;
   return new;
 end;
+$$;
+
+-- Cuentas creadas con la versión que pedía el mail: pasan al mail interno y su mail queda como contacto
+do $$
+declare
+  r record;
+  syn text;
+begin
+  for r in
+    select u.id, u.email, p.username from auth.users u join public.profiles p on p.id = u.id
+     where u.email is not null and u.email not like '%@foro-nflarg.com'
+  loop
+    syn := lower(r.username) || '@foro-nflarg.com';
+    insert into public.account_emails (user_id, email) values (r.id, lower(r.email)) on conflict do nothing;
+    update auth.users set email = syn where id = r.id;
+    update auth.identities set identity_data = jsonb_set(identity_data, '{email}', to_jsonb(syn))
+     where user_id = r.id and provider = 'email';
+  end loop;
+end $$;
+
+-- Entrar con usuario o mail: devuelve el mail interno de la cuenta (o nada)
+create or replace function public.login_email(p_login text)
+returns text language sql stable security definer set search_path = '' as $$
+  select u.email from public.profiles p join auth.users u on u.id = p.id
+   where lower(p.username) = lower(btrim(p_login))
+  union all
+  select u.email from public.account_emails a join auth.users u on u.id = a.user_id
+   where lower(a.email) = lower(btrim(p_login))
+  limit 1;
 $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users
@@ -177,6 +219,9 @@ revoke update on public.profiles from anon, authenticated;
 grant update (team_id) on public.profiles to authenticated;
 revoke update, delete on public.posts, public.threads from anon, authenticated;
 revoke insert, update, delete on public.threads, public.posts, public.reactions, public.profiles from anon;
+alter table public.account_emails enable row level security;
+revoke all on public.account_emails from anon, authenticated;
+grant execute on function public.login_email(text) to anon, authenticated;
 grant usage on all sequences in schema public to authenticated;
 revoke execute on function public.create_thread(text, text, text) from public, anon;
 grant execute on function public.create_thread(text, text, text) to authenticated;
