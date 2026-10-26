@@ -1457,14 +1457,14 @@ VIEWS.game = async (r, el, ctx) => {
   if(pre && !L.length && !SP.length) html += emptyBox('El partido todavía no comenzó', 'Las estadísticas aparecerán cuando arranque.');
   html += `<div class="star-sep"><span>Info</span></div><div class="box" style="border-top:1px solid #9aa7bd"><dl class="kv">${kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>`;
 
-  // Foro del partido
+  // Foro General (el mismo de la sección Foro), embebido abajo del partido
   let foro;
   try{
     foro = Foro.configured()
-      ? await forumBody(await Foro.client(), {forum: `game-${r.lg}-${r.id}`, base: `#/${r.lg}/game/${r.id}/foro`, name: `${tAbbr(A.team)} @ ${tAbbr(H.team)}`}, r, ctx)
+      ? await forumBody(await Foro.client(), {forum: 'general', base: `#/${r.lg}/game/${r.id}/foro`, name: 'Foro General'}, r, ctx)
       : foroSetup();
-  }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro del partido'); }
-  html += `<div class="star-sep" id="foroSec"><span>Foro del partido</span></div>${foro}`;
+  }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro'); }
+  html += `<div class="star-sep" id="foroSec"><span>Foro General</span></div>${foro}`;
   paint(ctx, el, html);
   if(r.foroLink && !ctx.silent && alive(ctx)) $('#foroSec')?.scrollIntoView({block: 'start'});
 };
