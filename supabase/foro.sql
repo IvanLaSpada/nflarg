@@ -180,3 +180,6 @@ revoke insert, update, delete on public.threads, public.posts, public.reactions,
 grant usage on all sequences in schema public to authenticated;
 revoke execute on function public.create_thread(text, text, text) from public, anon;
 grant execute on function public.create_thread(text, text, text) to authenticated;
+
+-- Que la API de Supabase vea los cambios de inmediato
+notify pgrst, 'reload schema';

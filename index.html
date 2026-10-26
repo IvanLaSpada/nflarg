@@ -884,7 +884,7 @@ function spinner(txt = 'Cargando…', small = false){
 function skeleton(n = 6){ let h = '<div class="box" style="border-top:1px solid #9aa7bd">'; for(let i = 0; i < n; i++) h += '<div class="sk"><i></i><i></i><i style="width:60%;margin:auto"></i><i></i></div>'; return h + '</div>'; }
 function errorBox(e, title = 'No se pudieron cargar los datos'){
   const msg = e?.message || String(e);
-  const hint = (e?.status === 0)
+  const hint = e?.foro ? 'El problema está en la base de datos del foro (Supabase), no en ESPN.' : (e?.status === 0)
     ? 'Si abriste el archivo directamente y tu navegador bloquea las peticiones, probá servirlo con un servidor local (por ejemplo: <code>python3 -m http.server</code>) o revisá tu conexión.'
     : (e?.status === 404 ? 'ESPN no tiene datos para esta consulta (puede que la temporada o el recurso no existan).' : 'Puede ser un problema momentáneo de ESPN.');
   return `<div class="err"><div class="ph red">⚠ ${esc(title)}</div><p>${esc(msg)}</p><small>${hint}</small>${e?.url ? `<small style="word-break:break-all;font-family:monospace">${esc(String(e.url).replace(/^https:\/\//, ''))}</small>` : ''}<button class="btn on" onclick="App.retry()">↻ Reintentar</button></div>`;
@@ -1791,13 +1791,14 @@ const Foro = {
   },
   async q(promise){
     const {data, error, count} = await promise;
-    if(error) throw new ApiError(foroErr(error), -1, '');
+    if(error){ const e = new ApiError(foroErr(error), -1, ''); e.foro = true; throw e; }
     return {data, count};
   },
 };
 
 function foroErr(e){
   const m = String(e?.message || e || '');
+  if(/does not exist|schema cache|could not find the (table|function)/i.test(m)) return 'La base del foro está desactualizada: volvé a ejecutar supabase/foro.sql completo en el SQL Editor de Supabase. (' + m + ')';
   if(/too_fast/i.test(m)) return 'Esperá unos segundos antes de volver a publicar.';
   if(/already registered|already been registered/i.test(m)) return 'Ese mail ya tiene una cuenta.';
   if(/invalid login credentials/i.test(m)) return 'Mail o contraseña incorrectos.';
