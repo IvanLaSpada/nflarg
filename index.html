@@ -243,11 +243,38 @@ footer b{color:var(--gold2)}
 .fo-form textarea{min-height:130px;resize:vertical}
 .fo-form label{font:700 11px Arial;text-transform:uppercase;color:var(--navy);margin-top:4px}
 .fo-msg{font:12px Arial;color:var(--loss)}
+.ftabs{display:flex;gap:2px;margin:10px 0;border-bottom:3px solid var(--navy3)}
+.ftabs .tab.on{background:linear-gradient(#4f74bb,#1d3f86 48%,#0f2a62 52%,#173b80);border-color:#071636}
+.fbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:6px 10px;font:12px Arial;background:linear-gradient(#f4f6fa,#dfe4ec);border:1px solid #9aa7bd;border-radius:4px}
+.fbar > span:first-child{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fbar .av{width:22px;height:22px;font-size:12px;border-width:1px}
+.fteam{display:inline-flex;align-items:center;gap:3px;font:700 10px Arial;color:var(--navy)!important;background:#fff;border:1px solid #b9c3d3;border-radius:9px;padding:1px 6px 1px 2px;text-decoration:none!important}
+.fteam .logo,.fteam .logo-fb{width:16px;height:16px;font-size:6px}
+.fpost .tx{min-height:1.5em}
+.fq{margin:4px 0 8px;padding:6px 10px;border-left:4px solid var(--navy3);background:#eef2f8;border-radius:0 4px 4px 0;font-size:12px;color:#333}
+.fq cite{display:block;font:italic 700 11px Arial;color:var(--navy3);margin-bottom:2px}
+.fq .fq{background:#e3e9f3}
+.acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.rx{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border:1px solid #a1abbb;border-radius:12px;background:linear-gradient(#fff,#e4e8ee);cursor:pointer;font:12px Arial;color:var(--navy)}
+.rx:hover{background:var(--hover)}
+.rx b{font:600 14px/1 var(--f-num);padding-top:2px}
+.rx.up.on{background:linear-gradient(#e2f6e7,#a9e0b7);border-color:#3d9b55}
+.rx.dn.on{background:linear-gradient(#fde4e7,#f3a7b1);border-color:#c8102e}
+.emo{display:flex;flex-wrap:wrap;gap:2px;padding:6px;background:#f4f6fa;border:1px solid #c9d1de;border-radius:4px;max-height:150px;overflow:auto}
+.emo button{width:32px;height:32px;font-size:19px;border:0;background:none;cursor:pointer;border-radius:4px}
+.emo button:hover{background:var(--hover)}
+.teamstrip{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:8px;margin-top:10px;background:linear-gradient(#fff,#e9edf3);border:1px solid #9aa7bd;border-radius:4px}
+.teamstrip a{display:inline-flex;padding:2px;border-radius:50%}
+.teamstrip a:hover{background:var(--hover);transform:scale(1.15)}
+.teamstrip .logo,.teamstrip .logo-fb{width:26px;height:26px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0a1f44;color:#fff;font:13px Arial;padding:10px 16px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.5);z-index:200;max-width:90vw}
 .fo-user{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:relative;z-index:1;margin-left:auto}
 .pager{display:flex;gap:4px;justify-content:center;align-items:center;margin:0 0 12px;flex-wrap:wrap}
 .pager .n{color:var(--muted)}
 .hero + .btnrow,.crumb + .btnrow{margin-top:0}
 @media (max-width:640px){
+  .tabs{flex-wrap:wrap;row-gap:3px}
+  .tabs .tab{padding:6px 10px 4px;font-size:12px}
   .fpost{grid-template-columns:1fr}
   .fpost .au{flex-direction:row;text-align:left;border-right:0;border-bottom:1px solid var(--line);padding:6px 10px}
   .fpost .au .av{width:26px;height:26px;font-size:13px}
@@ -997,8 +1024,8 @@ function parseHash(){
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   if(!parts.length || parts[0] === 'hoy') return {view: 'day', lg: null, date: parts[1]};
   if(parts[0] === 'foro'){
-    const sub = parts[1] || 'home';
-    return {view: 'foro', sub, cat: (sub === 'c' || sub === 'nuevo') ? parts[2] : null, id: sub === 't' ? parts[2] : null, page: num(parts[3])};
+    if(['entrar', 'registro', 'perfil'].includes(parts[1])) return {view: 'foro', acct: parts[1]};
+    return {view: 'foro', ...parseForoRest(parts.slice(1))};
   }
   const lg = parts[0];
   if(!LG[lg]) return {view: 'notfound'};
@@ -1008,7 +1035,9 @@ function parseHash(){
     case 'partidos': return {view: 'league', tab: 'partidos', lg, season: num(parts[2]), stype: num(parts[3]), week: num(parts[4])};
     case 'posiciones': return {view: 'league', tab: 'posiciones', lg, season: num(parts[2])};
     case 'stats': return {view: 'league', tab: 'stats', lg, season: num(parts[2])};
-    case 'team': return {view: 'team', lg, id: parts[2], tab: ['plantel', 'fixture', 'stats'].includes(parts[3]) ? parts[3] : 'plantel', season: num(parts[4])};
+    case 'team':
+      if(parts[3] === 'foro' && lg === 'nfl') return {view: 'team', lg, id: parts[2], tab: 'foro', season: null, ...parseForoRest(parts.slice(4))};
+      return {view: 'team', lg, id: parts[2], tab: ['plantel', 'fixture', 'stats'].includes(parts[3]) ? parts[3] : 'plantel', season: num(parts[4])};
     case 'player': return {view: 'player', lg, id: parts[2]};
     case 'game': return {view: 'game', lg, id: parts[2]};
     default: return {view: 'notfound'};
@@ -1474,7 +1503,7 @@ VIEWS.team = async (r, el, ctx) => {
     }
   }catch(e){}
   const c1 = teamColor(t);
-  const tabs = [['plantel', 'Plantel'], ['fixture', 'Fixture / Resultados'], ['stats', 'Estadísticas']];
+  const tabs = [['plantel', 'Plantel'], ['fixture', 'Fixture / Resultados'], ['stats', 'Estadísticas']].concat(lg.key === 'nfl' ? [['foro', '💬 Foro']] : []);
   const head = `<div class="crumb"><a href="#/${lg.key}/partidos">${esc(lg.name)}</a> › <a href="#/${lg.key}/posiciones/${season}">Posiciones</a> › ${esc(t.displayName || '')}</div>
     <div class="hero" style="--tc:${c1}">
       ${teamLogo(t) ? `<img class="wm" src="${esc(teamLogo(t))}" alt="" onerror="this.remove()">` : ''}
@@ -1483,11 +1512,12 @@ VIEWS.team = async (r, el, ctx) => {
         <div class="meta"><span class="chip gold">★ ${season}</span>${rec ? `<span class="chip">Récord ${esc(rec)}</span>` : ''}${pos ? `<span class="chip dark">${esc(pos)}</span>` : ''}</div>
       </div>
     </div>
-    <div class="tabs">${tabs.map(([k, n]) => `<a class="tab ${k === r.tab ? 'on' : ''}" href="#/${lg.key}/team/${r.id}/${k}/${season}">${n}</a>`).join('')}</div>`;
+    <div class="tabs">${tabs.map(([k, n]) => `<a class="tab ${k === r.tab ? 'on' : ''}" href="#/${lg.key}/team/${r.id}/${k}${k === 'foro' ? '' : '/' + season}">${n}</a>`).join('')}</div>`;
   if(!ctx.silent) paint(ctx, el, head + spinner());
   let body;
   try{
-    if(r.tab === 'plantel') body = await teamRoster(lg, r.id, season, isCur);
+    if(r.tab === 'foro') body = await teamForum(lg, {...t, id: t.id || r.id}, r, ctx);
+    else if(r.tab === 'plantel') body = await teamRoster(lg, r.id, season, isCur);
     else if(r.tab === 'fixture') body = await teamFixture(lg, r.id, season, ctx);
     else body = await teamStats(lg, r.id, season, isCur);
   }catch(e){ console.error(e); body = errorBox(e); }
@@ -1715,25 +1745,19 @@ VIEWS.player = async (r, el, ctx) => {
 };
 
 /* =========================================================================
-   FORO (Supabase) · usuario + contraseña, sin mail
+   FORO (Supabase) · foro general + uno por franquicia NFL
+   Cada foro: solapa Mensajes (muro) y solapa Temas (hilos)
    ========================================================================= */
 // Datos del proyecto Supabase (Project Settings → API). La clave pública es segura de publicar:
-// los permisos los controla la base (supabase/foro.sql).
+// lo que cada uno puede hacer lo controla la base (supabase/foro.sql).
 const FORO_CFG = {url: '', key: ''};
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
-const FORO_MAIL = '@foro-nflarg.com';   // Supabase pide un mail: se arma solo a partir del usuario
-const FORO_CATS = [
-  {key: 'general', name: 'General', desc: 'Charla libre de fútbol americano'},
-  {key: 'nfl', name: 'NFL', desc: 'Partidos, equipos, draft y fantasy de la NFL'},
-  {key: 'ncaa', name: 'College (NCAA)', desc: 'FBS, FCS, rankings y bowls'},
-  {key: 'ufl', name: 'UFL', desc: 'United Football League'},
-  {key: 'cfl', name: 'CFL', desc: 'Canadian Football League'},
-];
-const FCAT = Object.fromEntries(FORO_CATS.map(c => [c.key, c]));
-const THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
+const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
+const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles(username,team_id)';
+const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
 
 const Foro = {
-  sb: null, user: null, loading: null,
+  sb: null, user: null, loading: null, cache: new Map(), mine: {},
   configured(){ return /^https:\/\/\S+$/.test(FORO_CFG.url) && String(FORO_CFG.key).length > 20; },
   client(){
     if(this.sb) return Promise.resolve(this.sb);
@@ -1746,37 +1770,44 @@ const Foro = {
         document.head.appendChild(s);
       }).then(async () => {
         const sb = window.supabase.createClient(FORO_CFG.url, FORO_CFG.key, {auth: {persistSession: true, autoRefreshToken: true, storageKey: 'nfa-foro'}});
-        const {data} = await sb.auth.getSession();
-        this.setSession(data?.session);
-        sb.auth.onAuthStateChange((_ev, session) => this.setSession(session));
         this.sb = sb;
+        const {data} = await sb.auth.getSession();
+        await this.loadProfile(data?.session);
+        sb.auth.onAuthStateChange(ev => { if(ev === 'SIGNED_OUT') this.user = null; });
         return sb;
       });
-      this.loading.catch(() => { this.loading = null; });
+      this.loading.catch(() => { this.loading = null; this.sb = null; });
     }
     return this.loading;
   },
-  setSession(s){
-    const u = s?.user;
-    this.user = u ? {id: u.id, username: u.user_metadata?.username || String(u.email || '').split('@')[0]} : null;
+  async loadProfile(session){
+    const u = session?.user;
+    if(!u){ this.user = null; return; }
+    this.user = {id: u.id, username: u.user_metadata?.username || '', team_id: u.user_metadata?.team_id || null};
+    try{
+      const {data} = await this.sb.from('profiles').select('username,team_id').eq('id', u.id).maybeSingle();
+      if(data) Object.assign(this.user, data);
+    }catch(e){}
   },
   async q(promise){
     const {data, error, count} = await promise;
-    if(error) throw new ApiError(foroErr(error), error.status || -1, '');
+    if(error) throw new ApiError(foroErr(error), -1, '');
     return {data, count};
   },
 };
 
 function foroErr(e){
   const m = String(e?.message || e || '');
-  if(/already registered|already exists|duplicate/i.test(m)) return 'Ese nombre de usuario ya está en uso.';
-  if(/invalid login credentials/i.test(m)) return 'Usuario o contraseña incorrectos.';
+  if(/too_fast/i.test(m)) return 'Esperá unos segundos antes de volver a publicar.';
+  if(/already registered|already been registered/i.test(m)) return 'Ese mail ya tiene una cuenta.';
+  if(/invalid login credentials/i.test(m)) return 'Mail o contraseña incorrectos.';
   if(/password should be|weak password|at least/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
-  if(/database error saving new user/i.test(m)) return 'Ese nombre de usuario no es válido o ya está en uso.';
+  if(/database error saving new user|duplicate key/i.test(m)) return 'Ese nombre de usuario ya está en uso.';
+  if(/invalid format|validate email|email address.*invalid/i.test(m)) return 'El mail no es válido.';
   if(/signups? not allowed|signup.*disabled/i.test(m)) return 'El registro está desactivado en la configuración de Supabase.';
   if(/email not confirmed/i.test(m)) return 'La cuenta quedó pendiente de confirmación: en Supabase hay que desactivar "Confirm email".';
   if(/rate limit|too many/i.test(m)) return 'Demasiados intentos seguidos. Esperá unos minutos y probá de nuevo.';
-  if(/not_authenticated|JWT|row-level security/i.test(m)) return 'Tenés que entrar con tu usuario para publicar.';
+  if(/not_authenticated|JWT|row-level security/i.test(m)) return 'Tenés que entrar con tu usuario para hacer eso.';
   if(/failed to fetch|network/i.test(m)) return 'No se pudo conectar con el foro. Revisá tu conexión.';
   return m || 'Ocurrió un error en el foro.';
 }
@@ -1795,8 +1826,20 @@ function avatar(name){
   const hue = h % 360;
   return `<span class="av" style="background:linear-gradient(hsl(${hue} 60% 48%),hsl(${hue} 65% 30%))">${esc(n.charAt(0).toUpperCase())}</span>`;
 }
-function postBody(txt){
-  return esc(txt).replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`).replace(/\n/g, '<br>');
+const nflTeam = id => (id && LG.nfl.teamIdx?.[String(id)]) || null;
+function teamBadge(id){
+  const t = nflTeam(id);
+  return t ? `<a class="fteam" href="#/nfl/team/${t.id}/foro" title="Hincha de ${esc(t.displayName)}">${logo(t)}<span>${esc(t.abbreviation || '')}</span></a>` : '';
+}
+/* Texto del mensaje: escapado, citas [quote=usuario]…[/quote], links y saltos de línea. Sin imágenes. */
+function renderBody(txt){
+  let h = esc(txt);
+  for(let i = 0; i < 6; i++){
+    const n = h.replace(/\[quote=([A-Za-z0-9_]{1,20})\]((?:(?!\[quote=)[\s\S])*?)\[\/quote\]\n?/g, (m, u, b) => `<blockquote class="fq"><cite>${u} escribió:</cite>${b.trim()}</blockquote>`);
+    if(n === h) break; h = n;
+  }
+  h = h.replace(/https?:\/\/[^\s<"']+/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`);
+  return h.replace(/\n/g, '<br>');
 }
 function pager(base, page, total, per){
   const pages = Math.max(1, Math.ceil((total || 0) / per));
@@ -1808,20 +1851,40 @@ function pager(base, page, total, per){
   }
   return h + '</div>';
 }
-function foroHead(sub){
+function foroUserBar(){
   const u = Foro.user;
-  const who = u
-    ? `<span class="chip dark">${avatar(u.username)} ${esc(u.username)}</span><button class="btn" onclick="App.foroLogout()">Salir</button>`
-    : `<a class="btn on" href="#/foro/entrar">Entrar</a><a class="btn" href="#/foro/registro">Crear cuenta</a>`;
-  return `<div class="hero" style="--tc:#0f2a62">
-      <div style="position:relative;z-index:1"><h1>Foro NFLARG</h1><div class="meta"><span class="chip gold">★ ${esc(sub || 'Comunidad')}</span></div></div>
-      <div class="fo-user">${who}</div>
-    </div>`;
+  if(u) return `<div class="fbar"><span>${avatar(u.username)} Conectado como <b>${esc(u.username)}</b> ${teamBadge(u.team_id)}</span><span class="sp"></span><a class="btn" href="#/foro/perfil" onclick="App.foroBack()">Mi perfil</a><button class="btn" onclick="App.foroLogout()">Salir</button></div>`;
+  return `<div class="fbar"><span>Estás leyendo como invitado.</span><span class="sp"></span><a class="btn on" href="#/foro/entrar" onclick="App.foroBack()">Entrar</a><a class="btn" href="#/foro/registro" onclick="App.foroBack()">Crear cuenta</a></div>`;
 }
-const foroCrumb = (...parts) => `<div class="crumb" style="margin-top:10px"><a href="#/foro">Foro</a>${parts.map(p => ' › ' + p).join('')}</div>`;
+function composer(forum, threadId, after, placeholder){
+  if(!Foro.user) return `<div class="empty" style="padding:14px"><a class="btn on" href="#/foro/entrar" onclick="App.foroBack()">Entrá</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack()">creá una cuenta</a> para escribir.</div>`;
+  return `<form class="fo-form" onsubmit="App.foroSend(event,'${forum}',${threadId || 'null'},'${after}')">
+    <textarea id="foText" maxlength="5000" required placeholder="${esc(placeholder)}"></textarea>
+    <div class="emo" id="foEmo" hidden>${EMOJIS.map(e => `<button type="button" onclick="App.foroIns(this.textContent)">${e}</button>`).join('')}</div>
+    <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><span class="fo-msg" id="foMsg"></span></div>
+  </form>`;
+}
+async function loadMine(sb, posts){
+  Foro.mine = {};
+  posts.forEach(p => Foro.cache.set(p.id, {username: p.profiles?.username || '', body: p.body}));
+  if(!Foro.user || !posts.length) return;
+  try{
+    const {data} = await Foro.q(sb.from('reactions').select('post_id,value').eq('user_id', Foro.user.id).in('post_id', posts.map(p => p.id)));
+    arr(data).forEach(r => { Foro.mine[r.post_id] = r.value; });
+  }catch(e){}
+}
+function postHtml(p, n){
+  const name = p.profiles?.username || '—';
+  const mine = Foro.mine[p.id];
+  return `<article class="fpost" id="p${p.id}"><div class="au">${avatar(name)}<b>${esc(name)}</b>${teamBadge(p.profiles?.team_id)}</div>
+    <div class="bd"><div class="meta"><span>${esc(fmtDate(new Date(p.created_at)))} ${esc(fmtTime(new Date(p.created_at)))} · ${esc(timeAgo(p.created_at))}</span>${n ? `<span>#${n}</span>` : ''}</div>
+      <div class="tx">${renderBody(p.body)}</div>
+      <div class="acts"><button class="rx up ${mine === 1 ? 'on' : ''}" onclick="App.foroReact(${p.id},1)" title="Me gusta">👍 <b>${p.likes || 0}</b></button><button class="rx dn ${mine === -1 ? 'on' : ''}" onclick="App.foroReact(${p.id},-1)" title="No me gusta">👎 <b>${p.dislikes || 0}</b></button><button class="rx" onclick="App.foroQuote(${p.id})">❝ Citar</button></div>
+    </div></article>`;
+}
 
 function foroSetup(){
-  return foroHead('Sin configurar') + `<div class="box" style="border-top:1px solid #9aa7bd;margin-top:12px;padding:12px 16px;font:13px/1.6 Arial">
+  return `<div class="box" style="border-top:1px solid #9aa7bd;padding:12px 16px;font:13px/1.6 Arial">
     <b style="font:italic 700 18px var(--f-head);color:var(--navy);text-transform:uppercase">El foro todavía no está conectado</b>
     <p>Para activarlo hace falta un proyecto gratuito de Supabase (la base de datos donde se guardan usuarios y mensajes):</p>
     <ol>
@@ -1832,170 +1895,229 @@ function foroSetup(){
     </ol></div>`;
 }
 
-VIEWS.foro = async (r, el, ctx) => {
-  if(!Foro.configured()){ paint(ctx, el, foroSetup()); return; }
-  if(!ctx.silent) paint(ctx, el, spinner('Cargando foro'));
-  const sb = await Foro.client();
-  if(!alive(ctx)) return;
-  renderSidebar(true);
-  if(r.sub === 'entrar' || r.sub === 'registro') return paint(ctx, el, foroLoginView(r.sub));
-  if(r.sub === 'nuevo') return paint(ctx, el, foroNewView(r.cat));
-  if(r.sub === 'c') return foroCatView(sb, r, el, ctx);
-  if(r.sub === 't') return foroThreadView(sb, r, el, ctx);
-  return foroHomeView(sb, el, ctx);
-};
-
-async function foroHomeView(sb, el, ctx){
-  const stats = await Promise.all(FORO_CATS.map(async c => {
-    const [cnt, last] = await Promise.all([
-      Foro.q(sb.from('threads').select('id', {count: 'exact', head: true}).eq('category', c.key)),
-      Foro.q(sb.from('threads').select('id,title,last_post_at').eq('category', c.key).order('last_post_at', {ascending: false}).limit(1)),
-    ]);
-    return {c, count: cnt.count || 0, last: arr(last.data)[0]};
-  }));
-  const recent = await Foro.q(sb.from('threads').select('id,title,category,last_post_at,post_count,profiles(username)').order('last_post_at', {ascending: false}).limit(10));
-  const rows = stats.map(({c, count, last}) => `<tr><td class="l"><a href="#/foro/c/${c.key}"><b>${esc(c.name)}</b></a><div style="font-size:11px;color:var(--muted)">${esc(c.desc)}</div></td>
-    <td>${count}</td><td class="l hm">${last ? `<a href="#/foro/t/${last.id}">${esc(last.title)}</a><div style="font-size:10px;color:var(--muted)">${esc(timeAgo(last.last_post_at))}</div>` : '<span style="color:#999">Sin hilos todavía</span>'}</td></tr>`).join('');
-  const rec = arr(recent.data).map(threadRow).join('');
-  paint(ctx, el, foroHead('Comunidad') + `<div class="btnrow" style="margin-top:12px"><a class="btn on" href="#/foro/nuevo">＋ Nuevo hilo</a></div>
-    <div class="ph">Categorías</div><div class="box tw"><table class="tbl"><thead><tr><th class="l">Categoría</th><th>Hilos</th><th class="l hm">Última actividad</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="ph">Últimos hilos con actividad</div><div class="box tw">${rec ? threadTable(rec, true) : '<div class="empty"><b>Todavía no hay hilos</b>Arrancá la charla con el primero.</div>'}</div>`);
-}
-function threadRow(t){
-  return `<tr><td class="l"><a href="#/foro/t/${t.id}"><b>${esc(t.title)}</b></a><div style="font-size:10px;color:var(--muted)">por ${esc(t.profiles?.username || '—')}</div></td>
-    ${t.category ? `<td class="hm">${esc(FCAT[t.category]?.name || t.category)}</td>` : ''}<td>${Math.max(0, (t.post_count || 1) - 1)}</td><td class="hm">${esc(timeAgo(t.last_post_at))}</td></tr>`;
-}
-function threadTable(rows, withCat){
-  return `<table class="tbl"><thead><tr><th class="l">Hilo</th>${withCat ? '<th class="hm">Categoría</th>' : ''}<th>Respuestas</th><th class="hm">Último mensaje</th></tr></thead><tbody>${rows}</tbody></table>`;
+/* Cuerpo de un foro (general o de franquicia): solapas + contenido */
+async function forumBody(sb, fc, r, ctx){
+  const sub = r.fsub || 'muro';
+  const tabs = `<div class="ftabs"><a class="tab ${sub === 'muro' ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab ${sub !== 'muro' ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a></div>`;
+  let html;
+  if(sub === 'temas') html = await foroTopics(sb, fc, r);
+  else if(sub === 't') html = await foroThread(sb, fc, r);
+  else if(sub === 'nuevo') html = foroNewTopic(fc);
+  else html = await foroWall(sb, fc, r);
+  return foroUserBar() + tabs + html;
 }
 
-async function foroCatView(sb, r, el, ctx){
-  const c = FCAT[r.cat];
-  if(!c) return paint(ctx, el, emptyBox('Categoría inexistente', '<a class="btn" href="#/foro">Volver al foro</a>'));
+async function foroWall(sb, fc, r){
+  const page = Math.max(1, r.page || 1), from = (page - 1) * WALL_PER_PAGE;
+  const {data, count} = await Foro.q(sb.from('posts').select(POST_SEL, {count: 'exact'}).eq('forum', fc.forum).is('thread_id', null).order('id', {ascending: false}).range(from, from + WALL_PER_PAGE - 1));
+  const posts = arr(data);
+  await loadMine(sb, posts);
+  return `<div class="ph">Mensajes · ${esc(fc.name)} <span class="cnt">· ${pluralize(count || 0, 'mensaje', 'mensajes')} · se actualiza solo</span></div>
+    <div class="box">${page === 1 ? composer(fc.forum, null, fc.base, 'Escribí un mensaje…') : ''}${posts.map(p => postHtml(p)).join('') || '<div class="empty"><b>Todavía no hay mensajes</b>Escribí el primero.</div>'}</div>
+    ${pager(fc.base + '/muro', page, count, WALL_PER_PAGE)}`;
+}
+
+async function foroTopics(sb, fc, r){
   const page = Math.max(1, r.page || 1), from = (page - 1) * THREADS_PER_PAGE;
-  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles(username)', {count: 'exact'})
-    .eq('category', c.key).order('last_post_at', {ascending: false}).range(from, from + THREADS_PER_PAGE - 1));
-  const rows = arr(data).map(t => threadRow({...t, category: null})).join('');
-  paint(ctx, el, foroHead(c.name) + foroCrumb(esc(c.name)) + `<div class="btnrow"><a class="btn on" href="#/foro/nuevo/${c.key}">＋ Nuevo hilo en ${esc(c.name)}</a></div>
-    <div class="ph">${esc(c.name)} <span class="cnt">· ${pluralize(count || 0, 'hilo', 'hilos')}</span></div>
-    <div class="box tw">${rows ? threadTable(rows, false) : `<div class="empty"><b>Todavía no hay hilos en ${esc(c.name)}</b>Arrancá el primero.</div>`}</div>
-    ${pager(`#/foro/c/${c.key}`, page, count, THREADS_PER_PAGE)}`);
+  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles(username,team_id)', {count: 'exact'})
+    .eq('forum', fc.forum).order('last_post_at', {ascending: false}).range(from, from + THREADS_PER_PAGE - 1));
+  const rows = arr(data).map(t => `<tr><td class="l"><a href="${fc.base}/t/${t.id}"><b>${esc(t.title)}</b></a><div style="font-size:10px;color:var(--muted)">por ${esc(t.profiles?.username || '—')}</div></td>
+    <td>${Math.max(0, (t.post_count || 1) - 1)}</td><td class="hm">${esc(timeAgo(t.last_post_at))}</td></tr>`).join('');
+  return `<div class="btnrow"><a class="btn on" href="${fc.base}/nuevo">＋ Nuevo tema</a></div>
+    <div class="ph">Temas · ${esc(fc.name)} <span class="cnt">· ${pluralize(count || 0, 'tema', 'temas')}</span></div>
+    <div class="box tw">${rows ? `<table class="tbl"><thead><tr><th class="l">Tema</th><th>Respuestas</th><th class="hm">Último mensaje</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty"><b>Todavía no hay temas</b>Abrí el primero.</div>'}</div>
+    ${pager(fc.base + '/temas', page, count, THREADS_PER_PAGE)}`;
 }
 
-async function foroThreadView(sb, r, el, ctx){
+async function foroThread(sb, fc, r){
   const id = num(r.id);
-  if(!id) return paint(ctx, el, emptyBox('Hilo inexistente', '<a class="btn" href="#/foro">Volver al foro</a>'));
-  const th = await Foro.q(sb.from('threads').select('id,title,category,created_at,post_count,profiles(username)').eq('id', id).maybeSingle());
+  const th = id ? await Foro.q(sb.from('threads').select('id,title,forum,post_count').eq('id', id).maybeSingle()) : {data: null};
   const t = th.data;
-  if(!t) return paint(ctx, el, foroHead() + emptyBox('Ese hilo no existe', '<a class="btn" href="#/foro">Volver al foro</a>'));
+  if(!t) return emptyBox('Ese tema no existe', `<a class="btn" href="${fc.base}/temas">Volver a los temas</a>`);
   const total = t.post_count || 0;
   const pages = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
   const page = r.page === -1 ? pages : Math.min(Math.max(1, r.page || 1), pages);
   const from = (page - 1) * POSTS_PER_PAGE;
-  const {data, count} = await Foro.q(sb.from('posts').select('id,body,created_at,profiles(username)', {count: 'exact'}).eq('thread_id', id).order('id', {ascending: true}).range(from, from + POSTS_PER_PAGE - 1));
-  const c = FCAT[t.category] || {name: t.category, key: t.category};
-  const posts = arr(data).map((p, i) => {
-    const n = p.profiles?.username || '—';
-    return `<article class="fpost" id="p${p.id}"><div class="au">${avatar(n)}<b>${esc(n)}</b></div>
-      <div class="bd"><div class="meta"><span>${esc(fmtDate(new Date(p.created_at)))} ${esc(fmtTime(new Date(p.created_at)))} · ${esc(timeAgo(p.created_at))}</span><span>#${from + i + 1}</span></div>${postBody(p.body)}</div></article>`;
-  }).join('');
-  const base = `#/foro/t/${id}`;
-  const reply = Foro.user
-    ? `<form class="fo-form" onsubmit="App.foroReply(event, ${id})"><label for="foReply">Responder como ${esc(Foro.user.username)}</label>
-        <textarea id="foReply" maxlength="5000" required placeholder="Escribí tu respuesta…"></textarea>
-        <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar respuesta</button><span class="fo-msg" id="foMsg"></span></div></form>`
-    : `<div class="empty" style="padding:14px"><a class="btn on" href="#/foro/entrar" onclick="App.foroBack('${base}/-1')">Entrá</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack('${base}/-1')">creá una cuenta</a> para responder.</div>`;
-  paint(ctx, el, foroHead(c.name) + foroCrumb(`<a href="#/foro/c/${esc(c.key)}">${esc(c.name)}</a>`, esc(t.title)) +
-    `<div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
-    <div class="box">${posts || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
-    <div class="ph">Responder</div><div class="box">${reply}</div>`);
-  if(r.page === -1 && alive(ctx)){ const last = el.querySelector('.fpost:last-of-type'); if(last) last.scrollIntoView({block: 'start'}); }
+  const {data, count} = await Foro.q(sb.from('posts').select(POST_SEL, {count: 'exact'}).eq('thread_id', id).order('id', {ascending: true}).range(from, from + POSTS_PER_PAGE - 1));
+  const posts = arr(data);
+  await loadMine(sb, posts);
+  const base = `${fc.base}/t/${id}`;
+  return `<div class="crumb"><a href="${fc.base}/temas">Temas</a> › ${esc(t.title)}</div>
+    <div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
+    <div class="box">${posts.map((p, i) => postHtml(p, from + i + 1)).join('') || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
+    <div class="ph">Responder</div><div class="box">${composer(t.forum, id, base + '/-1', 'Escribí tu respuesta…')}</div>`;
 }
 
-function foroLoginView(mode){
+function foroNewTopic(fc){
+  if(!Foro.user) return `<div class="ph">Nuevo tema</div><div class="box">${composer(fc.forum, null, '', '')}</div>`;
+  return `<div class="ph">Nuevo tema · ${esc(fc.name)}</div><div class="box">
+    <form class="fo-form" onsubmit="App.foroCreate(event,'${fc.forum}','${fc.base}')">
+      <label for="foTitle">Título</label>
+      <input id="foTitle" required minlength="3" maxlength="120" placeholder="¿De qué querés hablar?">
+      <label for="foText">Mensaje</label>
+      <textarea id="foText" required maxlength="5000" placeholder="Escribí el primer mensaje…"></textarea>
+      <div class="emo" id="foEmo" hidden>${EMOJIS.map(e => `<button type="button" onclick="App.foroIns(this.textContent)">${e}</button>`).join('')}</div>
+      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar tema</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><span class="fo-msg" id="foMsg"></span></div>
+    </form></div>`;
+}
+
+function teamOptions(sel){
+  const teams = (LG.nfl.teams || []).slice().sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+  return `<option value="">Sin equipo</option>` + teams.map(t => `<option value="${t.id}" ${String(t.id) === String(sel || '') ? 'selected' : ''}>${esc(t.displayName)}</option>`).join('');
+}
+function foroAccount(mode){
+  if(mode === 'perfil'){
+    if(!Foro.user) return foroAccount('entrar');
+    return `<div class="ph">Mi perfil</div><div class="box" style="max-width:460px">
+      <form class="fo-form" onsubmit="App.foroSaveProfile(event)">
+        <div>${avatar(Foro.user.username)} <b style="font:italic 700 18px var(--f-head);color:var(--navy)">${esc(Foro.user.username)}</b></div>
+        <label for="foTeam">Mi franquicia</label><select id="foTeam">${teamOptions(Foro.user.team_id)}</select>
+        <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Guardar</button><span class="fo-msg" id="foMsg"></span></div>
+      </form></div>`;
+  }
   const reg = mode === 'registro';
-  return foroHead(reg ? 'Crear cuenta' : 'Entrar') + foroCrumb(reg ? 'Crear cuenta' : 'Entrar') + `
-    <div class="btnrow"><a class="btn ${reg ? '' : 'on'}" href="#/foro/entrar">Entrar</a><a class="btn ${reg ? 'on' : ''}" href="#/foro/registro">Crear cuenta</a></div>
-    <div class="box" style="border-top:1px solid #9aa7bd;max-width:440px">
+  return `<div class="btnrow"><a class="btn ${reg ? '' : 'on'}" href="#/foro/entrar">Entrar</a><a class="btn ${reg ? 'on' : ''}" href="#/foro/registro">Crear cuenta</a></div>
+    <div class="box" style="border-top:1px solid #9aa7bd;max-width:460px">
     <form class="fo-form" onsubmit="App.foroAuth(event, ${reg})" autocomplete="on">
-      <label for="foUser">Nombre de usuario</label>
-      <input id="foUser" name="username" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="ej: chiefs_fan">
-      ${reg ? '<small style="color:var(--muted)">De 3 a 20 caracteres: letras, números o guion bajo.</small>' : ''}
+      ${reg ? `<label for="foUser">Nombre de usuario</label>
+      <input id="foUser" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" placeholder="ej: chiefs_fan">
+      <small style="color:var(--muted)">De 3 a 20 caracteres: letras, números o guion bajo. Es el nombre que ven los demás.</small>` : ''}
+      <label for="foMail">Mail</label>
+      <input id="foMail" type="email" autocomplete="email" required placeholder="vos@ejemplo.com">
       <label for="foPass">Contraseña</label>
-      <input id="foPass" type="password" name="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required minlength="6">
-      ${reg ? '<label for="foPass2">Repetir contraseña</label><input id="foPass2" type="password" autocomplete="new-password" required minlength="6"><small style="color:var(--muted)">No hay forma de recuperar la contraseña, así que guardala bien.</small>' : ''}
+      <input id="foPass" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required minlength="6">
+      ${reg ? `<label for="foPass2">Repetir contraseña</label><input id="foPass2" type="password" autocomplete="new-password" required minlength="6">
+      <label for="foTeam">Tu franquicia NFL</label><select id="foTeam">${teamOptions('')}</select>
+      <small style="color:var(--muted)">No hay forma de recuperar la contraseña, así que guardala bien.</small>` : ''}
       <div class="btnrow" style="margin:0"><button class="btn on" type="submit">${reg ? 'Crear cuenta' : 'Entrar'}</button><span class="fo-msg" id="foMsg"></span></div>
     </form></div>`;
 }
 
-function foroNewView(cat){
-  if(!Foro.user) return foroHead('Nuevo hilo') + foroCrumb('Nuevo hilo') + `<div class="box" style="border-top:1px solid #9aa7bd"><div class="empty" style="padding:14px">Para abrir un hilo tenés que <a class="btn on" href="#/foro/entrar" onclick="App.foroBack('#/foro/nuevo/${esc(cat || '')}')">entrar</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack('#/foro/nuevo/${esc(cat || '')}')">crear una cuenta</a>.</div></div>`;
-  return foroHead('Nuevo hilo') + foroCrumb('Nuevo hilo') + `<div class="box" style="border-top:1px solid #9aa7bd">
-    <form class="fo-form" onsubmit="App.foroCreate(event)">
-      <label for="foCat">Categoría</label>
-      <select id="foCat">${FORO_CATS.map(c => `<option value="${c.key}" ${c.key === cat ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
-      <label for="foTitle">Título</label>
-      <input id="foTitle" required minlength="3" maxlength="120" placeholder="¿De qué querés hablar?">
-      <label for="foBody">Mensaje</label>
-      <textarea id="foBody" required maxlength="5000" placeholder="Escribí el primer mensaje…"></textarea>
-      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar hilo</button><span class="fo-msg" id="foMsg"></span></div>
-    </form></div>`;
+VIEWS.foro = async (r, el, ctx) => {
+  const head = `<div class="hero" style="--tc:#0f2a62"><div style="position:relative;z-index:1"><h1>Foro General</h1><div class="meta"><span class="chip gold">★ Comunidad NFLARG</span></div></div></div>`;
+  if(!Foro.configured()){ paint(ctx, el, head + `<div style="margin-top:12px">${foroSetup()}</div>`); return; }
+  if(!ctx.silent) paint(ctx, el, head + spinner('Cargando foro'));
+  const [sb] = await Promise.all([Foro.client(), teamsOf(LG.nfl).catch(() => null)]);
+  if(!alive(ctx)) return;
+  if(r.acct) return paint(ctx, el, head + `<div style="margin-top:12px">${foroAccount(r.acct)}</div>`);
+  const teams = (LG.nfl.teams || []).slice().sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+  const strip = teams.length ? `<div class="teamstrip" title="Foros por franquicia">${teams.map(t => `<a href="#/nfl/team/${t.id}/foro" title="Foro de ${esc(t.displayName)}">${logo(t)}</a>`).join('')}</div>` : '';
+  const body = await forumBody(sb, {forum: 'general', base: '#/foro', name: 'Foro General'}, r, ctx);
+  paint(ctx, el, head + strip + body);
+};
+
+/* Pestaña "Foro" dentro de la página de una franquicia NFL */
+async function teamForum(lg, t, r, ctx){
+  if(!Foro.configured()) return foroSetup();
+  const sb = await Foro.client();
+  return forumBody(sb, {forum: 'nfl-' + t.id, base: `#/nfl/team/${t.id}/foro`, name: t.displayName || 'Equipo'}, r, ctx);
 }
 
 const ForoActions = {
   _back: null,
-  foroBack(h){ ForoActions._back = h; },
+  foroBack(){ const h = location.hash; if(!/^#\/foro\/(entrar|registro|perfil)/.test(h)) ForoActions._back = h; },
+  foroEmo(){ const p = $('#foEmo'); if(p) p.hidden = !p.hidden; },
+  foroIns(txt){
+    const ta = $('#foText'); if(!ta) return;
+    const a = ta.selectionStart ?? ta.value.length, b = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, a) + txt + ta.value.slice(b);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = a + txt.length;
+  },
+  foroQuote(id){
+    if(!Foro.user){ ForoActions.foroBack(); go('#/foro/entrar'); return; }
+    const p = Foro.cache.get(id); const ta = $('#foText');
+    if(!p || !ta) return;
+    const own = String(p.body).replace(/\[quote=[^\]]*\][\s\S]*?\[\/quote\]\s*/g, '').trim().slice(0, 600);
+    ForoActions.foroIns(`[quote=${p.username || 'alguien'}]${own}[/quote]\n`);
+    ta.scrollIntoView({block: 'center'});
+  },
+  async foroReact(id, v){
+    if(!Foro.user){ ForoActions.foroBack(); go('#/foro/entrar'); return; }
+    try{
+      const sb = await Foro.client();
+      if(Foro.mine[id] === v) await Foro.q(sb.from('reactions').delete().eq('post_id', id).eq('user_id', Foro.user.id));
+      else await Foro.q(sb.from('reactions').upsert({post_id: id, user_id: Foro.user.id, value: v}, {onConflict: 'post_id,user_id'}));
+      route(true);
+    }catch(e){ alertBox(e.message); }
+  },
   async foroAuth(ev, reg){
     ev.preventDefault();
     const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
-    const user = $('#foUser', f).value.trim(), pass = $('#foPass', f).value;
-    if(!/^[A-Za-z0-9_]{3,20}$/.test(user)){ msg.textContent = 'El usuario debe tener de 3 a 20 caracteres: letras, números o guion bajo.'; return; }
+    const mail = $('#foMail', f).value.trim(), pass = $('#foPass', f).value;
+    const user = reg ? $('#foUser', f).value.trim() : '';
+    if(reg && !/^[A-Za-z0-9_]{3,20}$/.test(user)){ msg.textContent = 'El usuario debe tener de 3 a 20 caracteres: letras, números o guion bajo.'; return; }
     if(pass.length < 6){ msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
     if(reg && pass !== $('#foPass2', f).value){ msg.textContent = 'Las contraseñas no coinciden.'; return; }
     btn.disabled = true; msg.textContent = '';
     try{
       const sb = await Foro.client();
-      const email = user.toLowerCase() + FORO_MAIL;
-      const res = reg
-        ? await sb.auth.signUp({email, password: pass, options: {data: {username: user}}})
-        : await sb.auth.signInWithPassword({email, password: pass});
+      let res;
+      if(reg){
+        const taken = await Foro.q(sb.from('profiles').select('id').ilike('username', user.replace(/_/g, '\\_')).limit(1));
+        if(arr(taken.data).length) throw new Error('duplicate key');
+        res = await sb.auth.signUp({email: mail, password: pass, options: {data: {username: user, team_id: $('#foTeam', f).value || ''}}});
+        if(!res.error && !res.data?.session) throw new Error('email not confirmed');
+      } else res = await sb.auth.signInWithPassword({email: mail, password: pass});
       if(res.error) throw res.error;
-      if(reg && !res.data?.session){ throw new Error('email not confirmed'); }
-      Foro.setSession(res.data.session);
+      await Foro.loadProfile(res.data.session);
       const back = ForoActions._back; ForoActions._back = null;
       go(back || '#/foro');
     }catch(e){ msg.textContent = foroErr(e); btn.disabled = false; }
+  },
+  async foroSaveProfile(ev){
+    ev.preventDefault();
+    const f = ev.target, msg = $('#foMsg', f);
+    try{
+      const sb = await Foro.client();
+      const team = $('#foTeam', f).value || null;
+      await Foro.q(sb.from('profiles').update({team_id: team}).eq('id', Foro.user.id));
+      Foro.user.team_id = team;
+      msg.style.color = 'var(--win)'; msg.textContent = 'Guardado.';
+    }catch(e){ msg.style.color = ''; msg.textContent = e.message; }
   },
   async foroLogout(){
     try{ const sb = await Foro.client(); await sb.auth.signOut(); }catch(e){}
     Foro.user = null; route();
   },
-  async foroReply(ev, threadId){
+  async foroSend(ev, forum, threadId, after){
     ev.preventDefault();
     const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
-    const body = $('#foReply', f).value.trim();
+    const body = $('#foText', f).value.trim();
     if(!body){ msg.textContent = 'El mensaje está vacío.'; return; }
     btn.disabled = true; msg.textContent = 'Publicando…';
     try{
       const sb = await Foro.client();
-      await Foro.q(sb.from('posts').insert({thread_id: threadId, body, author: Foro.user.id}));
-      go(`#/foro/t/${threadId}/-1`);
-    }catch(e){ msg.textContent = e.message || foroErr(e); btn.disabled = false; }
+      await Foro.q(sb.from('posts').insert({forum, thread_id: threadId, body, author: Foro.user.id}));
+      $('#foText', f).value = '';
+      go(after);
+    }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
-  async foroCreate(ev){
+  async foroCreate(ev, forum, base){
     ev.preventDefault();
     const f = ev.target, msg = $('#foMsg', f), btn = f.querySelector('button[type=submit]');
-    const cat = $('#foCat', f).value, title = $('#foTitle', f).value.trim(), body = $('#foBody', f).value.trim();
+    const title = $('#foTitle', f).value.trim(), body = $('#foText', f).value.trim();
     if(title.length < 3){ msg.textContent = 'El título es muy corto.'; return; }
     if(!body){ msg.textContent = 'El mensaje está vacío.'; return; }
     btn.disabled = true; msg.textContent = 'Publicando…';
     try{
       const sb = await Foro.client();
-      const {data} = await Foro.q(sb.rpc('create_thread', {p_category: cat, p_title: title, p_body: body}));
-      go(`#/foro/t/${data}`);
-    }catch(e){ msg.textContent = e.message || foroErr(e); btn.disabled = false; }
+      const {data} = await Foro.q(sb.rpc('create_thread', {p_forum: forum, p_title: title, p_body: body}));
+      go(`${base}/t/${data}`);
+    }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
 };
+function alertBox(txt){
+  const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
+}
+function parseForoRest(p){
+  const s = p[0];
+  if(s === 'temas') return {fsub: 'temas', page: num(p[1])};
+  if(s === 't') return {fsub: 't', id: p[1], page: num(p[2])};
+  if(s === 'nuevo') return {fsub: 'nuevo'};
+  if(s === 'muro') return {fsub: 'muro', page: num(p[1])};
+  return {fsub: 'muro', page: 1};
+}
 
 VIEWS.notfound = async (r, el, ctx) => {
   paint(ctx, el, emptyBox('Página no encontrada', '<div class="btnrow" style="justify-content:center"><a class="btn on" href="#/hoy">Ir a Hoy</a></div>'));
@@ -2107,6 +2229,13 @@ function init(){
 
   // Auto-refresh cada 30s sólo si hay partidos en vivo en la vista actual
   setInterval(() => { if(state.liveInView && !document.hidden) route(true); }, 30e3);
+  // Muro del foro: se actualiza solo cada 20 s (si no estás escribiendo)
+  setInterval(() => {
+    const r = state.route;
+    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro') && r.fsub === 'muro' && (r.page || 1) === 1;
+    const ta = $('#foText');
+    if(wall && Foro.sb && !document.hidden && (!ta || (!ta.value && document.activeElement !== ta))) route(true);
+  }, 20e3);
   // Ticker: 30s si hay algo en vivo, si no cada 5 min
   let tick = 0;
   setInterval(() => {
