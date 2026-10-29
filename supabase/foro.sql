@@ -26,6 +26,12 @@ alter table public.profiles add column if not exists team_id text;
 alter table public.profiles drop constraint if exists profiles_team_id_check;
 alter table public.profiles add constraint profiles_team_id_check check (team_id is null or team_id ~ '^[0-9]{1,4}$');
 create unique index if not exists profiles_username_lower on public.profiles (lower(username));
+-- Foto de perfil: solo puede apuntar a la carpeta propia del almacenamiento de avatares
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles drop constraint if exists profiles_avatar_url_check;
+alter table public.profiles add constraint profiles_avatar_url_check check (
+  avatar_url is null or avatar_url ~ ('^https://[a-z0-9-]+\.supabase\.co/storage/v1/object/public/avatars/' || id::text || '/[A-Za-z0-9._-]+(\?v=[0-9]+)?$')
+);
 
 -- Temas
 create table if not exists public.threads (
@@ -270,7 +276,7 @@ grant select on public.profiles, public.threads, public.posts, public.reactions 
 grant insert on public.threads, public.posts, public.reactions to authenticated;
 grant update, delete on public.reactions to authenticated;
 revoke update on public.profiles from anon, authenticated;
-grant update (team_id) on public.profiles to authenticated;
+grant update (team_id, avatar_url) on public.profiles to authenticated;
 revoke update, delete on public.posts, public.threads from anon, authenticated;
 drop policy if exists "ver mis notificaciones" on public.notifications;
 drop policy if exists "marcar mis notificaciones" on public.notifications;
@@ -289,6 +295,29 @@ grant execute on function public.login_email(text) to anon, authenticated;
 grant usage on all sequences in schema public to authenticated;
 revoke execute on function public.create_thread(text, text, text) from public, anon;
 grant execute on function public.create_thread(text, text, text) to authenticated;
+
+-- Almacenamiento de fotos de perfil: público para ver, cada uno sube/cambia/borra solo la suya.
+-- Va en un bloque aparte: si el proyecto no permitiera crearlo, el resto del foro igual queda instalado.
+do $$
+begin
+  insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values ('avatars', 'avatars', true, 262144, array['image/jpeg', 'image/png', 'image/webp'])
+  on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+  execute 'drop policy if exists "avatares: ver" on storage.objects';
+  execute 'drop policy if exists "avatares: subir el mio" on storage.objects';
+  execute 'drop policy if exists "avatares: cambiar el mio" on storage.objects';
+  execute 'drop policy if exists "avatares: borrar el mio" on storage.objects';
+  execute $p$create policy "avatares: ver" on storage.objects for select using (bucket_id = 'avatars')$p$;
+  execute $p$create policy "avatares: subir el mio" on storage.objects for insert to authenticated
+    with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+  execute $p$create policy "avatares: cambiar el mio" on storage.objects for update to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+    with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+  execute $p$create policy "avatares: borrar el mio" on storage.objects for delete to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+exception when others then
+  raise warning 'No se pudo configurar el almacenamiento de fotos de perfil: %', sqlerrm;
+end $$;
 
 -- Que la API de Supabase vea los cambios de inmediato
 notify pgrst, 'reload schema';

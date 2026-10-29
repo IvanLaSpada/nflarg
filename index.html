@@ -203,7 +203,7 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .lgbadge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 3px;border-radius:3px;background:linear-gradient(#fff,#cfd5de);color:var(--navy);font:italic 700 10px var(--f-head);text-shadow:none;border:1px solid #071636}
 .dayh{font:700 11px Arial;text-transform:uppercase;color:var(--navy);background:linear-gradient(#f4f6fa,#dce2eb);border-bottom:1px solid #b9c3d3;padding:4px 10px;letter-spacing:.3px}
 .dayh:not(:first-child){border-top:1px solid #b9c3d3}
-.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 128px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
+.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 150px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
 .g:nth-child(even){background:var(--row2)}
 .g:hover{background:var(--hover)!important;box-shadow:inset 4px 0 0 var(--red)}
 .g:last-child{border-bottom:0}
@@ -283,6 +283,13 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .fpost .meta{font:10px Arial;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #c9d1de;padding-bottom:4px}
 .av{width:42px;height:42px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 20px var(--f-head);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);flex:none;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .chip .av{width:18px;height:18px;font-size:10px;border-width:1px}
+.av{position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.av.big{width:72px;height:72px;font-size:32px;border-width:3px}
+.fo-me{display:flex;gap:12px;align-items:center}
+.fo-form label.btn{font:italic 600 12px var(--f-head);margin-top:0;color:var(--navy)}
+.fo-me b{font:italic 700 20px var(--f-head);color:var(--navy)}
+.fo-me small{display:block;margin-top:4px}
 .fo-form{padding:12px;display:grid;gap:6px;background:#fff}
 .fo-form input,.fo-form textarea,.fo-form select{width:100%;font:13px Arial;padding:7px 8px;border:1px solid #8c97aa;border-radius:4px;box-shadow:inset 0 1px 2px rgba(0,0,0,.15);background:#fff;color:var(--ink)}
 .fo-form input:focus,.fo-form textarea:focus,.fo-form select:focus{outline:2px solid var(--gold2);border-color:var(--navy3)}
@@ -565,6 +572,8 @@ const LEAGUES = [
   {key:'ufl', slug:'ufl', name:'UFL', full:'United Football League', minSeason:2024},
   {key:'cfl', slug:'cfl', name:'CFL', full:'Canadian Football League', minSeason:2005},
 ];
+// Logos de liga que el scoreboard de ESPN no trae
+const LG_LOGO = {cfl: 'https://a.espncdn.com/i/teamlogos/leagues/500/cfl.png'};
 const LG = Object.fromEntries(LEAGUES.map(l => [l.key, l]));
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports/football';
 const STAND = 'https://site.api.espn.com/apis/v2/sports/football';
@@ -715,7 +724,7 @@ async function probeLeague(lg){
     const L = arr(d.leagues)[0];
     lg.ok = !!(L || arr(d.events).length);
     lg.probe = d;
-    lg.logo = arr(L?.logos)[0]?.href || null;
+    lg.logo = arr(L?.logos)[0]?.href || LG_LOGO[lg.key] || null;
     lg.cur = {
       season: num(L?.season?.year) || num(d.season?.year) || guessSeason(),
       stype: num(d.season?.type) || num(L?.season?.type?.type) || null,
@@ -841,16 +850,41 @@ function getTV(c){
   return [...new Set(out.filter(Boolean))].slice(0, 3).join(' / ');
 }
 /* Dónde verlo en Argentina: ESPN no lo informa, es una estimación según los derechos habituales */
-function arTV(lgKey, usTv){
+/* Dónde verlo en Argentina (estimado: ESPN solo informa la TV de EE.UU.).
+   NFL: siempre NFL Game Pass. Jueves/viernes y streaming exclusivo, solo Game Pass.
+   ESPN/ABC, domingo a la noche y playoffs: completo por ESPN/Disney+.
+   Domingo a la tarde (franja de CBS/FOX): por la RedZone de ESPN. */
+function etParts(date){
+  try{
+    const f = new Intl.DateTimeFormat('en-US', {timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', hour12: false}).formatToParts(date);
+    return {wd: f.find(x => x.type === 'weekday')?.value, h: +(f.find(x => x.type === 'hour')?.value) % 24};
+  }catch(e){ return {wd: '', h: 12}; }
+}
+function arInfo(lgKey, usTv, date, stype){
   const us = String(usTv || '');
-  if(lgKey === 'nfl') return 'ESPN · Disney+';
-  if(lgKey === 'cfl') return 'CFL+';
-  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return 'Disney+';
-  return '';
+  if(lgKey === 'nfl'){
+    const GP = {short: 'Game Pass', long: 'Solo NFL Game Pass (DAZN)'};
+    const FULL = {short: 'ESPN + Game Pass', long: 'Completo por ESPN / Disney+ · también en NFL Game Pass (DAZN)'};
+    const RZ = {short: 'RedZone + Game Pass', long: 'En la RedZone de ESPN / Disney+ (no completo) · completo en NFL Game Pass (DAZN)'};
+    if(stype === 1) return GP;
+    if(/prime|amazon|netflix|youtube/i.test(us)) return GP;
+    const {wd, h} = etParts(date instanceof Date ? date : new Date(date));
+    if(stype === 3) return FULL;
+    if(wd === 'Thu' || wd === 'Fri') return GP;
+    if(/ESPN|ABC/i.test(us)) return FULL;
+    if(wd === 'Sun'){
+      if(h >= 19 || h < 12) return FULL;   // noche del domingo o partido internacional de la mañana
+      return RZ;                           // franja de la tarde (CBS/FOX)
+    }
+    return GP;
+  }
+  if(lgKey === 'cfl') return {short: 'CFL+', long: 'CFL+ (gratis fuera de Canadá)'};
+  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return {short: 'Disney+', long: 'Disney+ (ESPN)'};
+  return null;
 }
 const AR_TIP = 'Dónde verlo en Argentina (estimado: ESPN solo informa la TV de EE.UU.)';
 function tvBadges(g){
-  return `${g.tv ? `<b title="TV en EE.UU.">${esc(g.tv)}</b>` : ''}${g.tvAR ? `<b class="ar" title="${AR_TIP}">AR · ${esc(g.tvAR)}</b>` : ''}`;
+  return `${g.tv ? `<b title="TV en EE.UU.">${esc(g.tv)}</b>` : ''}${g.tvAR ? `<b class="ar" title="${esc(g.tvARlong || AR_TIP)}">AR · ${esc(g.tvAR)}</b>` : ''}`;
 }
 function normGame(ev, lgKey){
   const comp = arr(ev?.competitions)[0] || ev || {};
@@ -879,7 +913,8 @@ function normGame(ev, lgKey){
     venue: comp.venue || null, note: arr(comp.notes)[0]?.headline || '',
     week: ev?.week, stype: num(ev?.seasonType?.type) || num(ev?.season?.type) || null,
   };
-  g.tvAR = arTV(lgKey, g.tv);
+  const ar = arInfo(lgKey, g.tv, g.date, g.stype || num(ev?.season?.type));
+  g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
   // Ganador
   const a = parseFloat(g.away.score), h = parseFloat(g.home.score);
   if(g.state === 'post'){
@@ -1218,7 +1253,7 @@ VIEWS.day = async (r, el, ctx) => {
       ? emptyBox('No hay partidos con este filtro', `<div class="btnrow" style="justify-content:center"><button class="btn" onclick="App.setFilter('all')">Ver todos</button></div>`)
       : emptyBox('No hay partidos programados para este día', `Probá otra fecha o mirá la semana de cada liga:<div class="btnrow" style="justify-content:center">${links}</div>`);
   }
-  paint(ctx, el, head + filters + blocks);
+  if(!ctx.silent || r.lg) paint(ctx, el, head + filters + blocks);
   // Foro General abajo de los partidos (solo en el Home de todas las ligas)
   if(!r.lg && alive(ctx)){
     let foro;
@@ -1405,7 +1440,8 @@ VIEWS.game = async (r, el, ctx) => {
   if(g.situation?.possession != null){ const p = String(g.situation.possession); g.away.possession = p === g.away.id; g.home.possession = p === g.home.id; }
   if(g.state !== 'in'){ g.away.possession = g.home.possession = false; }
   if(!g.tv) g.tv = getTV({broadcasts: d.broadcasts}) || '';
-  g.tvAR = arTV(r.lg, g.tv);
+  const ar = arInfo(r.lg, g.tv, g.date, num(d.header?.season?.type));
+  g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
   state.liveInView = g.state === 'in' || isSoon(g);
   const s = statusInfo(g);
   const A = g.away, H = g.home;
@@ -1422,7 +1458,7 @@ VIEWS.game = async (r, el, ctx) => {
       <div class="mid">
         ${pre ? `<div class="ledrow"><span class="led" style="font-size:30px">@</span></div>` : `<div class="ledrow"><span class="led ${H.win ? 'lose' : ''}">${esc(A.score ?? '0')}</span><span class="led ${A.win ? 'lose' : ''}">${esc(H.score ?? '0')}</span></div>`}
         <div class="stat">${g.state === 'in' ? '<span class="live">EN VIVO</span> ' : ''}${esc(stTxt)}</div>
-        <div class="info">${esc(g.tv ? '📺 EE.UU.: ' + g.tv : '')}${g.tvAR ? `${g.tv ? ' · ' : ''}<span title="${AR_TIP}">🇦🇷 Argentina: ${esc(g.tvAR)}*</span>` : ''}${(g.tv || g.tvAR) && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
+        <div class="info">${esc(g.tv ? '📺 EE.UU.: ' + g.tv : '')}${g.tvAR ? `${g.tv ? ' · ' : ''}<span title="${AR_TIP}">🇦🇷 Argentina: ${esc(g.tvARlong || g.tvAR)}*</span>` : ''}${(g.tv || g.tvAR) && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
       </div>
       ${side(H)}
     </div>`;
@@ -1525,7 +1561,7 @@ VIEWS.game = async (r, el, ctx) => {
   if(vtxt) kv.push(['Estadio', vtxt]);
   kv.push(['Fecha', `${fmtLong(g.date)} · ${fmtTime(g.date)}`]);
   if(g.tv) kv.push(['TV EE.UU.', g.tv]);
-  if(g.tvAR) kv.push(['TV Argentina', g.tvAR + (r.lg === 'nfl' ? ' · todos los partidos en NFL Game Pass (DAZN)' : '') + ' (estimado)']);
+  if(g.tvAR) kv.push(['TV Argentina', (g.tvARlong || g.tvAR) + ' (estimado)']);
   if(gi.attendance) kv.push(['Asistencia', Number(gi.attendance).toLocaleString('es-AR')]);
   if(gi.weather) kv.push(['Clima', [gi.weather.displayValue, gi.weather.temperature != null ? gi.weather.temperature + '°F (' + Math.round((gi.weather.temperature - 32) * 5 / 9) + '°C)' : ''].filter(Boolean).join(' · ')]);
   if(odds?.details) kv.push(['Línea', odds.details + (odds.overUnder ? ` · O/U ${odds.overUnder}` : '')]);
@@ -1840,7 +1876,7 @@ const FORO_CFG = {url: 'https://qdcimhqpgobtvcfvxnpj.supabase.co', key: 'sb_publ
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
 const FORO_MAIL = '@foro-nflarg.com';   // mail interno de cada cuenta (Supabase exige uno); el real es opcional
 const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
-const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_author_fkey(username,team_id)';
+const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_author_fkey(username,team_id,avatar_url)';
 const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
 
 const Foro = {
@@ -1872,7 +1908,7 @@ const Foro = {
     if(!u){ this.user = null; return; }
     this.user = {id: u.id, username: u.user_metadata?.username || '', team_id: u.user_metadata?.team_id || null};
     try{
-      const {data} = await this.sb.from('profiles').select('username,team_id').eq('id', u.id).maybeSingle();
+      const {data} = await this.sb.from('profiles').select('username,team_id,avatar_url').eq('id', u.id).maybeSingle();
       if(data) Object.assign(this.user, data);
     }catch(e){}
   },
@@ -1909,11 +1945,13 @@ function timeAgo(iso){
   if(s < 7 * 86400) return `hace ${Math.floor(s / 86400)} d`;
   return fmtDate(d);
 }
-function avatar(name){
+/* Avatar: la foto de perfil si hay; si no (o si no carga), la inicial sobre un color propio del usuario */
+function avatar(name, url, cls = ''){
   const n = String(name || '?');
   let h = 0; for(const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const hue = h % 360;
-  return `<span class="av" style="background:linear-gradient(hsl(${hue} 60% 48%),hsl(${hue} 65% 30%))">${esc(n.charAt(0).toUpperCase())}</span>`;
+  const img = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/|^blob:/.test(url || '') ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.remove()">` : '';
+  return `<span class="av ${cls}" style="background:linear-gradient(hsl(${hue} 60% 48%),hsl(${hue} 65% 30%))">${esc(n.charAt(0).toUpperCase())}${img}</span>`;
 }
 const nflTeam = id => (id && LG.nfl.teamIdx?.[String(id)]) || null;
 function teamBadge(id){
@@ -1942,7 +1980,7 @@ function pager(base, page, total, per){
 }
 function foroUserBar(){
   const u = Foro.user;
-  if(u) return `<div class="fbar"><span>${avatar(u.username)} Conectado como <b>${esc(u.username)}</b> ${teamBadge(u.team_id)}</span><span class="sp"></span><a class="btn" href="#/foro/perfil" onclick="App.foroBack()">Mi perfil</a><button class="btn" onclick="App.foroLogout()">Salir</button></div>`;
+  if(u) return `<div class="fbar"><span>${avatar(u.username, u.avatar_url)} Conectado como <b>${esc(u.username)}</b> ${teamBadge(u.team_id)}</span><span class="sp"></span><a class="btn" href="#/foro/perfil" onclick="App.foroBack()">Mi perfil</a><button class="btn" onclick="App.foroLogout()">Salir</button></div>`;
   return `<div class="fbar"><span>Estás leyendo como invitado.</span><span class="sp"></span><a class="btn on" href="#/foro/entrar" onclick="App.foroBack()">Entrar</a><a class="btn" href="#/foro/registro" onclick="App.foroBack()">Crear cuenta</a></div>`;
 }
 function composer(forum, threadId, after, placeholder){
@@ -1965,7 +2003,7 @@ async function loadMine(sb, posts){
 function postHtml(p, n){
   const name = p.profiles?.username || '—';
   const mine = Foro.mine[p.id];
-  return `<article class="fpost" id="p${p.id}"><div class="au">${avatar(name)}<b>${esc(name)}</b>${teamBadge(p.profiles?.team_id)}</div>
+  return `<article class="fpost" id="p${p.id}"><div class="au">${avatar(name, p.profiles?.avatar_url)}<b>${esc(name)}</b>${teamBadge(p.profiles?.team_id)}</div>
     <div class="bd"><div class="meta"><span>${esc(fmtDate(new Date(p.created_at)))} ${esc(fmtTime(new Date(p.created_at)))} · ${esc(timeAgo(p.created_at))}</span>${n ? `<span>#${n}</span>` : ''}</div>
       <div class="tx">${renderBody(p.body)}</div>
       <div class="acts"><button class="rx up ${mine === 1 ? 'on' : ''}" onclick="App.foroReact(${p.id},1)" title="Me gusta">👍 <b>${p.likes || 0}</b></button><button class="rx dn ${mine === -1 ? 'on' : ''}" onclick="App.foroReact(${p.id},-1)" title="No me gusta">👎 <b>${p.dislikes || 0}</b></button><button class="rx" onclick="App.foroQuote(${p.id})">❝ Citar</button></div>
@@ -1986,6 +2024,25 @@ function foroSetup(){
 
 /* Cuerpo de un foro (general o de franquicia): solapas + contenido */
 async function forumBody(sb, fc, r, ctx){
+  const inner = await forumInner(sb, fc, r);
+  Foro.current = {fc, r: {...r}, inner};
+  return `<div id="foroBox">${inner}</div>`;
+}
+/* Refresco del muro: reemplaza solo el contenido del foro, y solo si cambió (sin parpadeo ni saltos) */
+async function refreshForoBox(){
+  const cur = Foro.current, box = $('#foroBox');
+  if(!cur || !box || !Foro.sb) return;
+  const id = state.renderId;
+  try{
+    const inner = await forumInner(Foro.sb, cur.fc, cur.r);
+    if(id !== state.renderId || Foro.current !== cur || inner === cur.inner) return;
+    const ta = $('#foText');
+    if(ta && (ta.value || document.activeElement === ta)) return;
+    cur.inner = inner;
+    const b = $('#foroBox'); if(b) b.innerHTML = inner;
+  }catch(e){}
+}
+async function forumInner(sb, fc, r){
   const sub = r.fsub || 'muro';
   const tabs = `<div class="ftabs"><a class="tab ${sub === 'muro' ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab ${sub !== 'muro' ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a></div>`;
   let html;
@@ -2059,7 +2116,9 @@ function foroAccount(mode){
     if(!Foro.user) return foroAccount('entrar');
     return `<div class="ph">Mi perfil</div><div class="box" style="max-width:460px">
       <form class="fo-form" onsubmit="App.foroSaveProfile(event)">
-        <div>${avatar(Foro.user.username)} <b style="font:italic 700 18px var(--f-head);color:var(--navy)">${esc(Foro.user.username)}</b></div>
+        <div class="fo-me">${avatar(Foro.user.username, Foro.user.avatar_url, 'big')}<div><b>${esc(Foro.user.username)}</b>
+          <div class="btnrow" style="margin:6px 0 0"><label class="btn" for="foPic">📷 ${Foro.user.avatar_url ? 'Cambiar foto' : 'Subir foto'}</label>${Foro.user.avatar_url ? '<button class="btn" type="button" onclick="App.foroAvatarRemove()">Quitar foto</button>' : ''}</div>
+          <input id="foPic" type="file" accept="image/*" hidden onchange="App.foroAvatar(this)"><small style="color:var(--muted)">JPG, PNG o WEBP. Se recorta cuadrada.</small><div class="fo-msg" id="foPicMsg"></div></div></div>
         <label for="foTeam">Mi franquicia</label><select id="foTeam">${teamOptions(Foro.user.team_id)}</select>
         <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Guardar</button><span class="fo-msg" id="foMsg"></span></div>
       </form></div>`;
@@ -2172,6 +2231,33 @@ const ForoActions = {
       Notif.refresh();
     }catch(e){ msg.textContent = foroErr(e); btn.disabled = false; }
   },
+  async foroAvatar(input){
+    const file = input.files && input.files[0], msg = $('#foPicMsg');
+    if(!file) return;
+    if(!/^image\//.test(file.type)){ msg.textContent = 'Elegí una imagen.'; return; }
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Subiendo foto…';
+    try{
+      const blob = await squareJpeg(file, 160);
+      const sb = await Foro.client();
+      const path = `${Foro.user.id}/avatar.jpg`;
+      const up = await sb.storage.from('avatars').upload(path, blob, {upsert: true, contentType: 'image/jpeg', cacheControl: '3600'});
+      if(up.error) throw up.error;
+      const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl.split('?')[0] + '?v=' + Date.now();
+      await Foro.q(sb.from('profiles').update({avatar_url: url}).eq('id', Foro.user.id));
+      Foro.user.avatar_url = url;
+      route(true);
+    }catch(e){ msg.style.color = ''; msg.textContent = 'No se pudo subir la foto: ' + (e.message || e); }
+    input.value = '';
+  },
+  async foroAvatarRemove(){
+    try{
+      const sb = await Foro.client();
+      await Foro.q(sb.from('profiles').update({avatar_url: null}).eq('id', Foro.user.id));
+      sb.storage.from('avatars').remove([`${Foro.user.id}/avatar.jpg`]).catch(() => {});
+      Foro.user.avatar_url = null;
+      route(true);
+    }catch(e){ alertBox(e.message); }
+  },
   async foroSaveProfile(ev){
     ev.preventDefault();
     const f = ev.target, msg = $('#foMsg', f);
@@ -2232,7 +2318,7 @@ const Notif = {
     if(!Foro.user){ this.items = []; this.unread = 0; this.render(); return; }
     try{
       const [list, cnt] = await Promise.all([
-        Foro.q(sb.from('notifications').select('id,kind,read,created_at,forum,thread_id,actor:profiles!notifications_actor_fkey(username),threads!notifications_thread_id_fkey(title)')
+        Foro.q(sb.from('notifications').select('id,kind,read,created_at,forum,thread_id,actor:profiles!notifications_actor_fkey(username,avatar_url),threads!notifications_thread_id_fkey(title)')
           .eq('user_id', Foro.user.id).order('id', {ascending: false}).limit(20)),
         Foro.q(sb.from('notifications').select('id', {count: 'exact', head: true}).eq('user_id', Foro.user.id).eq('read', false)),
       ]);
@@ -2253,7 +2339,7 @@ const Notif = {
     if(!this.items.length) return head + '<div class="nempty">Todavía no tenés notificaciones. Te avisamos acá cuando alguien te responda o te cite.</div>';
     return head + '<div class="nlist">' + this.items.map(n => {
       const who = n.actor?.username || 'Alguien';
-      return `<a class="nitem ${n.read ? '' : 'new'}" href="${this.href(n)}" onclick="App.notifOpen(event,${n.id},'${this.href(n)}')">${avatar(who)}<div><b>${esc(who)}</b> ${this.text(n)}<small>${esc(timeAgo(n.created_at))}</small></div></a>`;
+      return `<a class="nitem ${n.read ? '' : 'new'}" href="${this.href(n)}" onclick="App.notifOpen(event,${n.id},'${this.href(n)}')">${avatar(who, n.actor?.avatar_url)}<div><b>${esc(who)}</b> ${this.text(n)}<small>${esc(timeAgo(n.created_at))}</small></div></a>`;
     }).join('') + '</div>';
   },
   render(){
@@ -2296,6 +2382,23 @@ const NotifActions = {
   },
 };
 
+/* Recorta al centro, achica y convierte a JPEG (la foto pesa pocos KB) */
+function squareJpeg(file, size){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const s = Math.min(img.naturalWidth, img.naturalHeight);
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, size, size);
+      x.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la imagen.')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la imagen.')); };
+    img.src = url;
+  });
+}
 function alertBox(txt){
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
   document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
@@ -2420,12 +2523,12 @@ function init(){
 
   // Auto-refresh cada 30s sólo si hay partidos en vivo en la vista actual
   const typing = () => { const ta = $('#foText'); return !!ta && (!!ta.value || document.activeElement === ta); };
-  setInterval(() => { if(state.liveInView && !document.hidden && !typing()) route(true); }, 30e3);
+  setInterval(() => { if(state.liveInView && !document.hidden && !typing() && !$('#foEmo:not([hidden])')) route(true); }, 30e3);
   // Muro del foro: se actualiza solo cada 20 s (si no estás escribiendo)
   setInterval(() => {
     const r = state.route;
-    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro' || (r.view === 'game' || r.view === 'day' && !r.lg) && !state.liveInView) && r.fsub === 'muro' && (r.page || 1) === 1;
-    if(wall && Foro.sb && !document.hidden && !typing()) route(true);
+    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro' || (r.view === 'game' || r.view === 'day' && !r.lg) && !state.liveInView) && r.fsub === 'muro' && (r.page || 1) === 1 && $('#foroBox');
+    if(wall && Foro.sb && !document.hidden && !typing() && !$('#foEmo:not([hidden])')) refreshForoBox();
   }, 20e3);
   // Ticker: 30s si hay algo en vivo, si no cada 5 min
   let tick = 0;
