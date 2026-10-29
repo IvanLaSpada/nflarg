@@ -128,6 +128,9 @@ button,select,input{font-family:inherit}
 #scrim{display:none}
 footer{max-width:1320px;margin:0 auto 18px;padding:10px 16px;color:#9fb0cf;font:11px Arial;text-align:center}
 footer b{color:var(--gold2)}
+footer .made{margin-bottom:6px;font:italic 600 13px var(--f-head);letter-spacing:1px;text-transform:uppercase;color:#cfd8ea}
+footer .lspd{color:#fff;font-weight:700;text-shadow:0 0 8px rgba(227,38,63,.6)}
+footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 
 /* ---------- Glossy panel headers ---------- */
 .ph{position:relative;display:flex;align-items:center;gap:8px;color:#fff;padding:6px 10px 6px 14px;margin:0;
@@ -517,7 +520,7 @@ footer b{color:var(--gold2)}
   <main id="view"></main>
 </div>
 <div id="scrim"></div>
-<footer>Datos: API pública no oficial de <b>ESPN</b> · Uso personal · Horarios en tu zona: <b id="tzName"></b></footer>
+<footer><div class="made">Hecho por <span class="lspd">LSPD Studio</span></div>Datos: API pública no oficial de <b>ESPN</b> · Uso personal · Horarios en tu zona: <b id="tzName"></b></footer>
 
 <script>
 "use strict";
