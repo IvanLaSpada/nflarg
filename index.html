@@ -1051,7 +1051,12 @@ async function refreshTicker(){
    ========================================================================= */
 function parseHash(){
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
-  if(!parts.length || parts[0] === 'hoy') return {view: 'day', lg: null, date: parts[1]};
+  if(!parts.length || parts[0] === 'hoy'){
+    // #/hoy[/AAAAMMDD][/foro/...]: el Home lleva el Foro General abajo de los partidos
+    const fi = parts.indexOf('foro');
+    const date = parts[1] && parts[1] !== 'foro' ? parts[1] : undefined;
+    return {view: 'day', lg: null, date, foroLink: fi > 0, ...parseForoRest(fi > 0 ? parts.slice(fi + 1) : [])};
+  }
   if(parts[0] === 'foro'){
     if(['entrar', 'registro', 'perfil'].includes(parts[1])) return {view: 'foro', acct: parts[1]};
     return {view: 'foro', ...parseForoRest(parts.slice(1))};
@@ -1183,6 +1188,17 @@ VIEWS.day = async (r, el, ctx) => {
       : emptyBox('No hay partidos programados para este día', `Probá otra fecha o mirá la semana de cada liga:<div class="btnrow" style="justify-content:center">${links}</div>`);
   }
   paint(ctx, el, head + filters + blocks);
+  // Foro General abajo de los partidos (solo en el Home de todas las ligas)
+  if(!r.lg && alive(ctx)){
+    let foro;
+    try{
+      foro = Foro.configured()
+        ? await forumBody(await Foro.client(), {forum: 'general', base: `#/hoy${r.date ? '/' + r.date : ''}/foro`, name: 'Foro General'}, r, ctx)
+        : foroSetup();
+    }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro'); }
+    paint(ctx, el, head + filters + blocks + `<div class="star-sep" id="foroSec"><span>Foro General</span></div>${foro}`);
+    if(r.foroLink && !ctx.silent && alive(ctx)) $('#foroSec')?.scrollIntoView({block: 'start'});
+  }
 };
 
 /* ---------- Liga ---------- */
@@ -2060,7 +2076,13 @@ async function teamForum(lg, t, r, ctx){
 
 const ForoActions = {
   _back: null,
-  foroBack(){ const h = location.hash; if(!/^#\/foro\/(entrar|registro|perfil)/.test(h)) ForoActions._back = h; },
+  foroBack(){
+    let h = location.hash;
+    if(/^#\/foro\/(entrar|registro|perfil)/.test(h)) return;
+    // Si el foro está embebido (Home o partido), volver directo al foro
+    if($('#foroSec') && !/\/foro(\/|$)/.test(h)) h = (h && h !== '#/' ? h : '#/hoy').replace(/\/$/, '') + '/foro';
+    ForoActions._back = h;
+  },
   foroEmo(){ const p = $('#foEmo'); if(p) p.hidden = !p.hidden; },
   foroIns(txt){
     const ta = $('#foText'); if(!ta) return;
@@ -2287,7 +2309,7 @@ function init(){
   // Muro del foro: se actualiza solo cada 20 s (si no estás escribiendo)
   setInterval(() => {
     const r = state.route;
-    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro' || r.view === 'game' && !state.liveInView) && r.fsub === 'muro' && (r.page || 1) === 1;
+    const wall = (r.view === 'foro' && !r.acct || r.view === 'team' && r.tab === 'foro' || (r.view === 'game' || r.view === 'day' && !r.lg) && !state.liveInView) && r.fsub === 'muro' && (r.page || 1) === 1;
     if(wall && Foro.sb && !document.hidden && !typing()) route(true);
   }, 20e3);
   // Ticker: 30s si hay algo en vivo, si no cada 5 min
