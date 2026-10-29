@@ -116,6 +116,25 @@ button,select,input{font-family:inherit}
 .season{display:flex;align-items:center;gap:6px;font:italic 600 11px var(--f-head);letter-spacing:1px;color:#fff;text-shadow:0 1px 0 #000}
 .season select{height:26px;border:1px solid #7f8796;border-radius:4px;font:700 12px Arial;color:var(--navy);padding:0 4px;
   background:linear-gradient(#fff,#e3e7ee 45%,#c3c9d3 55%,#dfe3ea);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(0,0,0,.4)}
+.notif{position:relative;flex:none}
+#bell{position:relative;width:38px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;border:1px solid #071636;border-radius:4px;
+  background:linear-gradient(#4a6fb5,#1b3c80 48%,#0f2a62 52%,#163a7f);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 3px rgba(0,0,0,.4)}
+#bell:hover{background:linear-gradient(#5b80c6,#24498f 48%,#14326f 52%,#1d4590)}
+#bell.on{color:var(--gold2)}
+.nbadge{position:absolute;top:-6px;right:-7px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:700 10px Arial;color:#fff;background:linear-gradient(#ff5050,#c80000);border:1px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.5);animation:pulse 1.3s infinite}
+.nbadge[hidden]{display:none}
+.npanel{position:absolute;right:0;top:42px;width:350px;max-width:calc(100vw - 20px);background:#fff;border:1px solid #0a1f44;border-radius:5px;box-shadow:0 10px 28px rgba(0,0,0,.55);z-index:60;overflow:hidden}
+.npanel[hidden]{display:none}
+.npanel .ph{border-radius:0}
+.npanel .ph button{margin-left:auto;font:italic 600 10px var(--f-head);text-transform:uppercase;color:var(--navy);background:linear-gradient(#fff,#d5dae2);border:1px solid #071636;border-radius:9px;padding:2px 8px;cursor:pointer}
+.nlist{max-height:min(420px,65vh);overflow:auto}
+.nitem{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-bottom:1px solid var(--line);font:12px/1.35 Arial;color:var(--ink)!important;text-decoration:none!important;cursor:pointer}
+.nitem:hover{background:var(--hover)}
+.nitem.new{background:#eef4ff;box-shadow:inset 3px 0 0 var(--red)}
+.nitem .av{width:26px;height:26px;font-size:13px;border-width:1px}
+.nitem small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.nempty{padding:16px 12px;font:12px Arial;color:var(--muted);text-align:center}
+.nempty .btnrow{justify-content:center}
 #burger{display:none;flex:none;width:38px;height:34px;border:1px solid #071636;border-radius:4px;color:#fff;font-size:20px;cursor:pointer;
   background:linear-gradient(#4a6fb5,#1b3c80 48%,#0f2a62 52%,#163a7f);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 3px rgba(0,0,0,.4)}
 
@@ -456,7 +475,11 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
   body.menu #scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90}
   #wrap{padding:0 8px;margin-top:8px}
   .hdr-in{flex-wrap:wrap;gap:8px 10px;padding:8px 10px}
-  .hdr-tools{width:100%;justify-content:space-between}
+  /* Mobile: menú · logo centrado · notificaciones; abajo la búsqueda */
+  #burger{order:0}
+  .brand{order:1;margin:0 auto}
+  .notif{order:2}
+  .hdr-tools{order:3;width:100%;justify-content:space-between}
   .search{flex:1}
   .search input{width:100%}
 }
@@ -482,6 +505,7 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
   .led{font-size:32px;min-width:52px;padding:4px 6px 2px}
   .brand .bt{font-size:26px}
   .brand-logo{height:48px}
+  .brand{gap:7px}
   .dayttl{font-size:19px}
   .hm{display:none}
   .grid2,.grid3{grid-template-columns:1fr}
@@ -493,6 +517,9 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
   .cmp{grid-template-columns:52px 1fr 52px}
 }
 .g .sub .tvm{display:none}
+@media (max-width:440px){
+  .brand small{display:none}
+}
 @media (max-width:380px){
   .season{font-size:0;gap:0}
   .daynav .btn{padding:0 7px}
@@ -510,6 +537,10 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
     <div class="hdr-tools">
       <div class="search"><input id="q" type="search" autocomplete="off" placeholder="Buscar equipo o jugador…" aria-label="Buscar"><div id="qres"></div></div>
       <label class="season">Temporada <select id="seasonSel" aria-label="Temporada"></select></label>
+    </div>
+    <div class="notif" id="notif">
+      <button id="bell" type="button" aria-label="Notificaciones" aria-haspopup="true" aria-expanded="false" onclick="App.notifToggle(event)"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-1.7 1.7A1 1 0 0 0 4 19.4h16a1 1 0 0 0 .7-1.7Z"/></svg><span class="nbadge" id="nbadge" hidden></span></button>
+      <div class="npanel" id="npanel" hidden></div>
     </div>
   </div>
 </header>
@@ -2138,6 +2169,7 @@ const ForoActions = {
       await Foro.loadProfile(res.data.session);
       const back = ForoActions._back; ForoActions._back = null;
       go(back || '#/foro');
+      Notif.refresh();
     }catch(e){ msg.textContent = foroErr(e); btn.disabled = false; }
   },
   async foroSaveProfile(ev){
@@ -2153,7 +2185,7 @@ const ForoActions = {
   },
   async foroLogout(){
     try{ const sb = await Foro.client(); await sb.auth.signOut(); }catch(e){}
-    Foro.user = null; route();
+    Foro.user = null; Notif.refresh(); route();
   },
   async foroSend(ev, forum, threadId, after){
     ev.preventDefault();
@@ -2182,6 +2214,88 @@ const ForoActions = {
     }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
 };
+/* ---------- Notificaciones (te responden o te citan) ---------- */
+function forumHref(forum){
+  const m = /^nfl-(\d+)$/.exec(forum || '');
+  return m ? `#/nfl/team/${m[1]}/foro` : '#/foro';
+}
+function forumLabel(forum){
+  const m = /^nfl-(\d+)$/.exec(forum || '');
+  if(m){ const t = nflTeam(m[1]); return 'el foro de ' + (t?.displayName || 'un equipo'); }
+  return 'el Foro General';
+}
+const Notif = {
+  items: [], unread: 0, last: 0, baseTitle: document.title,
+  async refresh(){
+    if(!Foro.configured()) return;
+    let sb; try{ sb = await Foro.client(); }catch(e){ return; }
+    if(!Foro.user){ this.items = []; this.unread = 0; this.render(); return; }
+    try{
+      const [list, cnt] = await Promise.all([
+        Foro.q(sb.from('notifications').select('id,kind,read,created_at,forum,thread_id,actor:profiles!notifications_actor_fkey(username),threads!notifications_thread_id_fkey(title)')
+          .eq('user_id', Foro.user.id).order('id', {ascending: false}).limit(20)),
+        Foro.q(sb.from('notifications').select('id', {count: 'exact', head: true}).eq('user_id', Foro.user.id).eq('read', false)),
+      ]);
+      this.items = arr(list.data); this.unread = cnt.count || 0; this.last = Date.now();
+    }catch(e){ console.warn('notificaciones', e); }
+    this.render();
+  },
+  href(n){ const b = forumHref(n.forum); return n.thread_id ? `${b}/t/${n.thread_id}/-1` : b; },
+  text(n){
+    const t = n.threads?.title ? `«${esc(n.threads.title)}»` : '';
+    if(n.kind === 'reply') return `respondió en tu tema ${t}`;
+    return `te citó en ${t || esc(forumLabel(n.forum))}`;
+  },
+  html(){
+    if(!Foro.user) return `<div class="ph sm">Notificaciones</div><div class="nempty">Entrá al foro para que te avisemos cuando te respondan o te citen.
+      <div class="btnrow"><a class="btn on" href="#/foro/entrar" onclick="App.foroBack();App.notifClose()">Entrar</a><a class="btn" href="#/foro/registro" onclick="App.foroBack();App.notifClose()">Crear cuenta</a></div></div>`;
+    const head = `<div class="ph sm">Notificaciones${this.unread ? ` <span class="cnt">· ${this.unread} sin leer</span>` : ''}${this.unread ? '<button type="button" onclick="App.notifReadAll()">Marcar todo leído</button>' : ''}</div>`;
+    if(!this.items.length) return head + '<div class="nempty">Todavía no tenés notificaciones. Te avisamos acá cuando alguien te responda o te cite.</div>';
+    return head + '<div class="nlist">' + this.items.map(n => {
+      const who = n.actor?.username || 'Alguien';
+      return `<a class="nitem ${n.read ? '' : 'new'}" href="${this.href(n)}" onclick="App.notifOpen(event,${n.id},'${this.href(n)}')">${avatar(who)}<div><b>${esc(who)}</b> ${this.text(n)}<small>${esc(timeAgo(n.created_at))}</small></div></a>`;
+    }).join('') + '</div>';
+  },
+  render(){
+    const badge = $('#nbadge'), bell = $('#bell'), panel = $('#npanel');
+    if(!badge) return;
+    badge.hidden = !this.unread; badge.textContent = this.unread > 99 ? '99+' : String(this.unread);
+    bell.classList.toggle('on', !!this.unread);
+    bell.setAttribute('aria-label', this.unread ? `Notificaciones: ${this.unread} sin leer` : 'Notificaciones');
+    document.title = (this.unread ? `(${this.unread}) ` : '') + this.baseTitle;
+    if(!panel.hidden) panel.innerHTML = this.html();
+  },
+};
+const NotifActions = {
+  notifToggle(ev){
+    ev?.stopPropagation();
+    const panel = $('#npanel'), bell = $('#bell');
+    panel.hidden = !panel.hidden; bell.setAttribute('aria-expanded', String(!panel.hidden));
+    if(!panel.hidden){
+      panel.innerHTML = Foro.configured() ? Notif.html() : '<div class="ph sm">Notificaciones</div><div class="nempty">El foro todavía no está conectado.</div>';
+      if(Date.now() - Notif.last > 15e3) Notif.refresh();
+    }
+  },
+  notifClose(){ const panel = $('#npanel'); if(panel){ panel.hidden = true; $('#bell').setAttribute('aria-expanded', 'false'); } },
+  async notifOpen(ev, id, href){
+    ev.preventDefault();
+    NotifActions.notifClose();
+    const n = Notif.items.find(x => x.id === id);
+    if(n && !n.read){
+      n.read = true; Notif.unread = Math.max(0, Notif.unread - 1); Notif.render();
+      try{ const sb = await Foro.client(); await Foro.q(sb.from('notifications').update({read: true}).eq('id', id)); }catch(e){}
+    }
+    go(href);
+  },
+  async notifReadAll(){
+    try{
+      const sb = await Foro.client();
+      await Foro.q(sb.from('notifications').update({read: true}).eq('user_id', Foro.user.id).eq('read', false));
+      Notif.items.forEach(n => { n.read = true; }); Notif.unread = 0; Notif.render();
+    }catch(e){ alertBox(e.message); }
+  },
+};
+
 function alertBox(txt){
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
   document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
@@ -2261,6 +2375,7 @@ function parseSearch(d){
    ========================================================================= */
 window.App = {
   ...ForoActions,
+  ...NotifActions,
   retry(){ if(!visible().length) state.readyP = null; route(); },
   sideRetry(){ state.sideKey = ''; renderSidebar(true); },
   setFilter(k){ state.filter = k; route(true); },
@@ -2320,6 +2435,11 @@ function init(){
     if(!document.hidden && (anyLive || tick % 10 === 0)) refreshTicker();
   }, 30e3);
   route();
+  // Notificaciones: restaurar sesión del foro y chequear cada 60 s
+  if(Foro.configured()) Foro.client().then(() => Notif.refresh()).catch(() => {});
+  setInterval(() => { if(Foro.user && !document.hidden) Notif.refresh(); }, 60e3);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden && Foro.user && Date.now() - Notif.last > 20e3) Notif.refresh(); });
+  document.addEventListener('click', e => { if(!e.target.closest('#notif')) App.notifClose(); });
 }
 init();
 </script>

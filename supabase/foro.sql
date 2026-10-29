@@ -156,6 +156,54 @@ drop trigger if exists posts_bump_thread on public.posts;
 create trigger posts_bump_thread after insert on public.posts
   for each row execute function public.bump_thread();
 
+-- Notificaciones: te responden en un tema tuyo o te citan
+create table if not exists public.notifications (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  actor uuid not null references public.profiles (id) on delete cascade,
+  post_id bigint not null references public.posts (id) on delete cascade,
+  thread_id bigint references public.threads (id) on delete cascade,
+  forum text not null,
+  kind text not null check (kind in ('reply', 'quote')),
+  read boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (user_id, post_id)
+);
+create index if not exists notifications_user on public.notifications (user_id, id desc);
+create index if not exists notifications_unread on public.notifications (user_id) where not read;
+
+create or replace function public.notify_on_post()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare
+  t_author uuid;
+  quoted text;
+  target uuid;
+begin
+  if new.thread_id is not null then
+    select t.author into t_author from public.threads t where t.id = new.thread_id;
+    if t_author is not null and t_author <> new.author then
+      insert into public.notifications (user_id, actor, post_id, thread_id, forum, kind)
+      values (t_author, new.author, new.id, new.thread_id, new.forum, 'reply')
+      on conflict (user_id, post_id) do nothing;
+    end if;
+  end if;
+  for quoted in
+    select distinct lower(m[1]) from regexp_matches(new.body, '\[quote=([A-Za-z0-9_]{1,20})\]', 'g') as m
+  loop
+    select p.id into target from public.profiles p where lower(p.username) = quoted;
+    if target is not null and target <> new.author then
+      insert into public.notifications (user_id, actor, post_id, thread_id, forum, kind)
+      values (target, new.author, new.id, new.thread_id, new.forum, 'quote')
+      on conflict (user_id, post_id) do update set kind = 'quote';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+drop trigger if exists posts_notify on public.posts;
+create trigger posts_notify after insert on public.posts
+  for each row execute function public.notify_on_post();
+
 -- Recuento de likes / dislikes
 create or replace function public.count_reactions()
 returns trigger language plpgsql security definer set search_path = '' as $$
@@ -193,6 +241,7 @@ alter table public.profiles enable row level security;
 alter table public.threads enable row level security;
 alter table public.posts enable row level security;
 alter table public.reactions enable row level security;
+alter table public.notifications enable row level security;
 
 drop policy if exists "leer perfiles" on public.profiles;
 drop policy if exists "editar mi perfil" on public.profiles;
@@ -223,6 +272,16 @@ grant update, delete on public.reactions to authenticated;
 revoke update on public.profiles from anon, authenticated;
 grant update (team_id) on public.profiles to authenticated;
 revoke update, delete on public.posts, public.threads from anon, authenticated;
+drop policy if exists "ver mis notificaciones" on public.notifications;
+drop policy if exists "marcar mis notificaciones" on public.notifications;
+drop policy if exists "borrar mis notificaciones" on public.notifications;
+create policy "ver mis notificaciones" on public.notifications for select to authenticated using (user_id = auth.uid());
+create policy "marcar mis notificaciones" on public.notifications for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "borrar mis notificaciones" on public.notifications for delete to authenticated using (user_id = auth.uid());
+revoke all on public.notifications from anon;
+revoke insert, update on public.notifications from authenticated;
+grant select, delete on public.notifications to authenticated;
+grant update (read) on public.notifications to authenticated;
 revoke insert, update, delete on public.threads, public.posts, public.reactions, public.profiles from anon;
 alter table public.account_emails enable row level security;
 revoke all on public.account_emails from anon, authenticated;
