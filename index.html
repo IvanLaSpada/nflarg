@@ -287,6 +287,15 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
 .av.big{width:72px;height:72px;font-size:32px;border-width:3px}
 .fo-me{display:flex;gap:12px;align-items:center}
+.tbl.rk td{padding:5px 8px}
+.tbl.rk tr.top td{background:linear-gradient(90deg,#fff8dc,#fff) !important}
+.tbl.rk .pos{font-size:15px;width:34px}
+.tbl.rk .rkn b{font:600 20px/1 var(--f-num);color:var(--navy)}
+.tbl.rk .rkc{width:40%}
+.tbl.rk .av{width:24px;height:24px;font-size:12px;border-width:1px}
+.rkbar{height:12px;background:#e3e8ef;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.2)}
+.rkbar i{display:block;height:100%;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+@media (max-width:640px){.tbl.rk .rkc{width:28%}}
 .fo-form label.btn{font:italic 600 12px var(--f-head);margin-top:0;color:var(--navy)}
 .fo-me b{font:italic 700 20px var(--f-head);color:var(--navy)}
 .fo-me small{display:block;margin-top:4px}
@@ -2044,9 +2053,11 @@ async function refreshForoBox(){
 }
 async function forumInner(sb, fc, r){
   const sub = r.fsub || 'muro';
-  const tabs = `<div class="ftabs"><a class="tab ${sub === 'muro' ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab ${sub !== 'muro' ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a></div>`;
+  const rk = fc.forum === 'general';   // los rankings son globales: solo en el Foro General
+  const tabs = `<div class="ftabs"><a class="tab ${sub === 'muro' ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab ${['temas', 't', 'nuevo'].includes(sub) ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a>${rk ? `<a class="tab ${sub === 'rankings' ? 'on' : ''}" href="${fc.base}/rankings">🏆 Rankings</a>` : ''}</div>`;
   let html;
-  if(sub === 'temas') html = await foroTopics(sb, fc, r);
+  if(sub === 'rankings' && rk) html = await foroRankings(sb, fc, r);
+  else if(sub === 'temas') html = await foroTopics(sb, fc, r);
   else if(sub === 't') html = await foroThread(sb, fc, r);
   else if(sub === 'nuevo') html = foroNewTopic(fc);
   else html = await foroWall(sb, fc, r);
@@ -2092,6 +2103,38 @@ async function foroThread(sb, fc, r){
     <div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
     <div class="box">${posts.map((p, i) => postHtml(p, from + i + 1)).join('') || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
     <div class="ph">Responder</div><div class="box">${composer(t.forum, id, base + '/-1', 'Escribí tu respuesta…')}</div>`;
+}
+
+/* Rankings: hinchas por franquicia y actividad (mensajes) por hinchada + usuarios más activos */
+async function foroRankings(sb, fc, r){
+  await teamsOf(LG.nfl).catch(() => {});
+  const mode = r.rank === 'actividad' ? 'actividad' : 'equipos';
+  const sw = `<div class="btnrow"><a class="btn ${mode === 'equipos' ? 'on' : ''}" href="${fc.base}/rankings">Por equipo</a><a class="btn ${mode === 'actividad' ? 'on' : ''}" href="${fc.base}/rankings/actividad">Por actividad</a></div>`;
+  const teamCell = id => { const t = nflTeam(id) || {id, displayName: 'Equipo ' + id}; return `<a class="tmc" href="#/nfl/team/${esc(id)}/foro">${logo(t)}<span>${esc(t.displayName || tName(t))}</span></a>`; };
+  const bar = (v, max, id) => { const t = nflTeam(id); const c = teamColor(t), c2 = hexOk(t?.alternateColor) || '#c7ccd4'; return `<div class="rkbar"><i style="width:${max ? Math.max(3, v / max * 100).toFixed(1) : 0}%;background:linear-gradient(90deg,${c},${c} 70%,${c2})"></i></div>`; };
+  const medal = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+  if(mode === 'equipos'){
+    const {data} = await Foro.q(sb.rpc('ranking_hinchas'));
+    const counts = Object.fromEntries(arr(data).map(x => [String(x.team_id), +x.fans || 0]));
+    const ids = Object.keys(LG.nfl.teamIdx || {}).length ? Object.keys(LG.nfl.teamIdx) : Object.keys(counts);
+    const rows = [...new Set(ids.concat(Object.keys(counts)))].map(id => ({id, n: counts[id] || 0}))
+      .sort((a, b) => b.n - a.n || (nflTeam(a.id)?.displayName || '').localeCompare(nflTeam(b.id)?.displayName || ''));
+    const max = rows[0]?.n || 0, total = rows.reduce((a, x) => a + x.n, 0);
+    const body = rows.map((x, i) => `<tr class="${i < 3 && x.n ? 'top' : ''}"><td class="pos">${x.n ? medal(i) : '–'}</td><td class="l">${teamCell(x.id)}</td><td class="rkn"><b>${x.n}</b></td><td class="l rkc">${bar(x.n, max, x.id)}</td></tr>`).join('');
+    return sw + `<div class="ph">🏆 Hinchadas · cantidad de hinchas <span class="cnt">· ${pluralize(total, 'hincha registrado', 'hinchas registrados')}</span></div>
+      <div class="box tw"><table class="tbl rk"><thead><tr><th>#</th><th class="l">Franquicia</th><th>Hinchas</th><th class="l rkc"></th></tr></thead><tbody>${body}</tbody></table></div>
+      <div class="legend">Cuenta a los usuarios del foro según la franquicia elegida en su perfil. ${Foro.user ? '<a href="#/foro/perfil" onclick="App.foroBack()">Cambiar la mía</a>' : '<a href="#/foro/registro" onclick="App.foroBack()">Sumate a tu hinchada</a>'}</div>`;
+  }
+  const [act, usr] = await Promise.all([Foro.q(sb.rpc('ranking_actividad')), Foro.q(sb.rpc('ranking_usuarios', {p_limit: 10}))]);
+  const rows = arr(act.data).map(x => ({id: String(x.team_id), posts: +x.posts || 0, autores: +x.autores || 0, likes: +x.likes || 0}));
+  const max = rows[0]?.posts || 0;
+  const tTeams = rows.map((x, i) => `<tr class="${i < 3 ? 'top' : ''}"><td class="pos">${medal(i)}</td><td class="l">${teamCell(x.id)}</td><td class="rkn"><b>${x.posts}</b></td><td class="hm">${x.autores}</td><td class="hm">👍 ${x.likes}</td><td class="l rkc">${bar(x.posts, max, x.id)}</td></tr>`).join('');
+  const tUsers = arr(usr.data).map((u, i) => `<tr class="${i < 3 ? 'top' : ''}"><td class="pos">${medal(i)}</td><td class="l"><span class="tmc">${avatar(u.username, u.avatar_url)}<b>${esc(u.username)}</b>${teamBadge(u.team_id)}</span></td><td class="rkn"><b>${+u.posts || 0}</b></td><td>👍 ${+u.likes || 0}</td></tr>`).join('');
+  return sw + `<div class="ph">🔥 Hinchada más activa · mensajes escritos</div>
+    <div class="box tw">${tTeams ? `<table class="tbl rk"><thead><tr><th>#</th><th class="l">Franquicia</th><th>Mensajes</th><th class="hm">Hinchas activos</th><th class="hm">Likes</th><th class="l rkc"></th></tr></thead><tbody>${tTeams}</tbody></table>` : '<div class="empty"><b>Todavía no hay actividad</b>Cuando los hinchas escriban, su equipo aparece acá.</div>'}</div>
+    <div class="ph">⭐ Usuarios más activos</div>
+    <div class="box tw">${tUsers ? `<table class="tbl rk"><thead><tr><th>#</th><th class="l">Usuario</th><th>Mensajes</th><th>Likes</th></tr></thead><tbody>${tUsers}</tbody></table>` : '<div class="empty">Todavía nadie escribió.</div>'}</div>
+    <div class="legend">Suma los mensajes del muro y de los temas de todos los foros. Los likes son los 👍 recibidos.</div>`;
 }
 
 function foroNewTopic(fc){
@@ -2409,6 +2452,7 @@ function parseForoRest(p){
   if(s === 't') return {fsub: 't', id: p[1], page: num(p[2])};
   if(s === 'nuevo') return {fsub: 'nuevo'};
   if(s === 'muro') return {fsub: 'muro', page: num(p[1])};
+  if(s === 'rankings') return {fsub: 'rankings', rank: p[1] === 'actividad' ? 'actividad' : 'equipos'};
   return {fsub: 'muro', page: 1};
 }
 

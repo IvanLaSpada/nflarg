@@ -242,6 +242,37 @@ begin
 end;
 $$;
 
+-- Rankings (solo números por equipo y nombres de usuario públicos; nada privado)
+create or replace function public.ranking_hinchas()
+returns table (team_id text, fans bigint)
+language sql stable security invoker set search_path = '' as $$
+  select p.team_id, count(*) from public.profiles p
+   where p.team_id is not null
+   group by p.team_id
+   order by 2 desc, 1;
+$$;
+create or replace function public.ranking_actividad()
+returns table (team_id text, posts bigint, autores bigint, likes bigint)
+language sql stable security invoker set search_path = '' as $$
+  select p.team_id, count(po.id), count(distinct p.id), coalesce(sum(po.likes), 0)
+    from public.posts po join public.profiles p on p.id = po.author
+   where p.team_id is not null
+   group by p.team_id
+   order by 2 desc, 4 desc, 1;
+$$;
+create or replace function public.ranking_usuarios(p_limit integer default 10)
+returns table (username text, team_id text, avatar_url text, posts bigint, likes bigint)
+language sql stable security invoker set search_path = '' as $$
+  select p.username, p.team_id, p.avatar_url, count(po.id), coalesce(sum(po.likes), 0)
+    from public.posts po join public.profiles p on p.id = po.author
+   group by p.id, p.username, p.team_id, p.avatar_url
+   order by 4 desc, 5 desc, 1
+   limit least(greatest(coalesce(p_limit, 10), 1), 50);
+$$;
+grant execute on function public.ranking_hinchas() to anon, authenticated;
+grant execute on function public.ranking_actividad() to anon, authenticated;
+grant execute on function public.ranking_usuarios(integer) to anon, authenticated;
+
 -- Permisos: todos leen; los usuarios registrados escriben siempre a su nombre
 alter table public.profiles enable row level security;
 alter table public.threads enable row level security;
