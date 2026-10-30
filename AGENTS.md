@@ -16,7 +16,7 @@
 6. **Si cambiás `supabase/foro.sql`, avisale al dueño que tiene que volver a correrlo.** Si no lo corre, la página falla con errores tipo "column … does not exist".
 7. **Manejá datos faltantes en todos lados.** La API de ESPN es no oficial y cambia: usá siempre `arr()`, `?.`, valores por defecto y caídas a otras fuentes (sección 6). Nunca dejes la pantalla en blanco: ante un error mostrá `errorBox(e)` con el botón "Reintentar".
 8. **Escapá todo lo que viene de afuera** con `esc()` antes de meterlo en HTML (ESPN, Supabase, lo que escriben los usuarios). El foro no permite HTML ni imágenes.
-9. **Antes de hacer push, traé lo último de GitHub** (`git fetch` + merge). GitHub a veces agrega commits solo (por ejemplo el archivo `CNAME` cuando se configura el dominio). Nunca hagas force-push.
+9. **Primero prueba interna y aprobación expresa del dueño; recién después se publica.** Los cambios quedan en una copia local de esta misma rama hasta que el dueño diga que se pueden publicar. Antes del push, traé lo último de GitHub (`git fetch` + merge) y volvé a verificar si se integraron cambios. GitHub a veces agrega commits solo (por ejemplo `CNAME`). Nunca hagas force-push.
 10. **Las capturas y descripciones del dueño mandan.** Si pide algo puntual de diseño o comportamiento, se hace así aunque contradiga una idea anterior.
 
 ---
@@ -48,6 +48,7 @@
 ## 3. Publicación, dominio y DNS
 
 - **Hosting:** GitHub Pages, desde la rama **`claude/nifty-hopper-jra203`**, carpeta `/` (root). Cualquier push a esa rama se publica solo en 1–2 minutos.
+- **Flujo acordado con el dueño:** preparar y mostrar primero una versión interna. No hacer push, publicar ni ejecutar SQL sobre la base real sin su aprobación expresa del cambio que revisó. La vista previa debe usar un foro simulado o una base separada: abrir una copia local con la conexión original a Supabase también permite escribir en el foro real.
 - **Dominio:** `nflarg.com.ar` (comprado en NIC Argentina). En GitHub → Settings → Pages → Custom domain = `nflarg.com.ar`, con "Enforce HTTPS".
 - **DNS en Cloudflare** (plan Free). Los nameservers de NIC.ar apuntan a Cloudflare (`bowen.ns.cloudflare.com`, `brynne.ns.cloudflare.com`). Registros, **todos en "DNS only" (nube gris)**, porque si están en naranja GitHub no puede emitir el certificado:
   - `A @ 185.199.108.153` · `A @ 185.199.109.153` · `A @ 185.199.110.153` · `A @ 185.199.111.153`
@@ -78,7 +79,7 @@ El archivo está dividido en secciones con comentarios grandes `/* ===== NOMBRE 
 16. **`ACCIONES GLOBALES + ARRANQUE`**: `window.App` (funciones llamadas desde `onclick=` en el HTML) e `init()` (eventos e intervalos de refresco).
 
 ### Patrón de render (importante)
-- Cada vista es `async (r, el, ctx) => {...}`. `r` = ruta parseada, `el` = `#view`, `ctx = {id, silent}`.
+- Cada vista es `async (r, el, ctx) => {...}`. `r` = ruta parseada, `el` = `#view`, `ctx = {id, silent, preserveForo}`. `preserveForo` es falso por defecto; solo el intervalo deportivo de 30 s lo activa para el partido con Gamecast.
 - `route(silent)` incrementa `state.renderId`. **Siempre pintá con `paint(ctx, el, html)`**, que solo pinta si `ctx.id === state.renderId`. Así una respuesta vieja no pisa una vista nueva.
 - `silent = true` = refresco en segundo plano: **no mostrar spinner** y no hacer scroll.
 - Los botones del HTML llaman a `App.algo(...)`. Si agregás una acción, sumala a `window.App`.
@@ -310,6 +311,7 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
 9. **Volver al foro después de entrar**: `App.foroBack()` guarda el hash actual; si el foro está embebido (Home o partido) agrega `/foro` para volver directo al foro.
 10. **Mail interno**: si cambiás `FORO_MAIL`, también hay que cambiarlo en el SQL (`'%@foro-nflarg.com'`) y las cuentas existentes dejarían de poder entrar. **No lo cambies.**
 11. **Logo de la CFL**: el scoreboard de ESPN no lo trae; se usa `LG_LOGO.cfl` (ruta de logos de ligas de ESPN). Si no carga, se ve un recuadro "CFL".
+12. **Ancho de las tablas y del marcador en celular con datos reales**: los hijos de `.boxgrid` necesitan `min-width:0` para que las tablas scrolleen dentro de `.tw`. El marcador usa columnas `minmax(0,…)` en celular para que la información central no aplaste los nombres ni los logos.
 
 ---
 
@@ -321,19 +323,24 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
   - `fake-supabase.js`: un Supabase falso en memoria (auth, tablas, triggers emulados, RPCs, storage) que se inyecta en lugar de la librería real.
   - `smoke.js`: recorre todas las rutas en escritorio y en celular y reporta errores de JavaScript y scroll horizontal.
   - `foro.js`: registro, muro, likes, temas, citas, notificaciones, rankings y perfil.
+  - `gamecast.js`: orientación, cambios de posesión, datos faltantes, última jugada adelantada al historial y enriquecimiento de participantes. Se corre con `node tests/gamecast.js`; no requiere navegador ni red.
   - Se corren con `node tests/smoke.js` y `node tests/foro.js` (necesitan `playwright` instalado). Leé el encabezado de cada archivo.
 - **Checklist antes de hacer commit:**
   1. Que el JS parsee: `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"`.
   2. Correr `tests/smoke.js` y `tests/foro.js` sin errores.
   3. Mirar capturas en 1280 px y 360 px.
   4. Si tocaste el SQL: probarlo en un Postgres local dos veces seguidas.
-  5. `git fetch` + merge, commit y push a `claude/nifty-hopper-jra203`.
+  5. Mostrar la versión interna al dueño. Solo después de su aprobación expresa: `git fetch` + merge, volver a verificar si se integraron cambios, commit y push a `claude/nifty-hopper-jra203`.
 
 ---
 
 ## 13. Pendientes e ideas conversadas (NO hacer sin que el dueño lo pida)
 
-- **"Gamecast" con cancha animada** (como el de X): cancha en perspectiva 3D con los colores de los equipos, la pelota moviéndose con animación, la línea amarilla de primer down, flechas por jugada del drive y carteles de TOUCHDOWN, FIELD GOAL, INTERCEPCIÓN, etc. Datos: `summary` → `situation` (yarda, posesión, down y distancia, zona roja, última jugada) y `drives` (jugadas con yarda de inicio y fin y tipo). Sin jugadores (ESPN no da tracking). Durante los partidos en vivo, refrescar cada 10–15 s. Lo delicado es la orientación de la cancha cuando cambia la posesión. Idea extra: mini cancha en las filas en vivo del Home. **El dueño dijo "todavía no".**
+- **Gamecast aprobado para publicación (29/10/2026):** el dueño revisó la versión interna, pidió corregir la perspectiva de los arcos y nombres y agregar su logo en el mediocampo, y autorizó publicar el resultado. Se muestra dentro del detalle de Panthers–Packers (`#/nfl/game/401873023`); `gamecastEnabled()` mantiene ese alcance. `gamecastModel()` normaliza la última jugada y `gamecastYard()` ubica al visitante a la izquierda y al local a la derecha. El texto de posición tiene prioridad porque ESPN a veces devuelve `yardsToEndzone=0` incorrectamente. Se combinan `drives.previous` y `drives.current`, se quitan duplicados y se ignoran tiempos muertos y finales de período. `gamecastHTML()` dibuja un SVG con césped, arcos, retrato, pelota, trayectoria ilustrativa y primer down. `refreshGamecast()` consulta cada 12 s con TTL de 10 s y actualiza solo la cancha y el marcador superior; no usa `route()` ni reemplaza el foro. Una jugada nueva se anima una vez y hay botón para repetir; se respeta movimiento reducido. Si se corta la conexión, se conserva lo último con aviso. **No extender a otros partidos sin que el dueño lo pida.** Mini cancha en el Home y recorrido completo del drive siguen pendientes.
+  - En este partido, el intervalo deportivo de 30 s llama `route(true, true)`: `ctx.preserveForo` conserva y reinserta el mismo nodo `#foroBox`, sin llamar `forumBody()` ni alterar `Foro.current`. Las acciones explícitas, como reaccionar a un mensaje, siguen usando `route(true)` con el foro actualizado. No conservar el foro para todas las llamadas silenciosas: eso deja viejos los likes/dislikes. El muro se actualiza por separado cada 20 s también mientras el partido está en vivo. No reemplazar un foro guardado por HTML recién consultado: eso desincroniza `Foro.current.inner` del contenido visible.
+  - `situation.lastPlay` tiene prioridad si su secuencia o ID numérico es más nuevo que el historial. La clave estable por jugada controla la animación; la firma visual también incluye geometría, descripción y retrato, porque ESPN puede completar participantes sin cambiar `modified` (que tiene precisión de minuto).
+  - Los nombres de las zonas de anotación se transforman en el plano del césped, siguiendo los dos ejes de `pt()`. Los arcos se proyectan desde el centro de cada línea de fondo: el travesaño sigue el ancho del campo y los postes se elevan con profundidad. No volver a dibujarlos de frente ni resolver los textos con una rotación sola.
+  - El mediocampo usa el logo original de NFLARG que entregó el dueño, embebido como WebP con transparencia dentro del SVG de `index.html`. Está centrado sobre la yarda 50 y proyectado en el plano del césped; no depende de un archivo externo ni de la carpeta Descargas.
 - **Moderación mínima del foro**: botón de borrar solo para el admin, bloquear usuarios, que cada uno borre lo suyo, botón de reportar, captcha (Cloudflare Turnstile) en el registro. Para el admin hace falta el nombre de usuario del dueño en el foro.
 - **Publicidad** que no moleste: banner en la barra lateral, entre bloques del Home o en el footer (nunca pop-ups). Antes, revisar el tema marca "NFL" y las condiciones de uso de ESPN.
 - **Riesgo legal conocido**: "NFL" en el nombre, el dominio y el logo es marca registrada. Para uso personal sin fines de lucro el riesgo es bajo; si se monetiza, conviene cambiar el nombre y el logo.
