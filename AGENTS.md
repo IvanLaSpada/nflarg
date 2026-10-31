@@ -97,7 +97,9 @@ El archivo está dividido en secciones con comentarios grandes `/* ===== NOMBRE 
 | `#/{liga}/partidos[/temporada[/tipo[/semana]]]` | Liga → Partidos por semana (tipo: 1 pretemporada, 2 regular, 3 playoffs) |
 | `#/{liga}/posiciones[/temporada]` | Liga → Posiciones |
 | `#/{liga}/stats[/temporada]` | Liga → Líderes estadísticos |
+| `#/nfl/draft` | Draft 2027: 32 tarjetas, orden provisorio y picks intercambiados |
 | `#/{liga}/team/{id}[/plantel\|fixture\|stats[/temporada]]` | Equipo |
+| `#/nfl/team/{id}/palmares[/temporada]` | Palmarés de la franquicia, con corte por temporada |
 | `#/nfl/team/{id}/foro[/temas …]` | Foro de la franquicia (solo NFL) |
 | `#/{liga}/player/{id}` | Jugador |
 | `#/{liga}/game/{id}[/foro/…]` | Detalle de partido (con Foro General abajo) |
@@ -167,6 +169,20 @@ Cabecera con los colores de los dos equipos y **marcador estilo LED** (fuente Sh
 
 ### Equipo (`VIEWS.team`)
 Hero con los colores del equipo, logo grande y marca de agua, chips de temporada, récord y posición ("1º en AFC West"). Solapas: **Plantel** (agrupado en ofensiva, defensiva y equipos especiales; número, posición, edad, altura y peso también en métrico, experiencia, college) · **Fixture / Resultados** (G/P/E coloreado, semana libre, TV EE.UU. y AR) · **Estadísticas** · **💬 Foro** (solo NFL).
+
+- **Palmarés (solo NFL):** solapa propia pedida por Iván, en la página de cada equipo; no va dentro de las tarjetas del Draft. `TEAM_HONOURS` guarda los años de las 32 franquicias y `teamHonours(id, season)` los filtra hasta la temporada elegida, con tope en `HONOURS_THROUGH` (2025). `teamHonoursHTML()` muestra temporadas campeón, Super Bowls, último título y años por competencia: Super Bowl, NFL anterior a 1970, AFL y AAFC. El total cuenta temporadas únicas, para no duplicar un campeonato NFL/AFL y el Super Bowl del mismo año. Fuentes primarias: Pro Football Hall of Fame (hasta 2024) y Seahawks (Super Bowl LX, temporada 2025). Actualizar el registro y su tope después de cada nuevo campeón.
+
+### Draft (`VIEWS.draft`)
+
+- Diseño aprobado: lista compacta de tarjetas, una por elección; pick, escudo, equipo, récord, SOS actual/restante, próximo rival, racha, necesidades y panorama visibles. Hay entrada **Draft NFL 2027** en el menú y solapa **Draft** en la liga NFL de 2026. En esta vista el selector global queda en temporada 2026 y deshabilitado, porque no se ofrecen otros años de Draft sin su registro verificado.
+- Alcance de datos explícito en `DRAFT`: temporada 2026, Draft 2027. No cambiar el año automáticamente sin revisar derechos de picks y necesidades. Las operaciones se verificaron al 30/10/2026; las tres necesidades por equipo son una evaluación editorial PFM fechada al 21/10/2026, atribuida en cada tarjeta. `DRAFT_NEEDS` se edita manualmente; nunca presentarla como evaluación automática en vivo. El panorama se redacta a partir de los datos del tablero, sin copiar reseñas de otros sitios.
+- `draftModel(groups, events, season)` normaliza posiciones y calendario. Se consultan scoreboards con `dates=2026&limit=500` y `dates=2027&limit=500`, y se filtra **cada evento** por temporada 2026/tipo 2: una consulta por año calendario mezcla temporadas y omite enero de la temporada anterior. Las dos consultas verificadas devuelven los 272 partidos regulares (17 por equipo). Los eventos se deduplican; se prioriza la versión más avanzada y se ignoran cancelados/postergados/suspendidos.
+- Récords y seeds salen de posiciones. El SOS actual pondera el récord combinado de los rivales ya enfrentados, contando cada enfrentamiento divisional; el restante usa los partidos pendientes. Los empates valen media victoria. No redondear antes de comparar. Se valida calendario, seeds 1–16 y concordancia de partidos terminados/récords antes de mostrar un orden, con reintento si ESPN está sincronizando.
+- Los seeds solo clasifican la zona de playoffs; **no resuelven empates del Draft**, porque protegen campeones divisionales. Entre dos equipos empatados se comparan enfrentamiento directo, los criterios divisionales/de conferencia pertinentes y fuerza de victorias; entre conferencias, también ranking de puntos y diferencia. Los empates de tres o más y los criterios posteriores no calculados conservan un rango compartido. No reemplazarlo por el seed, nombre o ID.
+- Se separan las primeras 18 elecciones de los 14 equipos en zona de playoffs. Estos últimos muestran **PL**, no un resultado futuro inventado. Los resultados de la postemporada permiten asignar los bloques 19–24, 25–28, 29–30, 31 y 32. Una igualdad que los criterios disponibles no resuelven se muestra como rango compartido, nunca se decide por nombre o ID.
+- Propiedad 2027: IND→NYJ, LAR→CLE, CHI→TEN, GB→DAL; Jets recibe el mejor de DAL/GB. Si ambos siguen en playoffs o comparten un rango sin resolver, los picks muestran la condición pendiente y las prioridades de ambos posibles dueños. El récord, el calendario y la racha son del origen; las necesidades, del propietario. Mantener las fuentes de las operaciones en el pie de la vista.
+- Cada victoria de postemporada fija `minPick`: ganar Wild Card garantiza 25 o posterior; Divisional, 29; final de conferencia, 31. Esto permite resolver DAL/GB si uno fue eliminado antes y el otro ya avanzó, aunque todavía no tenga un número exacto. La ruta del Draft fija `season:DRAFT.season`: no conservar escondida una temporada histórica que después hereden sus enlaces a equipos.
+- Las flechas comparan con la **última visita**, identificada con fecha; no simulan movimientos semanales. `nfa:draft:2027` guarda el último orden en localStorage y `DraftState.baseline` mantiene esa referencia durante la sesión. Solo guardar al finalizar una carga vigente (`alive(ctx)`). Actualizar fuerza una consulta; ante un error conserva las tarjetas anteriores con aviso. El foro no se consulta desde esta vista.
 
 ### Jugador (`VIEWS.player`)
 Hero con la foto, la camiseta y el equipo; ficha (posición, edad, nacimiento, altura, peso, college, draft, experiencia); resumen de la temporada; tablas por temporada con la fila de carrera.
@@ -312,6 +328,8 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
 10. **Mail interno**: si cambiás `FORO_MAIL`, también hay que cambiarlo en el SQL (`'%@foro-nflarg.com'`) y las cuentas existentes dejarían de poder entrar. **No lo cambies.**
 11. **Logo de la CFL**: el scoreboard de ESPN no lo trae; se usa `LG_LOGO.cfl` (ruta de logos de ligas de ESPN). Si no carga, se ve un recuadro "CFL".
 12. **Ancho de las tablas y del marcador en celular con datos reales**: los hijos de `.boxgrid` necesitan `min-width:0` para que las tablas scrolleen dentro de `.tw`. El marcador usa columnas `minmax(0,…)` en celular para que la información central no aplaste los nombres ni los logos.
+13. **Draft por año calendario**: `dates=2026` incluye partidos de otra temporada y no incluye enero de 2027. Consultar ambos años, filtrar `event.season.year/type` y validar 272 partidos regulares. El parámetro `seasontype` solo no alcanza en esta consulta.
+14. **Palmarés y mudanzas**: Houston Oilers→Titans, Dallas Texans→Chiefs y Baltimore Colts→Indianapolis. Los campeonatos de Browns permanecen en Cleveland; Ravens tiene su propia historia. Los años son temporadas, no el año de la final. Contar temporadas únicas evita duplicar los títulos NFL/Super Bowl de Packers en 1966/1967.
 
 ---
 
@@ -324,6 +342,9 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
   - `smoke.js`: recorre todas las rutas en escritorio y en celular y reporta errores de JavaScript y scroll horizontal.
   - `foro.js`: registro, muro, likes, temas, citas, notificaciones, rankings y perfil.
   - `gamecast.js`: orientación, cambios de posesión, datos faltantes, última jugada adelantada al historial y enriquecimiento de participantes. Se corre con `node tests/gamecast.js`; no requiere navegador ni red.
+  - `draft.js`: orden, porcentajes, SOS ponderado, calendario cruzando enero, playoffs, derechos condicionales, seeds inválidos y escape. `draft-fixture.js` aporta el calendario controlado de 32 equipos; no se usa desde la app.
+  - `honours.js`: palmarés de las 32 franquicias, 60 Super Bowls hasta temporada 2025, mudanzas y corte por temporada, sin duplicar campeonatos.
+  - `draft-ui.js`: las 32 tarjetas y la solapa Palmarés a 1280/360, navegación durante una carga lenta y conservación de los últimos datos ante un fallo. Usa foro falso y la misma dependencia Playwright.
   - Se corren con `node tests/smoke.js` y `node tests/foro.js` (necesitan `playwright` instalado). Leé el encabezado de cada archivo.
 - **Checklist antes de hacer commit:**
   1. Que el JS parsee: `node -e "new Function(require('fs').readFileSync('index.html','utf8').match(/<script>([\s\S]*)<\/script>/)[1])"`.
@@ -335,6 +356,8 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
 ---
 
 ## 13. Pendientes e ideas conversadas (NO hacer sin que el dueño lo pida)
+
+- **Draft 2027 y palmarés (publicación autorizada 30/10/2026):** Iván aprobó la versión interna integrada de las 32 tarjetas y pidió publicar; confirmó que el palmarés va en la página de cada equipo. Esta autorización cubre el cambio revisado en esta rama, sin SQL ni cambios del foro. Para consultas futuras, verificar el estado de la rama y del sitio antes de decir que sigue pendiente o que está en producción.
 
 - **Gamecast aprobado para publicación (29/10/2026):** el dueño revisó la versión interna, pidió corregir la perspectiva de los arcos y nombres y agregar su logo en el mediocampo, y autorizó publicar el resultado. Se muestra dentro del detalle de Panthers–Packers (`#/nfl/game/401873023`); `gamecastEnabled()` mantiene ese alcance. `gamecastModel()` normaliza la última jugada y `gamecastYard()` ubica al visitante a la izquierda y al local a la derecha. El texto de posición tiene prioridad porque ESPN a veces devuelve `yardsToEndzone=0` incorrectamente. Se combinan `drives.previous` y `drives.current`, se quitan duplicados y se ignoran tiempos muertos y finales de período. `gamecastHTML()` dibuja un SVG con césped, arcos, retrato, pelota, trayectoria ilustrativa y primer down. `refreshGamecast()` consulta cada 12 s con TTL de 10 s y actualiza solo la cancha y el marcador superior; no usa `route()` ni reemplaza el foro. Una jugada nueva se anima una vez y hay botón para repetir; se respeta movimiento reducido. Si se corta la conexión, se conserva lo último con aviso. **No extender a otros partidos sin que el dueño lo pida.** Mini cancha en el Home y recorrido completo del drive siguen pendientes.
   - En este partido, el intervalo deportivo de 30 s llama `route(true, true)`: `ctx.preserveForo` conserva y reinserta el mismo nodo `#foroBox`, sin llamar `forumBody()` ni alterar `Foro.current`. Las acciones explícitas, como reaccionar a un mensaje, siguen usando `route(true)` con el foro actualizado. No conservar el foro para todas las llamadas silenciosas: eso deja viejos los likes/dislikes. El muro se actualiza por separado cada 20 s también mientras el partido está en vivo. No reemplazar un foro guardado por HTML recién consultado: eso desincroniza `Foro.current.inner` del contenido visible.

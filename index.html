@@ -583,6 +583,54 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
   .gc-copy strong{font-size:20px}.gc-copy p{font-size:11px}.gc-copy{flex-basis:calc(100% - 45px)}
   .gc-replay{margin-left:40px;min-height:40px}.gc-foot{padding:7px 8px;font-size:9px;gap:6px}.gc-keys{gap:8px}
 }
+/* Draft NFL · tarjetas aprobadas, dentro de la misma aplicación */
+.draft-hero{display:flex;align-items:center;gap:11px;padding:13px 15px;color:#fff;background:linear-gradient(115deg,#183970,#091d40 70%);border:1px solid #071636;border-top:1px solid #6589c3;border-radius:4px 4px 0 0;box-shadow:inset 0 1px rgba(255,255,255,.14);position:relative;overflow:hidden}
+.draft-hero::after{content:'DRAFT';position:absolute;right:120px;top:-18px;font:italic 700 98px var(--f-head);color:rgba(255,255,255,.035);pointer-events:none}
+.draft-hero .draft-icon{flex:none;display:grid;place-items:center;width:47px;height:51px;border:1px solid #bec8d9;color:var(--gold2);background:linear-gradient(#41649a,#14294d);font:700 31px var(--f-var);box-shadow:inset 0 0 0 3px #233e68;clip-path:polygon(0 0,100% 0,100% 80%,50% 100%,0 80%)}
+.draft-hero h1{margin:0;font:italic 700 28px/1.1 var(--f-head);letter-spacing:.4px;text-shadow:0 2px #000}.draft-hero p{margin:5px 0 0;color:#d4ddec;font:11px Arial}.draft-season{margin-left:auto;position:relative;z-index:1;min-width:76px;padding:5px 9px;text-align:center;border:1px solid #94a8c7;background:linear-gradient(#fff,#d6dde8 47%,#b4c1d5 52%,#e4eaf3);color:var(--navy);box-shadow:0 2px 3px #0006,inset 0 1px #fff}.draft-season span{display:block;font:italic 600 10px var(--f-head);letter-spacing:1px}.draft-season b{font:600 27px/.95 var(--f-num)}
+.draft-intro{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 10px;border:1px solid #9aa7bd;border-top:0;background:linear-gradient(#f5f6f8,#e5eaf2);margin:0 0 12px;font:11px/1.5 Arial;color:#4d5b70}.draft-intro strong{color:var(--navy)}.draft-intro .draft-sample{white-space:nowrap;color:#8a2636;font-weight:700;font-size:10px}
+.draft-section.ph{font-size:14px}.draft-section .cnt{font:10px Arial;opacity:1;letter-spacing:0;text-transform:none}
+.draft-list{display:grid;gap:9px;padding:10px 0 0}
+.draft-card{display:grid;grid-template-columns:64px minmax(0,1fr);border:1px solid #8c9bb1;border-top:3px solid var(--team-color);border-radius:3px;background:#fff;box-shadow:0 2px 4px #0a1f4424;overflow:hidden}
+.dc-rank{display:flex;flex-direction:column;align-items:center;padding:11px 4px 8px;border-right:1px solid #081b39;color:#fff;background:linear-gradient(100deg,#254b86,#102649 60%,#0b1d39);box-shadow:inset 1px 0 #ffffff26}
+.dc-pick-label{font:italic 600 11px var(--f-head);letter-spacing:2px;color:#c7d5e9}.dc-rank>strong{font:600 57px/.95 var(--f-num);color:#fff;text-shadow:0 2px #000;margin:3px 0 8px}
+.dc-movement{min-width:34px;text-align:center;padding:2px 5px;border:1px solid #446086;border-radius:2px;font:bold 11px Arial;background:#06172b}.dc-movement.up{color:#b8ef99}.dc-movement.down{color:#ffa7ad}.dc-movement.same{color:#c0cad9}
+.dc-content{min-width:0}.dc-head{display:flex;align-items:center;gap:10px;padding:8px 12px;background:linear-gradient(#fff,#edf0f5 47%,#d8dfe9 52%,#f3f5f9);border-bottom:1px solid #aab6c7;box-shadow:inset 0 1px #fff}
+.dc-logo{width:43px;height:43px;object-fit:contain;flex:none;filter:drop-shadow(0 1px 0 #fff)}.dc-identity{min-width:0;flex:1}.dc-identity h2{margin:0;color:var(--navy);font:italic 600 23px/1.1 var(--f-head);text-transform:uppercase;letter-spacing:.25px}.dc-sub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;margin-top:4px;font:10px Arial}.dc-own{color:#5d697a}.dc-conf{color:#6c7685;font-size:9px;letter-spacing:.5px}.dc-via{display:inline-flex;align-items:center;gap:4px;color:#233e68;font-weight:700}.dc-via img{width:16px;height:16px;object-fit:contain}.dc-record{flex:none;text-align:center;min-width:57px;padding-left:10px;border-left:1px solid #aebccd}.dc-record strong{display:block;font:600 31px/.95 var(--f-num);color:var(--navy)}.dc-record small{display:block;font:bold 8px Arial;color:#647184;letter-spacing:.4px;margin-top:3px}
+.dc-statbar{display:grid;grid-template-columns:1fr 1fr 1fr 1.6fr 1fr;border-bottom:1px solid var(--line);background:linear-gradient(#fff,#f3f6fa)}.dc-stat{padding:7px 9px 6px;border-right:1px solid #dce2eb;min-width:0}.dc-stat:last-child{border-right:0}.dc-stat>span{display:block;font:bold 8px/1.25 Verdana;color:#5f6b7c;letter-spacing:.25px}.dc-stat>strong{display:block;font:500 26px/1.1 var(--f-num);color:var(--navy);margin:2px 0 0}.dc-stat>small{display:block;color:#6a7484;font:9px/1.3 Arial}.dc-stat em{font:700 10px Arial;color:#5b687b;font-style:normal}.dc-opponent>div{display:flex;align-items:center;gap:5px;min-height:30px}.dc-opponent img{width:25px;height:25px;object-fit:contain;flex:none}.dc-opponent strong{font:bold 11px/1.25 Arial;color:var(--navy)}.dc-streak>strong{font:bold 11px/1.3 Arial;margin:9px 0 7px}.dc-streak .dc-loss{color:var(--loss)}.dc-streak .dc-win{color:var(--win)}
+.dc-needs{display:flex;align-items:center;gap:9px;padding:6px 11px;border-bottom:1px solid #e0e5ed;background:#eef2f8}.dc-needs>span{font:italic 600 11px var(--f-head);letter-spacing:.3px;color:#334c73}.dc-needs>div{display:flex;gap:4px;flex-wrap:wrap}.dc-needs b{display:inline-flex;align-items:center;justify-content:center;min-width:26px;padding:2px 5px;border:1px solid #a9b6c9;border-radius:2px;background:linear-gradient(#fff,#dce3ee);font:bold 9px Arial;color:#213f6c;box-shadow:inset 0 1px #fff}
+.dc-comment{margin:0;padding:7px 11px 8px;color:#465166;font:11px/1.5 Arial}.dc-comment b{font:italic 600 11px var(--f-head);color:var(--navy);margin-right:8px;letter-spacing:.3px}
+.draft-foot{margin:12px 0 0;padding:9px 11px;border:1px solid #b8c4d6;border-left:3px solid var(--red);background:#eaf0f8;color:#4d5b70;font:10px/1.6 Arial}.draft-foot strong{color:var(--navy)}.draft-foot p{margin:0}.draft-foot p+p{margin-top:3px}.draft-foot a{text-decoration:underline}
+@media(max-width:900px){.dc-identity h2{font-size:22px}}
+@media(max-width:700px){.draft-hero{padding:10px;gap:8px}.draft-hero h1{font-size:22px}.draft-hero p{font-size:10px;line-height:1.4}.draft-hero .draft-icon{width:36px;height:41px;font-size:25px}.draft-season{min-width:57px;padding:5px}.draft-season b{font-size:24px}.draft-season span{font-size:8px}.draft-intro{display:block;padding:7px 9px;font-size:10px}.draft-sample{display:block;margin-top:3px}.draft-section.ph{font-size:13px;padding-right:8px}.draft-section .cnt{font-size:9px}.draft-list{gap:10px;padding-top:9px}.draft-card{display:block;position:relative}.dc-rank{position:absolute;left:0;top:0;width:44px;height:72px;padding:4px 3px;border-right:1px solid #afb9c7;border-bottom:1px solid #aab6c7;box-shadow:none}.dc-pick-label{font-size:8px;letter-spacing:1px}.dc-rank>strong{font-size:32px;line-height:.9;margin:1px 0 3px}.dc-movement{font-size:9px;min-width:28px;padding:1px 2px}.dc-head{padding:8px 7px 8px 50px;gap:6px;min-height:72px}.dc-logo{width:32px;height:32px}.dc-identity h2{font-size:18px;line-height:1.1}.dc-sub{gap:3px;margin-top:4px;font-size:9px}.dc-conf{display:none}.dc-via{font-size:8px;gap:2px}.dc-via img{width:12px;height:12px}.dc-record{min-width:44px;padding-left:6px}.dc-record strong{font-size:27px}.dc-record small{font-size:7px;letter-spacing:0}.dc-statbar{grid-template-columns:repeat(3,minmax(0,1fr))}.dc-stat{padding:7px 6px}.dc-stat>span{font-size:7px;letter-spacing:0}.dc-stat>small{font-size:8px}.dc-stat>strong{font-size:25px}.dc-stat:nth-child(3){border-right:0}.dc-opponent{grid-column:span 2;border-top:1px solid #dce2eb}.dc-opponent>div{min-height:26px}.dc-opponent strong{font-size:11px}.dc-streak{display:block;border-top:1px solid #dce2eb}.dc-streak>strong{margin:5px 0;font-size:11px}.dc-needs{padding:6px 7px;gap:7px}.dc-needs>span{font-size:10px;letter-spacing:0;max-width:90px}.dc-needs b{min-width:24px;font-size:8px;padding:2px 4px}.dc-needs>div{gap:3px}.dc-comment{font-size:11px;line-height:1.5;padding:8px}.dc-comment b{display:block;font-size:10px;margin:0 0 3px}.draft-foot{font-size:10px}.draft-hero::after{display:none}}
+
+.draft-hero{border-radius:4px}.draft-hero h1{overflow-wrap:anywhere}
+.draft-fresh{font:10px Arial;color:var(--muted);margin:0 0 8px;text-align:right}
+.draft-intro small{font-size:10px}.draft-intro button{flex:none}.draft-playoffs{margin-top:16px}
+.draft-playoff-note{margin:0;padding:8px 10px;border:1px solid #9aa7bd;border-top:0;color:#536178;background:#e9eef6;font:11px/1.5 Arial}
+.dc-identity h2 a{color:inherit}.dc-identity h2,.dc-stat a{overflow-wrap:anywhere}
+.dc-head>.logo,.dc-head>.logo-fb{width:43px;height:43px;flex:none;object-fit:contain}
+.dc-sub .logo,.dc-sub .logo-fb{width:16px;height:16px;flex:none;object-fit:contain}
+.dc-opponent .logo,.dc-opponent .logo-fb{width:25px;height:25px;flex:none}
+.dc-opponent a{font:bold 11px/1.25 Arial;color:var(--navy)}
+.dc-needs{flex-wrap:wrap}.dc-credit{margin-left:auto;white-space:nowrap;font:9px Arial;color:#546582;text-decoration:underline}
+.dc-candidate{display:inline-flex;align-items:center;gap:4px;margin-right:6px}.dc-candidate strong{font:bold 9px Arial;color:var(--navy)}
+.dc-rank>strong.range{font-size:29px;line-height:1.2;overflow-wrap:anywhere;text-align:center}
+@media(max-width:700px){
+ .dc-head>.logo,.dc-head>.logo-fb{width:32px;height:32px}.dc-sub .logo,.dc-sub .logo-fb{width:12px;height:12px}
+ .draft-intro{display:flex;align-items:flex-start;gap:8px}.draft-intro button{font-size:10px;padding:0 6px}
+ .dc-rank>strong.range{font-size:19px;margin:2px 0 4px}.dc-credit{font-size:8px}.draft-hero h1{font-size:22px}
+}
+
+/* Palmarés · cromados y títulos históricos de la franquicia */
+.palmares{margin-top:12px}.pal-summary{margin:0;border-bottom:1px solid var(--line)}
+.pal-summary .pal-total{background:linear-gradient(#fff8d8,#f2d477);border-color:#b28a2c}.pal-summary b{font-size:36px}
+.pal-row{display:grid;grid-template-columns:170px minmax(0,1fr);gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}
+.pal-row:nth-child(odd){background:#f0f3f8}.pal-label b{display:block;font:italic 600 15px var(--f-head);text-transform:uppercase;color:var(--navy)}
+.pal-label small{display:block;color:var(--muted);font:10px/1.4 Arial}.pal-years{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.pal-year{font:600 13px var(--f-head);color:#715100;padding:3px 8px;border:1px solid #c5a74d;border-radius:3px;background:linear-gradient(#fffbe9,#f0d780 48%,#e0bd54 52%,#f8e6a6);box-shadow:inset 0 1px #fff,0 1px 2px #0a1f4426}
+.pal-empty{color:var(--muted);font:12px Arial}.pal-notes{padding:10px 12px;color:var(--muted);font:10px/1.5 Arial;background:#f7f8fb}.pal-notes p{margin:0 0 4px}.pal-notes p:last-child{margin:0}.pal-notes a{text-decoration:underline}
+@media(max-width:640px){.pal-summary{gap:5px;padding:8px}.pal-summary div{flex-basis:80px;padding:6px 3px}.pal-summary b{font-size:30px}.pal-summary small{font-size:9px}.pal-row{grid-template-columns:minmax(0,1fr);gap:7px;padding:10px}.pal-year{padding:3px 7px}.pal-notes{padding:9px 10px}}
 </style>
 </head>
 <body>
@@ -879,6 +927,232 @@ function sortEntries(ents, lg, byConf){
 }
 
 /* =========================================================================
+   DRAFT NFL · orden provisorio, calendario y propiedad de las elecciones
+   ========================================================================= */
+const DRAFT = {season: 2026, year: 2027, tradesDate: '2026-10-30', needsDate: '2026-10-21', needsSource: 'https://profootballmania.com/nfl-draft/team-needs/'};
+// Prioridades editoriales de PFM, con fecha y atribución visibles. No son datos en vivo.
+const DRAFT_NEEDS = {
+  '24':['DT','CB','EDGE'], '10':['WR','IOL','CB'], '15':['QB','WR','CB'], '28':['CB','IOL','EDGE'],
+  '34':['OT','IOL','DT'], '21':['OT','TE','S'], '11':['QB','WR','DT'], '22':['QB','OT','WR'],
+  '27':['QB','DT','LB'], '18':['IOL','EDGE','QB'], '20':['QB','CB','EDGE'], '6':['EDGE','LB','RB'],
+  '13':['QB','WR','CB'], '14':['QB','OT','LB'], '1':['OT','CB','EDGE'], '33':['EDGE','S','IOL'],
+  '26':['OT','EDGE','IOL'], '17':['WR','OT','EDGE'], '29':['CB','EDGE','OT'], '9':['DT','CB','OT'],
+  '19':['QB','IOL','DT'], '30':['CB','OT','S'], '4':['EDGE','DT','LB'], '8':['CB','EDGE','OT'],
+  '5':['QB','WR','OT'], '23':['QB','CB','OT'], '7':['DT','LB','TE'], '3':['DT','EDGE','IOL'],
+  '12':['TE','OT','EDGE'], '2':['CB','DT','EDGE'], '25':['OT','CB','IOL'], '16':['DT','QB','CB'],
+};
+const DRAFT_POS = {QB:'Quarterback', RB:'Corredor', WR:'Receptor', TE:'Ala cerrada', OT:'Tackle ofensivo', IOL:'Interior de la línea ofensiva', DT:'Tackle defensivo', EDGE:'Pass rusher exterior', LB:'Linebacker', CB:'Cornerback', S:'Safety'};
+const DraftState = {baseline: undefined, force: false};
+
+function draftModel(groups, events, season){
+  const entries = new Map(), metadata = new Map(), gameMap = new Map();
+  for(const gr of arr(groups)) for(const e of arr(gr?.entries)){
+    if(e?.team?.id) entries.set(String(e.team.id), {e, conf: gr.parent || gr.name || '', division: gr.name || ''});
+  }
+  for(const e of arr(events)){
+    if(+e?.season?.year !== +season || ![2,3].includes(+e?.season?.type)) continue;
+    const c = arr(e.competitions)[0], competitors = arr(c?.competitors).filter(t => t?.team?.id);
+    if(competitors.length !== 2) continue;
+    const home = competitors.find(t => t.homeAway === 'home') || competitors[0], away = competitors.find(t => t !== home);
+    const status = c?.status?.type || e.status?.type || {}, state = status.state || 'pre';
+    if(/CANCEL|POSTPON|SUSPEND/i.test(status.name || '')) continue;
+    for(const t of competitors) metadata.set(String(t.team.id), {...metadata.get(String(t.team.id)), ...t.team});
+    const score = t => t?.score != null && String(t.score).trim() !== '' && Number.isFinite(+t.score) ? +t.score : null;
+    const hs = score(home), as = score(away), id = String(e.id || c?.id || '');
+    if(!id) continue;
+    const g = {id, type:+e.season.type, week:+e.week?.number || 0, date:e.date || c?.date, home:String(home.team.id), away:String(away.team.id), hs, as, state, done:!!status.completed && hs != null && as != null};
+    const old = gameMap.get(id), progress = x => x.done ? 2 : x.state === 'in' ? 1 : 0;
+    if(!old || progress(g) >= progress(old)) gameMap.set(id,g);
+  }
+  const regular = [...gameMap.values()].filter(g => g.type === 2), postseason = [...gameMap.values()].filter(g => g.type === 3 && g.done);
+  const rows = [...entries].map(([id,{e,conf,division}]) => {
+    const wins = sn(e,'wins'), losses = sn(e,'losses'), ties = Number.isFinite(sn(e,'ties')) ? sn(e,'ties') : 0;
+    const known = Number.isFinite(wins) && Number.isFinite(losses), games = known ? wins + losses + ties : null;
+    const seed = sn(e,'playoffSeed');
+    return {origin:{...metadata.get(id),...e.team,id}, conf, division, wins:known?wins:null, losses:known?losses:null, ties, games, pct:known ? (games ? (wins + ties/2)/games : 0) : null, record:known ? [wins,losses,...(ties?[ties]:[])].join('–') : 'Sin datos', seed, playoff:Number.isFinite(seed) && seed > 0 && seed <= 7, pf:sn(e,'pointsFor'), pa:sn(e,'pointsAgainst'), streak:sv(e,'streak'), pickStart:null, pickEnd:null};
+  });
+  const byId = new Map(rows.map(r => [r.origin.id,r]));
+  const opponent = (g,id) => byId.get(g.home === id ? g.away : g.home);
+  const strength = opponents => {
+    if(!opponents.length || opponents.some(r => !r || r.games == null)) return null;
+    const games = opponents.reduce((n,r) => n + r.games,0);
+    return games ? opponents.reduce((n,r) => n + r.wins + r.ties/2,0)/games : null;
+  };
+  for(const r of rows){
+    const games = regular.filter(g => g.home === r.origin.id || g.away === r.origin.id), played = games.filter(g => g.done);
+    r.scheduleCount = games.length; r.playedCount = played.length;
+    r.sos = strength(played.map(g => opponent(g,r.origin.id)));
+    r.remainingSos = strength(games.filter(g => !g.done).map(g => opponent(g,r.origin.id)));
+    r.sov = strength(played.filter(g => g.home === r.origin.id ? g.hs > g.as : g.as > g.hs).map(g => opponent(g,r.origin.id)));
+    const next = games.filter(g => !g.done && ['pre','in'].includes(g.state)).sort((a,b) => (a.state === 'in' ? -1 : b.state === 'in' ? 1 : 0) || Date.parse(a.date) - Date.parse(b.date))[0];
+    r.next = next ? {...next, opponent:opponent(next,r.origin.id)?.origin, homeAway:next.home === r.origin.id ? 'Local' : 'Visitante'} : null;
+    if(rows.every(t => Number.isFinite(t.pf) && Number.isFinite(t.pa))) r.scoringRank = 2 + rows.filter(t => t.pf > r.pf).length + rows.filter(t => t.pa < r.pa).length;
+  }
+  const different = (a,b) => a != null && b != null && Math.abs(a-b) > 1e-12;
+  const compareTie = (a,b) => {
+    if(a.sos == null || b.sos == null) return 0;
+    // El seed protege campeones divisionales: no sirve como desempate del Draft.
+    const games = regular.filter(g => g.done && [a.origin.id,b.origin.id].includes(g.home) && [a.origin.id,b.origin.id].includes(g.away));
+    if(games.length){
+      const wins = r => games.reduce((n,g) => n + (g.hs === g.as ? .5 : (g.home === r.origin.id ? g.hs > g.as : g.as > g.hs) ? 1 : 0),0);
+      if(wins(a) !== wins(b)) return wins(a) - wins(b);
+    }
+    const played = r => regular.filter(g => g.done && [g.home,g.away].includes(r.origin.id));
+    const aGames = played(a), bGames = played(b), ids = new Set(aGames.map(g => opponent(g,a.origin.id)?.origin.id));
+    const common = new Set(bGames.map(g => opponent(g,b.origin.id)?.origin.id).filter(id => ids.has(id)));
+    const commonPct = (r,gs,minimum=4) => {
+      const list = gs.filter(g => common.has(opponent(g,r.origin.id)?.origin.id));
+      return list.length >= minimum ? list.reduce((n,g) => n + (g.hs === g.as ? .5 : (g.home === r.origin.id ? g.hs > g.as : g.as > g.hs) ? 1 : 0),0)/list.length : null;
+    };
+    if(a.conf === b.conf){
+      const recordPct=(r,gs,field)=>{
+        const list=gs.filter(g=>opponent(g,r.origin.id)?.[field]===r[field]);
+        return list.length?list.reduce((n,g)=>n+(g.hs===g.as?.5:(g.home===r.origin.id?g.hs>g.as:g.as>g.hs)?1:0),0)/list.length:null;
+      };
+      const sameDivision=a.division===b.division;
+      if(sameDivision){
+        const ad=recordPct(a,aGames,'division'),bd=recordPct(b,bGames,'division');
+        if(different(ad,bd)) return ad-bd;
+        const ac=commonPct(a,aGames,1),bc=commonPct(b,bGames,1);
+        if(different(ac,bc)) return ac-bc;
+      }
+      const ac=recordPct(a,aGames,'conf'),bc=recordPct(b,bGames,'conf');
+      if(different(ac,bc)) return ac-bc;
+      if(!sameDivision){const ap=commonPct(a,aGames),bp=commonPct(b,bGames);if(different(ap,bp)) return ap-bp;}
+      if(different(a.sov,b.sov)) return a.sov-b.sov;
+      return 0; // Los criterios posteriores no calculados conservan el rango compartido.
+    }
+    const ap = commonPct(a,aGames), bp = commonPct(b,bGames);
+    if(different(ap,bp)) return ap-bp;
+    if(different(a.sov,b.sov)) return a.sov-b.sov;
+    if(different(a.scoringRank,b.scoringRank)) return b.scoringRank-a.scoringRank;
+    if([a.pf,a.pa,b.pf,b.pa].every(Number.isFinite) && a.pf-a.pa !== b.pf-b.pa) return a.pf-a.pa-b.pf+b.pa;
+    return 0; // No decidir una igualdad restante por nombre o ID: se muestra compartida.
+  };
+  const rank = (list,start) => {
+    list.sort((a,b) => (a.pct ?? 2) - (b.pct ?? 2) || (a.sos ?? 2) - (b.sos ?? 2));
+    for(let i=0;i<list.length;){
+      let end=i+1;
+      while(end<list.length && !different(list[i].pct,list[end].pct) && list[i].pct === list[end].pct && (list[i].sos === list[end].sos || !different(list[i].sos,list[end].sos) && list[i].sos != null && list[end].sos != null)) end++;
+      const tied=list.slice(i,end);
+      const orderable=tied.length === 1 || tied.length === 2 && compareTie(tied[0],tied[1]) !== 0;
+      if(orderable) tied.sort(compareTie);
+      tied.forEach((r,j) => { if(r.pct != null){r.pickStart=start+i+(orderable?j:0);r.pickEnd=start+i+(orderable?j:tied.length-1);} });
+      list.splice(i,tied.length,...tied); i=end;
+    }
+    return list;
+  };
+  const nonPlayoff=rank(rows.filter(r=>!r.playoff),1), playoff=rows.filter(r=>r.playoff);
+  const rounds={1:{size:6,start:19},2:{size:4,start:25},3:{size:2,start:29},5:{size:1,start:31}};
+  for(const g of postseason){
+    if(!rounds[g.week] || g.hs === g.as) continue;
+    const loser=byId.get(g.hs>g.as?g.away:g.home), winner=byId.get(g.hs>g.as?g.home:g.away);
+    if(loser?.playoff) loser.eliminated=g.week;
+    if(winner?.playoff) winner.minPick=Math.max(winner.minPick||19,({1:25,2:29,3:31,5:32})[g.week]);
+    if(g.week === 5 && winner?.playoff){winner.pickStart=32;winner.pickEnd=32;winner.eliminated=6;}
+  }
+  for(const [week,info] of Object.entries(rounds)){
+    const list=playoff.filter(r=>r.eliminated===+week);
+    if(list.length===info.size) rank(list,info.start);
+    else for(const r of list){r.pickStart=info.start;r.pickEnd=info.start+info.size-1;}
+  }
+  const ordered=[...nonPlayoff,...playoff.sort((a,b)=>(a.pickStart??33)-(b.pickStart??33) || (a.pct??2)-(b.pct??2) || String(a.origin.displayName||'').localeCompare(String(b.origin.displayName||'')))];
+  const earlier = (a,b) => a && b && (!a.playoff && b.playoff || a.pickEnd != null && a.pickEnd < (b.pickStart ?? b.minPick ?? (b.playoff?19:1)));
+  const dal=byId.get('6'), gb=byId.get('9'), best=earlier(dal,gb)?'6':earlier(gb,dal)?'9':null;
+  for(const r of ordered){
+    let owner=r.origin.id;
+    if(+season === DRAFT.season){
+      owner=({'11':'20','14':'5','3':'10','9':'6'})[owner] || owner;
+      if(['6','9'].includes(r.origin.id)) owner=best ? (r.origin.id===best?'20':'6') : null;
+    }
+    r.owner=owner?byId.get(owner)?.origin||null:null;
+    r.candidates=owner?[]:['20','6'].map(id=>byId.get(id)?.origin).filter(Boolean);
+    r.needs=arr(DRAFT_NEEDS[r.owner?.id]);
+  }
+  return {rows:ordered,regular,calendarComplete:rows.length===32 && rows.every(r=>r.scheduleCount===17),playedComplete:rows.every(r=>r.games!=null && r.games===r.playedCount),seedsComplete:rows.length===32 && rows.every(r=>Number.isInteger(r.seed)&&r.seed>=1&&r.seed<=16) && ['AFC','NFC'].every(c=>new Set(rows.filter(r=>r.conf===c).map(r=>r.seed)).size===16),remainingRanks:rows.filter(r=>r.remainingSos!=null).sort((a,b)=>b.remainingSos-a.remainingSos)};
+}
+
+function draftCard(r, context = {}){
+  const owner=r.owner||r.origin, via=r.owner && r.owner.id!==r.origin.id, name=t=>t?.displayName||t?.abbreviation||'Equipo';
+  const pct=v=>v==null?'—':v.toFixed(3).replace(/^0/,'');
+  const pick=r.pickStart==null?(r.playoff?'PL':'—'):r.pickStart===r.pickEnd?pad(r.pickStart):`${r.pickStart}–${r.pickEnd}`;
+  const previous=context.baseline?.positions?.[r.origin.id], delta=Number.isInteger(previous) && r.pickStart===r.pickEnd && r.pickStart!=null ? previous-r.pickStart : null;
+  const movement=delta==null||delta===0?'—':`${delta>0?'▲':'▼'} ${Math.abs(delta)}`, movementTitle=delta==null?'Sin comparación de puestos disponible':delta===0?'Sin cambios desde tu última visita':`${delta>0?'Subió':'Bajó'} ${Math.abs(delta)} desde tu última visita`;
+  const conditional=!r.owner && r.candidates.length;
+  const sub=conditional?`<span class="dc-via">Condicional: ${esc(r.candidates.map(t=>t.abbreviation).join(' / '))}</span>`:via?`<span class="dc-via">${logo(r.origin)}Vía <a href="#/nfl/team/${esc(r.origin.id)}">${esc(name(r.origin))}</a></span>`:'<span class="dc-own">Pick propio</span>';
+  const n=r.next, nextDate=n && Number.isFinite(Date.parse(n.date))?new Date(n.date):null;
+  const next=n?.opponent?`${logo(n.opponent)}<a href="#/nfl/game/${esc(n.id)}">${esc(name(n.opponent))}</a>`:'<strong>Sin partidos pendientes</strong>';
+  const nextDetail=n?`${n.state==='in'?'En juego':n.homeAway}${n.week?' · Sem '+n.week:''}${nextDate?' · '+fmtShort(nextDate)+' '+fmtTime(nextDate):''}`:'Temporada regular';
+  const streak=String(r.streak||'').match(/^([WLT])(\d+)$/i), streakText=streak?pluralize(+streak[2],...({W:['victoria','victorias'],L:['derrota','derrotas'],T:['empate','empates']}[streak[1].toUpperCase()])):'—';
+  const remainingRank=context.remainingRanks && r.remainingSos!=null ? context.remainingRanks.filter(x=>x.remainingSos>r.remainingSos+1e-12).length : -1;
+  let comment=conditional?'Esta elección se reparte entre Jets y Cowboys según cuál de los picks de Dallas y Green Bay quede antes en el orden final.':via?`El récord de ${name(r.origin)} determina esta posición; ${name(r.owner)} es quien recibe la elección.`:r.playoff && r.pickStart==null?'Está en zona de playoffs. Su puesto definitivo depende de hasta dónde avance en la postemporada.':r.pickStart!==r.pickEnd?'Comparte este rango por igualdad en los criterios disponibles. El desempate restante todavía no está resuelto.':`Con récord ${r.record}, hoy tendría la elección ${r.pickStart ?? 'por definir'} de la primera ronda.`;
+  if(!conditional && r.remainingSos!=null && r.sos!=null && Math.abs(r.remainingSos-r.sos)>.005) comment+=` El calendario que le queda es ${r.remainingSos>r.sos?'más exigente':'más accesible'} que el ya enfrentado.`;
+  const needChips=needs=>arr(needs).map(n=>`<b title="${esc(DRAFT_POS[n]||n)}">${esc(n)}</b>`).join('');
+  const needs=conditional?r.candidates.map(t=>`<span class="dc-candidate"><strong>${esc(t.abbreviation)}</strong>${needChips(DRAFT_NEEDS[t.id])}</span>`).join(''):needChips(r.needs);
+  return `<article class="draft-card" data-origin="${esc(r.origin.id)}" style="--team-color:${esc(hexOk(owner.color)||'#13306b')}"><div class="dc-rank"><span class="dc-pick-label">${r.playoff&&r.pickStart==null?'ZONA':'PICK'}</span><strong class="${pick.length>2?'range':''}">${esc(pick)}</strong><span class="dc-movement ${delta>0?'up':delta<0?'down':'same'}" title="${esc(movementTitle)}">${esc(movement)}</span></div><div class="dc-content">
+    <header class="dc-head">${logo(owner)}<div class="dc-identity"><h2><a href="#/nfl/team/${esc(owner.id)}">${esc(name(owner))}</a></h2><div class="dc-sub">${sub}<span class="dc-conf">${esc(r.division)}</span></div></div><div class="dc-record"><strong>${esc(r.record)}</strong><small>RÉCORD${via||conditional?' · '+esc(r.origin.abbreviation):''}</small></div></header>
+    <div class="dc-statbar"><div class="dc-stat"><span>PORC. VICTORIAS</span><strong>${pct(r.pct)}</strong><small>${via||conditional?esc(name(r.origin)):'Temporada regular'}</small></div><div class="dc-stat"><span>SOS ACTUAL</span><strong>${pct(r.sos)}</strong><small>Calendario enfrentado</small></div><div class="dc-stat"><span>SOS RESTANTE</span><strong>${pct(r.remainingSos)}${remainingRank>=0?` <em>${remainingRank+1}.º</em>`:''}</strong><small>1.º = más difícil</small></div><div class="dc-stat dc-opponent"><span>PRÓXIMO RIVAL${via||conditional?' · '+esc(r.origin.abbreviation):''}</span><div>${next}</div><small>${esc(nextDetail)}</small></div><div class="dc-stat dc-streak"><span>RACHA${via||conditional?' · '+esc(r.origin.abbreviation):''}</span><strong class="${streak?.[1]==='L'?'dc-loss':streak?.[1]==='W'?'dc-win':''}">${esc(streakText)}</strong><small>Últimos partidos</small></div></div>
+    <div class="dc-needs"><span>NECESIDADES · ${esc(r.owner?.abbreviation||'CONDICIONAL')}</span><div>${needs||'<small>Sin evaluación publicada</small>'}</div><a class="dc-credit" href="${esc(DRAFT.needsSource)}" target="_blank" rel="noopener noreferrer" title="Evaluación editorial de PFM · ${esc(DRAFT.needsDate)}">PFM · ${esc(DRAFT.needsDate.slice(8)+'/'+DRAFT.needsDate.slice(5,7))}</a></div><p class="dc-comment"><b>PANORAMA NFLARG</b>${esc(comment)}</p></div></article>`;
+}
+
+/* Palmarés de las franquicias NFL · años de temporada, no fechas de las finales.
+   Fuentes: Pro Football Hall of Fame (hasta 2024) y Seahawks (Super Bowl LX/2025).
+   Los registros siguen la franquicia; Browns conserva sus títulos y Ravens empieza en 1996. */
+const HONOURS_THROUGH = 2025;
+const TEAM_HONOURS = {
+  '1':{sb:[]},
+  '2':{sb:[],afl:[1964,1965]},
+  '3':{sb:[1985],nfl:[1921,1932,1933,1940,1941,1943,1946,1963]},
+  '4':{sb:[]},
+  '5':{sb:[],nfl:[1950,1954,1955,1964],aafc:[1946,1947,1948,1949]},
+  '6':{sb:[1971,1977,1992,1993,1995]},
+  '7':{sb:[1997,1998,2015]},
+  '8':{sb:[],nfl:[1935,1952,1953,1957]},
+  '9':{sb:[1966,1967,1996,2010],nfl:[1929,1930,1931,1936,1939,1944,1961,1962,1965,1966,1967]},
+  '10':{sb:[],afl:[1960,1961]},
+  '11':{sb:[1970,2006],nfl:[1958,1959,1968]},
+  '12':{sb:[1969,2019,2022,2023],afl:[1962,1966,1969]},
+  '13':{sb:[1976,1980,1983],afl:[1967]},
+  '14':{sb:[1999,2021],nfl:[1945,1951]},
+  '15':{sb:[1972,1973]},
+  '16':{sb:[],nfl:[1969]},
+  '17':{sb:[2001,2003,2004,2014,2016,2018]},
+  '18':{sb:[2009]},
+  '19':{sb:[1986,1990,2007,2011],nfl:[1927,1934,1938,1956]},
+  '20':{sb:[1968],afl:[1968]},
+  '21':{sb:[2017,2024],nfl:[1948,1949,1960]},
+  '22':{sb:[],nfl:[1925,1947]},
+  '23':{sb:[1974,1975,1978,1979,2005,2008]},
+  '24':{sb:[],afl:[1963]},
+  '25':{sb:[1981,1984,1988,1989,1994]},
+  '26':{sb:[2013,2025]},
+  '27':{sb:[2002,2020]},
+  '28':{sb:[1982,1987,1991],nfl:[1937,1942]},
+  '29':{sb:[]}, '30':{sb:[]}, '33':{sb:[2000,2012]}, '34':{sb:[]},
+};
+function teamHonours(id,season){
+  const raw=TEAM_HONOURS[String(id)], cutoff=Number.isInteger(+season)?Math.min(+season,HONOURS_THROUGH):HONOURS_THROUGH;
+  const result={known:!!raw,cutoff};
+  for(const k of ['sb','nfl','afl','aafc']) result[k]=arr(raw?.[k]).filter(y=>y<=cutoff);
+  const years=[...new Set([...result.sb,...result.nfl,...result.afl,...result.aafc])];
+  result.total=years.length; result.last=years.length?Math.max(...years):null;
+  return result;
+}
+function teamHonoursHTML(id,season){
+  const h=teamHonours(id,season);
+  if(!h.known) return emptyBox('Palmarés no disponible','Todavía no hay un registro verificado para esta franquicia.');
+  const row=(title,subtitle,years,empty)=>`<div class="pal-row"><div class="pal-label"><b>${esc(title)}</b><small>${esc(subtitle)}</small></div><div class="pal-years">${years.length?[...years].reverse().map(y=>`<span class="pal-year">★ ${y}</span>`).join(''):`<span class="pal-empty">${esc(empty)}</span>`}</div></div>`;
+  return `<section class="palmares" aria-label="Palmarés de la franquicia"><div class="ph">★ Palmarés<span class="sp"></span><span class="cnt">Hasta la temporada ${h.cutoff}</span></div><div class="box">
+    <div class="sumst pal-summary"><div class="pal-total"><b>${h.total}</b><small>Temporadas campeón</small></div><div><b>${h.sb.length}</b><small>Super Bowls</small></div><div><b>${h.last??'—'}</b><small>Último título</small></div></div>
+    ${row('Super Bowls','Desde la temporada 1966',h.sb,'Todavía no ganó el Super Bowl.')}
+    ${h.nfl.length?row('Campeonatos NFL','Antes de la fusión de 1970',h.nfl,''):''}
+    ${h.afl.length?row('Campeonatos AFL','Liga que se fusionó con la NFL',h.afl,''):''}
+    ${h.aafc.length?row('Campeonatos AAFC','All-America Football Conference',h.aafc,''):''}
+    <div class="pal-notes"><p>Los años corresponden a la temporada, aunque la final se juegue al año siguiente. La historia incluye las antiguas ciudades y nombres de la franquicia.</p><p>El total cuenta temporadas únicas: si ganó el campeonato NFL/AFL y el Super Bowl en el mismo año, esa temporada se cuenta una sola vez.</p><p>Fuentes: <a href="https://www.profootballhof.com/nfl-champions" target="_blank" rel="noopener noreferrer">Pro Football Hall of Fame</a> · <a href="https://www.seahawks.com/news/2025-the-seahawks-are-super-bowl-lx-champions" target="_blank" rel="noopener noreferrer">Super Bowl LX</a>. Registro verificado hasta ${HONOURS_THROUGH}.</p></div>
+    </div></section>`;
+}
+
+/* =========================================================================
    NORMALIZACIÓN DE PARTIDOS
    ========================================================================= */
 function teamLogo(t){
@@ -1074,13 +1348,13 @@ async function renderSidebar(force){
   const lg = LG[state.sideLg] && LG[state.sideLg].ok !== false ? LG[state.sideLg] : (visible()[0] || LG.nfl);
   const r = state.route;
   const sel = state.season && state.season !== curSeason(lg) ? state.season : null;
-  const active = r.lg || (r.view === 'day' ? 'home' : r.view === 'foro' ? 'foro' : '');
+  const active = r.view === 'draft' ? 'draft' : r.lg || (r.view === 'day' ? 'home' : r.view === 'foro' ? 'foro' : '');
   const key = lg.key + '|' + active + '|' + (sel || '') + '|' + (r.view === 'team' ? r.id : '') + '|' + visible().length;
   if(!force && key === state.sideKey) return;
   state.sideKey = key;
   const side = $('#side');
   const lgList = `<li><a href="#/hoy" class="${active === 'home' ? 'on' : ''}"><span class="lgbadge">★</span> Hoy · Todas</a></li>`
-    + visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === active ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>`).join('')
+    + visible().map(l => `<li><a href="#/${l.key}/partidos" class="${l.key === active ? 'on' : ''}">${lgLogo(l)} ${esc(l.name)}</a></li>${l.key === 'nfl' ? `<li><a href="#/nfl/draft" class="${active === 'draft' ? 'on' : ''}"><span class="lgbadge">★</span> Draft NFL ${DRAFT.year}</a></li>` : ''}`).join('')
     + `<li><a href="#/foro" class="${active === 'foro' ? 'on' : ''}"><span class="lgbadge">✉</span> Foro</a></li>`;
   const sbc = k => state.sbClosed.has(k) ? 'closed' : '';
   const s = sel || curSeason(lg);
@@ -1116,7 +1390,8 @@ async function renderSeasonSelect(){
   const lg = LG[state.route.lg] || LG[state.sideLg] || LG.nfl;
   const sel = $('#seasonSel');
   const years = await seasonsFor(lg).catch(() => [curSeason(lg)]);
-  const val = state.route.season || state.season || curSeason(lg);
+  sel.disabled = state.route.view === 'draft';
+  const val = state.route.view === 'draft' ? DRAFT.season : state.route.season || state.season || curSeason(lg);
   const list = years.includes(val) ? years : [val, ...years];
   sel.innerHTML = list.map(y => `<option value="${y}" ${y === val ? 'selected' : ''}>${y}${y === curSeason(lg) ? ' ★' : ''}</option>`).join('');
 }
@@ -1187,9 +1462,10 @@ function parseHash(){
     case 'partidos': return {view: 'league', tab: 'partidos', lg, season: num(parts[2]), stype: num(parts[3]), week: num(parts[4])};
     case 'posiciones': return {view: 'league', tab: 'posiciones', lg, season: num(parts[2])};
     case 'stats': return {view: 'league', tab: 'stats', lg, season: num(parts[2])};
+    case 'draft': return lg === 'nfl' ? {view: 'draft', lg, season:DRAFT.season} : {view: 'notfound'};
     case 'team':
       if(parts[3] === 'foro' && lg === 'nfl') return {view: 'team', lg, id: parts[2], tab: 'foro', season: null, ...parseForoRest(parts.slice(4))};
-      return {view: 'team', lg, id: parts[2], tab: ['plantel', 'fixture', 'stats'].includes(parts[3]) ? parts[3] : 'plantel', season: num(parts[4])};
+      return {view: 'team', lg, id: parts[2], tab: ['plantel', 'fixture', 'stats', ...(lg === 'nfl' ? ['palmares'] : [])].includes(parts[3]) ? parts[3] : 'plantel', season: num(parts[4])};
     case 'player': return {view: 'player', lg, id: parts[2]};
     case 'game': return {view: 'game', lg, id: parts[2], foroLink: parts[3] === 'foro', ...parseForoRest(parts[3] === 'foro' ? parts.slice(4) : [])};
     default: return {view: 'notfound'};
@@ -1224,6 +1500,48 @@ async function route(silent = false, preserveForo = false){
    VISTAS
    ========================================================================= */
 const VIEWS = {};
+
+/* ---------- Draft NFL ---------- */
+function draftHead(){
+  return `<div class="draft-hero"><span class="draft-icon" aria-hidden="true">★</span><div><h1>Draft · Así elegirían hoy</h1><p>Primera ronda · Temporada NFL ${DRAFT.season}</p></div><div class="draft-season"><span>DRAFT NFL</span><b>${DRAFT.year}</b></div></div><div class="tabs"><a class="tab" href="#/nfl/partidos/${DRAFT.season}">Partidos</a><a class="tab" href="#/nfl/posiciones/${DRAFT.season}">Posiciones</a><a class="tab" href="#/nfl/stats/${DRAFT.season}">Estadísticas</a><a class="tab on" href="#/nfl/draft">Draft</a><a class="tab" href="#/nfl/hoy">Hoy</a></div>`;
+}
+VIEWS.draft = async (r,el,ctx) => {
+  const head=draftHead(), force=DraftState.force;
+  DraftState.force=false;
+  if(!ctx.silent) paint(ctx,el,head+spinner('Calculando el orden del Draft…'));
+  else if(alive(ctx) && $('#draftNotice')) $('#draftNotice').textContent='Consultando los resultados…';
+  try{
+    const opt={force,noStale:force};
+    const [stand,year,next]=await Promise.all([
+      API.get(`${STAND}/nfl/standings?${qs({season:DRAFT.season,level:3})}`,opt),
+      getSite(sbUrl(LG.nfl,{dates:DRAFT.season,limit:500}),opt),
+      getSite(sbUrl(LG.nfl,{dates:DRAFT.season+1,limit:500}),opt),
+    ]);
+    const model=draftModel(standingsGroups(stand),[...arr(year.events),...arr(next.events)],DRAFT.season);
+    if(!model.calendarComplete || !model.seedsComplete) throw new ApiError('ESPN no entregó el calendario o las posiciones completas de los 32 equipos. Probá actualizar en unos minutos.',0);
+    if(!model.playedComplete) throw new ApiError('ESPN todavía está sincronizando los resultados con las posiciones. Probá actualizar en unos minutos.',0);
+    if(!alive(ctx)) return;
+    if(DraftState.baseline === undefined){
+      try{ const saved=JSON.parse(localStorage.getItem(`nfa:draft:${DRAFT.year}`)||'null'); DraftState.baseline=saved?.year===DRAFT.year && Number.isFinite(saved.time) && saved.positions && typeof saved.positions==='object'?saved:null; }
+      catch(e){ DraftState.baseline=null; }
+    }
+    const time=Date.now(), context={...DRAFT,baseline:DraftState.baseline,remainingRanks:model.remainingRanks};
+    const positions=Object.fromEntries(model.rows.map(row=>[row.origin.id,row.pickStart===row.pickEnd?row.pickStart:null]));
+    try{localStorage.setItem(`nfa:draft:${DRAFT.year}`,JSON.stringify({year:DRAFT.year,time,positions}));}catch(e){}
+    state.liveInView=model.regular.some(g=>g.state==='in'||g.state==='pre' && Date.parse(g.date)-time<15*60e3 && time-Date.parse(g.date)<8*3600e3);
+    const first=model.rows.filter(row=>!row.playoff), playoff=model.rows.filter(row=>row.playoff);
+    const compare=DraftState.baseline?`Flechas: desde tu última visita (${fmtDate(new Date(DraftState.baseline.time))}).`:'Las flechas comparan con tu última visita; en la primera consulta no hay comparación.';
+    const list=rows=>`<div class="draft-list">${rows.map(row=>draftCard(row,context)).join('')}</div>`;
+    paint(ctx,el,head+`<div class="draft-intro"><div><strong>Orden provisorio.</strong> Solo cuentan partidos terminados.<br><small>${esc(compare)}</small></div><button class="btn" onclick="App.draftRefresh()">Actualizar</button></div><p class="draft-fresh" id="draftNotice">Consulta: ${esc(fmtDate(new Date(time)))} · ${esc(fmtTime(new Date(time)))}</p>
+      <div class="ph draft-section">★ Primera ronda<span class="sp"></span><span class="cnt">${first.length} elecciones · Fuera de playoffs</span></div>${list(first)}
+      <div class="ph draft-section draft-playoffs">★ Zona de playoffs<span class="sp"></span><span class="cnt">${playoff.length} elecciones</span></div><p class="draft-playoff-note">PL = clasificado si la temporada terminara hoy. Los puestos 19–32 se definen por los resultados de la postemporada.</p>${list(playoff)}
+      <div class="draft-foot"><p><strong>Cómo se ordena:</strong> menor porcentaje de victorias, luego menor SOS (récord combinado de los rivales ya enfrentados). Los empates cuentan media victoria. Si los datos no resuelven un desempate, se muestra el rango compartido.</p><p><strong>Picks intercambiados:</strong> récord, racha y calendario del equipo de origen; necesidades del dueño de la elección. Jets recibe el mejor pick entre Dallas y Green Bay; cuando el orden todavía no permite decidirlo, ambos figuran como condicionales.</p><p><strong>Fuentes:</strong> resultados y posiciones ESPN; <a href="${esc(DRAFT.needsSource)}" target="_blank" rel="noopener noreferrer">necesidades editoriales PFM (${esc(fmtDate(parseYmd(DRAFT.needsDate.replace(/-/g,''))))})</a>. Operaciones verificadas al ${esc(fmtDate(parseYmd(DRAFT.tradesDate.replace(/-/g,''))))}: <a href="https://www.newyorkjets.com/news/jets-cowboys-trade-first-round-pick-second-round-pick-quinnen-williams-mazi-smith-11-04-2025" target="_blank" rel="noopener noreferrer">Jets</a> · <a href="https://www.nfl.com/news/jets-trade-dt-quinnen-williams-to-cowboys-for-first-round-pick" target="_blank" rel="noopener noreferrer">Condición DAL/GB</a> · <a href="https://browns.1rmg.com/press-releases/browns-agree-to-trade-with-rams/" target="_blank" rel="noopener noreferrer">Browns/Rams</a> · <a href="https://www.tennesseetitans.com/team/transactions/" target="_blank" rel="noopener noreferrer">Titans/Bears</a>.</p><p>Las necesidades son una evaluación editorial fechada; no se recalculan con cada resultado. El panorama de cada tarjeta resume su situación en este tablero.</p></div>`);
+  }catch(e){
+    if(!alive(ctx)) return;
+    if(ctx.silent && el.querySelector('.draft-card')){ const notice=$('#draftNotice'); if(notice) notice.textContent='No se pudo actualizar. Se conserva la última consulta. Volvé a intentar en unos minutos.'; }
+    else paint(ctx,el,head+errorBox(e,'No se pudo cargar el Draft'));
+  }
+};
 
 /* ---------- Home / Partidos del día ---------- */
 async function fetchDay(lg, date){
@@ -1322,12 +1640,13 @@ VIEWS.day = async (r, el, ctx) => {
 /* ---------- Liga ---------- */
 function leagueHead(lg, tab, season){
   const tabs = [['partidos', 'Partidos'], ['posiciones', 'Posiciones'], ['stats', 'Estadísticas']];
+  if(lg.key === 'nfl' && season === DRAFT.season) tabs.push(['draft','Draft']);
   return `<div class="hero" style="--tc:#0f2a62">
       ${lg.logo ? `<img class="wm" src="${esc(lg.logo)}" alt="" onerror="this.remove()">` : ''}
       ${lg.logo ? `<img class="big" src="${esc(lg.logo)}" alt="" onerror="this.remove()">` : ''}
       <div><h1>${esc(lg.full)}</h1><div class="meta"><span class="chip gold">★ Temporada ${season}</span>${season === curSeason(lg) ? '<span class="chip dark">Actual</span>' : '<span class="chip dark">Histórica</span>'}</div></div>
     </div>
-    <div class="tabs">${tabs.map(([k, t]) => `<a class="tab ${k === tab ? 'on' : ''}" href="#/${lg.key}/${k}/${season}">${t}</a>`).join('')}<a class="tab" href="#/${lg.key}/hoy">Hoy</a></div>`;
+    <div class="tabs">${tabs.map(([k, t]) => `<a class="tab ${k === tab ? 'on' : ''}" href="#/${lg.key}/${k}${k==='draft'?'':'/'+season}">${t}</a>`).join('')}<a class="tab" href="#/${lg.key}/hoy">Hoy</a></div>`;
 }
 VIEWS.league = async (r, el, ctx) => {
   const lg = LG[r.lg];
@@ -1887,7 +2206,7 @@ VIEWS.team = async (r, el, ctx) => {
     }
   }catch(e){}
   const c1 = teamColor(t);
-  const tabs = [['plantel', 'Plantel'], ['fixture', 'Fixture / Resultados'], ['stats', 'Estadísticas']].concat(lg.key === 'nfl' ? [['foro', '💬 Foro']] : []);
+  const tabs = [['plantel', 'Plantel'], ['fixture', 'Fixture / Resultados'], ['stats', 'Estadísticas']].concat(lg.key === 'nfl' ? [['palmares','Palmarés'],['foro', '💬 Foro']] : []);
   const head = `<div class="crumb"><a href="#/${lg.key}/partidos">${esc(lg.name)}</a> › <a href="#/${lg.key}/posiciones/${season}">Posiciones</a> › ${esc(t.displayName || '')}</div>
     <div class="hero" style="--tc:${c1}">
       ${teamLogo(t) ? `<img class="wm" src="${esc(teamLogo(t))}" alt="" onerror="this.remove()">` : ''}
@@ -1900,7 +2219,8 @@ VIEWS.team = async (r, el, ctx) => {
   if(!ctx.silent) paint(ctx, el, head + spinner());
   let body;
   try{
-    if(r.tab === 'foro') body = await teamForum(lg, {...t, id: t.id || r.id}, r, ctx);
+    if(r.tab === 'palmares' && lg.key === 'nfl') body = teamHonoursHTML(r.id,season);
+    else if(r.tab === 'foro') body = await teamForum(lg, {...t, id: t.id || r.id}, r, ctx);
     else if(r.tab === 'plantel') body = await teamRoster(lg, r.id, season, isCur);
     else if(r.tab === 'fixture') body = await teamFixture(lg, r.id, season, ctx);
     else body = await teamStats(lg, r.id, season, isCur);
@@ -2777,6 +3097,7 @@ window.App = {
   ...ForoActions,
   ...NotifActions,
   gamecastReplay(){ if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) $('#gcMotion')?.beginElement?.(); },
+  draftRefresh(){ if(state.route.view === 'draft'){ DraftState.force=true; route(true); } },
   retry(){ if(!visible().length) state.readyP = null; route(); },
   sideRetry(){ state.sideKey = ''; renderSidebar(true); },
   setFilter(k){ state.filter = k; route(true); },
