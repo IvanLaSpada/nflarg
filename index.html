@@ -679,8 +679,8 @@ const LEAGUES = [
   {key:'ufl', slug:'ufl', name:'UFL', full:'United Football League', minSeason:2024},
   {key:'cfl', slug:'cfl', name:'CFL', full:'Canadian Football League', minSeason:2005},
 ];
-// Logos de liga que el scoreboard de ESPN no trae
-const LG_LOGO = {cfl: 'https://a.espncdn.com/i/teamlogos/leagues/500/cfl.png'};
+// Logos de liga que el scoreboard de ESPN no trae (ESPN no tiene logo de la CFL: se ve el recuadro "CFL")
+const LG_LOGO = {};
 const LG = Object.fromEntries(LEAGUES.map(l => [l.key, l]));
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports/football';
 const STAND = 'https://site.api.espn.com/apis/v2/sports/football';
@@ -1255,8 +1255,9 @@ const LEAGUE_HONOURS = (() => {
       sources: [['NCAA.com', 'https://www.ncaa.com/history/football/fcs']],
     },
     ufl: {
-      through: 2025, teamLeagues: ['ufl'], title: 'Campeones de la UFL', since: 'Desde 2024',
-      rows: () => [{y: 2024, w: 'Birmingham Stallions', l: 'San Antonio Brahmas', inst: 'Final UFL'}, {y: 2025, w: 'DC Defenders', l: 'Michigan Panthers', inst: 'Final UFL'}],
+      through: 2026, teamLeagues: ['ufl'], title: 'Campeones de la UFL', since: 'Desde 2024',
+      rows: () => [{y: 2024, w: 'Birmingham Stallions', l: 'San Antonio Brahmas', inst: 'Final UFL'}, {y: 2025, w: 'DC Defenders', l: 'Michigan Panthers', inst: 'Final UFL'},
+        {y: 2026, w: 'Louisville Kings', l: 'DC Defenders', inst: 'United Bowl'}],
       ranking: cutoff => countBy(LEAGUE_HONOURS.ufl.rows(), cutoff),
       rankCols: {n: 'Títulos'},
       extra: cutoff => ({title: 'Ligas que formaron la UFL (USFL y XFL)', rows: [
@@ -1316,25 +1317,39 @@ async function findFinalGame(lgKey, y){
   const lg = LG[lgKey], H = LEAGUE_HONOURS[lgKey];
   const row = H.rows().find(r => r.y === y && !/USFL|XFL/.test(r.inst));
   if(!lg || !row) return {fallback: `#/${lgKey}/partidos/${y}`};
-  const first = await API.get(sbUrl(lg, {dates: y, seasontype: 3, week: 1}));
+  const first = await API.get(sbUrl(lg, {dates: y, seasontype: 3, week: 1})).catch(() => null);   // un error momentáneo no corta la búsqueda
   const cal = arr(arr(first.leagues)[0]?.calendar).find(c => String(c?.value) === '3');
   const weeks = [...new Set(arr(cal?.entries).map(e => num(e.value)).filter(Boolean))].sort((a, b) => b - a);
   const order = weeks.length ? weeks : (lgKey === 'nfl' ? [5, 4, 3, 2, 1] : [3, 2, 1]);
   const loose = lgKey === 'cfl' || lgKey === 'ufl';
+  const key = v => norm(v).replace(/[^a-z0-9]/g, '');   // "D.C. Defenders" = "DC Defenders"
   const isTeam = (c, ref) => {
     if(ref == null) return false;
     if(typeof ref === 'number') return String(c.id || c.team?.id) === String(ref);
-    const n = norm(ref), t = c.team || {};
-    if([t.displayName, t.location, t.shortDisplayName].some(v => v && norm(v) === n)) return true;
-    return loose && !!t.location && n.startsWith(norm(t.location));   // la CFL cambió nombres (ej. Edmonton)
+    const n = key(ref), t = c.team || {};
+    if([t.displayName, t.location, t.shortDisplayName].some(v => v && key(v) === n)) return true;
+    return loose && !!t.location && n.startsWith(key(t.location));   // la CFL cambió nombres (ej. Edmonton)
+  };
+  const pick = d => {
+    const hits = arr(d?.events).filter(ev => {
+      const cs = arr(arr(ev.competitions)[0]?.competitors);
+      return cs.some(c => isTeam(c, row.w)) && (row.l == null || cs.some(c => isTeam(c, row.l))) && (row.l != null || ev.status?.type?.completed !== false);
+    });
+    return (hits.find(ev => +ev.season?.type === 3) || hits[0])?.id || null;   // ESPN a veces duplica la final como temporada regular
   };
   for(const w of order){
     const d = w === 1 ? first : await API.get(sbUrl(lg, {dates: y, seasontype: 3, week: w})).catch(() => null);
-    for(const ev of arr(d?.events)){
-      const cs = arr(arr(ev.competitions)[0]?.competitors);
-      const hasW = cs.some(c => isTeam(c, row.w)), hasL = row.l == null || cs.some(c => isTeam(c, row.l));
-      if(hasW && hasL && (row.l != null || ev.status?.type?.completed !== false)) return {id: ev.id};
-    }
+    const id = pick(d); if(id) return {id};
+  }
+  // En temporadas viejas ESPN no responde por semana de playoffs, pero sí por fecha: se prueban los domingos habituales de cada final.
+  const sundays = (from, to) => { const out = []; for(let d = new Date(from); d <= to; d = addDays(d, 1)) if(d.getDay() === 0) out.push(new Date(d)); return out; };
+  let days = [];
+  if(lgKey === 'nfl' && y >= 1966) days = sundays(new Date(y + 1, 0, 7), new Date(y + 1, 1, 14));
+  else if(lgKey === 'nfl' && y >= 1933) days = sundays(new Date(y, 11, 10), new Date(y + 1, 0, 10));
+  else if(lgKey === 'cfl') days = sundays(new Date(y, 10, 14), new Date(y, 11, 5));
+  for(const day of days.reverse()){
+    const d = await API.get(sbUrl(lg, {dates: ymd(day)})).catch(() => null);
+    const id = pick(d); if(id) return {id};
   }
   return {fallback: `#/${lgKey}/partidos/${y}/3/${order[0]}`};
 }
@@ -1764,24 +1779,31 @@ VIEWS.draft = async (r,el,ctx) => {
 };
 
 /* ---------- Home / Partidos del día ---------- */
-async function fetchDay(lg, date){
-  const from = ymd(addDays(date, -1)), to = ymd(addDays(date, 1));
-  let d;
+/* ESPN rechaza los rangos de fechas (error 400): se piden los días por separado. Las fechas de ESPN son del
+   horario del Este; para acomodar los partidos a la zona del navegador se piden el día anterior, el elegido y el siguiente. */
+async function fetchDates(lg, days){
   const lim = lg.group ? {} : {limit: 500};
-  try{ d = await API.get(sbUrl(lg, {dates: `${from}-${to}`, ...lim})); }
-  catch(e){ d = await API.get(sbUrl(lg, {dates: ymd(date), ...lim})); }
-  const all = arr(d.events).map(e => normGame(e, lg.key));
+  const res = await Promise.all(days.map(d => API.get(sbUrl(lg, {dates: ymd(d), ...lim})).then(x => x, e => ({error: e}))));
+  if(res.every(x => x.error)) throw res[0].error;
+  const seen = new Set();
+  return res.flatMap(x => arr(x.events)).filter(e => e && !seen.has(e.id) && seen.add(e.id));
+}
+async function fetchDay(lg, date){
+  const lim = lg.group ? {} : {limit: 500};
+  const all = (await fetchDates(lg, [addDays(date, -1), date, addDays(date, 1)])).map(e => normGame(e, lg.key));
   // Filtra por el día en la zona horaria local del navegador
   const games = all.filter(g => sameDay(g.date, date)).sort((a, b) => a.date - b.date);
   // Próximo partido de la liga después de este día (para ligas sin partidos hoy)
   const end = addDays(startOfDay(date), 1);
-  const cands = all.concat(arr(lg.probe?.events).map(e => normGame(e, lg.key))).filter(g => g.date >= end && g.state === 'pre' && !/POSTPONED|CANCEL/.test(g.statusName));
+  const cands = all.concat(arr(lg.probe?.events).map(e => normGame(e, lg.key))).filter(g => g.date >= end && !/POSTPONED|CANCEL/.test(g.statusName));
   let next = cands.sort((a, b) => a.date - b.date)[0] || null;
   if(!next && !games.length){
-    try{
-      const nd = await API.get(sbUrl(lg, {dates: `${ymd(addDays(date, 1))}-${ymd(addDays(date, 12))}`, ...lim}));
-      next = arr(nd.events).map(e => normGame(e, lg.key)).filter(g => g.date >= end && g.state === 'pre' && !/POSTPONED|CANCEL/.test(g.statusName)).sort((a, b) => a.date - b.date)[0] || null;
-    }catch(e){}
+    for(let i = 2; i <= 12 && !next; i++){
+      try{
+        const nd = await API.get(sbUrl(lg, {dates: ymd(addDays(date, i)), ...lim}));
+        next = arr(nd.events).map(e => normGame(e, lg.key)).filter(g => g.date >= end && !/POSTPONED|CANCEL/.test(g.statusName)).sort((a, b) => a.date - b.date)[0] || null;
+      }catch(e){ break; }
+    }
   }
   return {games, next};
 }
@@ -2110,8 +2132,9 @@ function gamecastModel(d, g){
   if(/safety/i.test(type)) label = 'SAFETY';
   const team = possession === g.away.id ? g.away.team : possession === g.home.id ? g.home.team : null;
   const playTeam = String(play.start?.team?.id || play.driveTeam || '') === g.away.id ? g.away.team : g.home.team;
-  const model = {play, possession, ball, from, to, down, distance, direction, firstDown, actor, yards, label, pathKind, summary, team, playTeam,
-    spot: current.possessionText || (ball == null ? 'Ubicación no disponible' : realYd === half ? `Yarda ${half}` : `${realYd < half ? tAbbr(g.away.team) : tAbbr(g.home.team)} ${realYd < half ? realYd : gcLen(g) - realYd}`),
+  const goal = /goal/i.test(current.downDistanceText || current.shortDownDistanceText || '');
+  const model = {goal, play, possession, ball, from, to, down, distance, direction, firstDown, actor, yards, label, pathKind, summary, team, playTeam,
+    spot: /\s0$/.test(current.possessionText || '') ? 'Zona de anotación' : /^\s*5[05]\s*$/.test(current.possessionText || '') ? 'Mediocampo' : current.possessionText || (ball == null ? 'Ubicación no disponible' : realYd === half ? `Yarda ${half}` : `${realYd < half ? tAbbr(g.away.team) : tAbbr(g.home.team)} ${realYd < half ? realYd : gcLen(g) - realYd}`),
     key: String(play.id || play.sequenceNumber || [play.period?.number, play.clock?.displayValue, play.text].join(':'))};
   // ESPN puede completar el retrato o corregir una jugada sin cambiar id ni modified.
   model.signature = JSON.stringify([model.key, model.spot, from, to, ball, firstDown, down, distance, possession, label, yards, summary, actor?.displayName, actor?.headshot, g.state]);
@@ -2160,7 +2183,7 @@ function gamecastHTML(d, g, animate = true){
   const hasPlay = !!m.play.id || !!m.play.type;
   return `<section class="gc" id="gamecastBox" data-game="${esc(g.id)}" data-play="${esc(m.key)}" data-signature="${esc(m.signature)}" aria-label="Cancha del partido">
     <div class="ph"><span>★ GAMECAST</span><small>NFLARG · CENTRO DEL PARTIDO</small></div>
-    <div class="gc-top"><span class="gc-possession">${m.team ? logo(m.team) : ''}<span>${m.team ? `${m.direction < 0 ? '◀ ' : ''}${esc(tName(m.team))}${m.direction > 0 ? ' ▶' : ''}` : (g.state === 'pre' ? 'Todavía no empezó' : g.state === 'post' ? 'Terminado' : 'Esperando posesión')}</span></span><span>${m.ball == null && !(m.down >= 1) ? (g.state === 'pre' ? 'Previa del partido' : g.state === 'post' ? 'Partido finalizado' : 'Esperando la próxima jugada') : `${m.down >= 1 && m.down <= 4 ? `${m.down}º y ${esc(m.distance ?? '—')}` : g.state === 'post' ? 'FINAL' : '—'} <b>· ${esc(m.spot)}</b>`}</span><span class="gc-clock">${esc(statusInfo(g).txt)}</span></div>
+    <div class="gc-top"><span class="gc-possession">${m.team ? logo(m.team) : ''}<span>${m.team ? `${m.direction < 0 ? '◀ ' : ''}${esc(tName(m.team))}${m.direction > 0 ? ' ▶' : ''}` : (g.state === 'pre' ? 'Todavía no empezó' : g.state === 'post' ? 'Terminado' : 'Esperando posesión')}</span></span><span>${m.ball == null && !(m.down >= 1) ? (g.state === 'pre' ? 'Previa del partido' : g.state === 'post' ? 'Partido finalizado' : 'Esperando la próxima jugada') : `${m.down >= 1 && m.down <= 4 ? `${m.down}º y ${m.goal ? 'gol' : esc(m.distance ?? '—')}` : g.state === 'post' ? 'FINAL' : '—'} <b>· ${esc(m.spot)}</b>`}</span><span class="gc-clock">${esc(statusInfo(g).txt)}</span></div>
     <div class="gc-stage"><svg viewBox="0 0 1000 410" role="img" aria-labelledby="gcTitle">
       <title id="gcTitle">Cancha de ${esc(tName(A))} y ${esc(tName(H))}. ${esc(m.summary || 'Esperando la primera jugada con ubicación.')}</title>
       <defs>
@@ -2202,16 +2225,34 @@ function gamecastHTML(d, g, animate = true){
     <div class="gc-foot"><div class="gc-keys"><span><i></i>Pelota</span><span><i class="gc-yellow"></i>Primer down</span></div><span id="gcFresh" class="gc-fresh">${g.state === 'post' ? 'Partido finalizado' : 'Actualizado ' + esc(new Date().toLocaleTimeString('es-AR', {hour12: false}))}</span></div>
   </section>`;
 }
+/* El resumen de ESPN no trae la "situación" (posesión, yarda, down y distancia): sale del marcador general.
+   NFL/UFL/CFL usan el marcador de la semana (el mismo de la cartelera); college, el del día del partido (horario del Este). */
+async function liveSituation(lgKey, id, date, force){
+  const lg = LG[lgKey]; if(!lg) return null;
+  const find = d => arr(d?.events).find(e => String(e.id) === String(id));
+  const etDay = () => { try{ const f = new Intl.DateTimeFormat('en-CA', {timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'}).format(date); return f.replace(/-/g, ''); }catch(e){ return ymd(date); } };
+  let ev = !lg.group && !force ? find(lg.probe) : null;
+  if(!ev){
+    try{
+      const d = await API.get(lg.group ? sbUrl(lg, {dates: etDay()}) : sbUrl(lg), force ? {force: true} : undefined);
+      if(!lg.group) lg.probe = d;
+      ev = find(d);
+    }catch(e){}
+  }
+  return arr(ev?.competitions)[0]?.situation || null;
+}
 async function refreshGamecast(){
   const r = state.route, ctx = {id: state.renderId, silent: true}, box = $('#gamecastBox');
   if(Gamecast.busy || !gamecastEnabled(r) || !box) return;
   Gamecast.busy = true;
   try{
-    const d = await getSite(`${SITE}/nfl/summary?event=${encodeURIComponent(r.id)}`, {force: true, ttl: 10e3, noStale: true});
+    const d = await getSite(`${SITE}/${LG[r.lg].slug}/summary?event=${encodeURIComponent(r.id)}`, {force: true, ttl: 10e3, noStale: true});
     if(!alive(ctx) || !gamecastEnabled(state.route) || !$('#gamecastBox')) return;
     const hc = arr(d.header?.competitions)[0] || {};
     const g = normGame({id: r.id, competitions: [hc], date: hc.date}, r.lg);
     if(!g.home.id || !g.away.id) throw new Error('Faltan los equipos');
+    if(!d.situation && g.state === 'in') g.situation = await liveSituation(r.lg, r.id, g.date, true) || g.situation;
+    if(!alive(ctx) || !$('#gamecastBox')) return;
     const m = gamecastModel(d, g), current = $('#gamecastBox');
     const fresh = current.querySelector('#gcFresh');
     // El reloj cambia sin reconstruir la cancha. La animación corre una vez por jugada nueva.
@@ -2239,6 +2280,7 @@ VIEWS.game = async (r, el, ctx) => {
   const g = normGame({id: r.id, competitions: [hc], date: hc.date, week: d.header?.week, seasonType: d.header?.season}, r.lg);
   if(!g.home.id && !g.away.id) throw new ApiError('ESPN no devolvió datos para este partido.', 404, '');
   g.situation = d.situation || hc.situation || g.situation;
+  if(!g.situation && g.state === 'in' && gamecastEnabled(r)) g.situation = await liveSituation(r.lg, r.id, g.date, ctx.silent);
   if(g.situation?.possession != null){ const p = String(g.situation.possession); g.away.possession = p === g.away.id; g.home.possession = p === g.home.id; }
   if(g.state !== 'in'){ g.away.possession = g.home.possession = false; }
   if(!g.tv) g.tv = getTV({broadcasts: d.broadcasts}) || '';
