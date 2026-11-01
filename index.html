@@ -761,15 +761,16 @@ const API = (() => {
     keys.forEach(k => sessionStorage.removeItem(k));
   }
   async function doFetch(url, opt){
+    const src = /thesportsdb\.com/.test(url) ? 'TheSportsDB' : 'ESPN';
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), opt.timeout || 15000);
     let res;
     try{ res = await fetch(url, {signal: ctrl.signal}); }
     catch(e){
-      throw new ApiError(e.name === 'AbortError' ? 'ESPN tardó demasiado en responder.' : 'No se pudo conectar con ESPN (error de red o bloqueo CORS).', 0, url);
+      throw new ApiError(e.name === 'AbortError' ? `${src} tardó demasiado en responder.` : `No se pudo conectar con ${src} (error de red, bloqueo CORS o un bloqueador de anuncios).`, 0, url);
     }finally{ clearTimeout(to); }
-    if(!res.ok) throw new ApiError(`ESPN respondió con un error ${res.status}.`, res.status, url);
-    try{ return await res.json(); }catch(e){ throw new ApiError('ESPN devolvió una respuesta inválida.', -1, url); }
+    if(!res.ok) throw new ApiError(`${src} respondió con un error ${res.status}.`, res.status, url);
+    try{ return await res.json(); }catch(e){ throw new ApiError(`${src} devolvió una respuesta inválida.`, -1, url); }
   }
   async function get(url, opt = {}){
     url = String(url).replace(/^http:\/\//, 'https://');
@@ -845,7 +846,9 @@ function tsdbStatus(e){
   if(!st || /^(NS|TBD|NOT STARTED)/.test(st)) return {state: 'pre', name: 'STATUS_SCHEDULED', completed: false};
   const q = st.match(/Q(\d)/); return {state: 'in', name: /HT|HALF/.test(st) ? 'STATUS_HALFTIME' : 'STATUS_IN_PROGRESS', completed: false, period: q ? +q[1] : (/OT/.test(st) ? 5 : 0)};
 }
+const TSDB_SEEN = new Map();   // partidos de la CFL ya recibidos (por si después falla lookupevent)
 function tsdbToEspn(e){
+  if(e?.idEvent) TSDB_SEEN.set(String(e.idEvent), e);
   const st = tsdbStatus(e), hs = e.intHomeScore, as = e.intAwayScore;
   const team = (id, name, badge) => { const ab = CFL_ABBR[name] || String(name || '').slice(0, 3).toUpperCase(); return {id: 't' + id, displayName: name, shortDisplayName: String(name || '').split(' ').slice(-1)[0], name, location: String(name || '').replace(/\s+\S+$/, ''), abbreviation: ab, color: CFL_COLOR[ab] || null, logo: badge || ''}; };
   const home = team(e.idHomeTeam, e.strHomeTeam, e.strHomeTeamBadge), away = team(e.idAwayTeam, e.strAwayTeam, e.strAwayTeamBadge);
@@ -872,8 +875,13 @@ async function cflProbe(){
   return {leagues: [{season: {year: season, type: {type: 2}}}], season: {year: season, type: 2}, events};
 }
 async function cflSummary(id){
-  const d = await API.get(`${TSDB}/lookupevent.php?id=${encodeURIComponent(String(id).replace(/^t/, ''))}`);
-  const e = arr(d?.events)[0];
+  const raw = String(id).replace(/^t/, ''), url = `${TSDB}/lookupevent.php?id=${encodeURIComponent(raw)}`;
+  let e = null, err = null;
+  for(let i = 0; i < 2 && !e; i++){   // un reintento: TheSportsDB a veces corta pedidos sueltos
+    try{ e = arr((await API.get(url, i ? {force: true} : undefined))?.events)[0] || null; }catch(x){ err = x; }
+  }
+  if(!e) e = TSDB_SEEN.get(raw) || null;   // si falla, se usa el partido que ya vino en el Home o la cartelera
+  if(!e && err) throw err;
   if(!e) throw new ApiError('TheSportsDB no tiene datos de este partido.', 404, '');
   const ev = tsdbToEspn(e);
   return {header: {competitions: ev.competitions, season: ev.season}, gameInfo: {venue: ev.competitions[0].venue}, cflSource: true};
@@ -1602,7 +1610,7 @@ function skeleton(n = 6){ let h = '<div class="box" style="border-top:1px solid 
 function errorBox(e, title = 'No se pudieron cargar los datos'){
   const msg = e?.message || String(e);
   const hint = e?.foro ? 'El problema está en la base de datos del foro (Supabase), no en ESPN.' : (e?.status === 0)
-    ? 'Si abriste el archivo directamente y tu navegador bloquea las peticiones, probá servirlo con un servidor local (por ejemplo: <code>python3 -m http.server</code>) o revisá tu conexión.'
+    ? 'Revisá tu conexión. Si usás un bloqueador de anuncios o el escudo de Brave, probá desactivarlo para nflarg.com.ar y tocá Reintentar.'
     : (e?.status === 404 ? 'ESPN no tiene datos para esta consulta (puede que la temporada o el recurso no existan).' : 'Puede ser un problema momentáneo de ESPN.');
   return `<div class="err"><div class="ph red">⚠ ${esc(title)}</div><p>${esc(msg)}</p><small>${hint}</small>${e?.url ? `<small style="word-break:break-all;font-family:monospace">${esc(String(e.url).replace(/^https:\/\//, ''))}</small>` : ''}<button class="btn on" onclick="App.retry()">↻ Reintentar</button></div>`;
 }
