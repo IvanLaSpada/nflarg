@@ -53,4 +53,15 @@ assert.ok(markup.includes('&lt;img'), 'Se escapan los nombres externos');
 assert.ok(!markup.includes('<img src=x'), 'Un nombre nunca se interpreta como HTML');
 assert.doesNotThrow(() => gamecastHTML({drives: null}, g, false));
 assert.doesNotThrow(() => gamecastHTML({drives: {previous: [null, {}], current: {plays: [null, {}]}}}, g, false));
+// Habilitado en todos los partidos de todas las ligas
+const {gamecastEnabled} = vm.runInContext('({gamecastEnabled})', ctx);
+assert.ok(gamecastEnabled({view: 'game', lg: 'fbs', id: '401999999'}) && gamecastEnabled({view: 'game', lg: 'cfl', id: '1'}), 'Gamecast en todos los partidos');
+assert.ok(!gamecastEnabled({view: 'team', lg: 'nfl', id: '12'}), 'Solo en la página de partido');
+// CFL: cancha de 110 yardas escalada al dibujo de 100 (visitante a la izquierda, local a la derecha)
+const cfl = {id: 'c1', lg: 'cfl', away: {id: '1', team: {id: '1', abbreviation: 'WPG'}}, home: {id: '2', team: {id: '2', abbreviation: 'BC'}}};
+assert.equal(gamecastYard({possessionText: 'WPG 55'}, cfl), 50, 'La 55 de la CFL es el mediocampo');
+assert.equal(gamecastYard({possessionText: 'WPG 11'}, cfl), 10, 'Yarda propia del visitante escalada');
+assert.equal(gamecastYard({possessionText: 'BC 11'}, cfl), 90, 'Yarda propia del local escalada');
+const cflModel = gamecastModel({situation: {possessionText: 'WPG 44', possession: '1', down: 2, distance: 11}}, cfl);
+assert.equal(cflModel.ball, 40); assert.equal(cflModel.firstDown, 50, 'El primer down también se escala');
 console.log('Gamecast: orientación, punt con cambio de posesión, tiempos muertos, datos faltantes y HTML externo: OK');

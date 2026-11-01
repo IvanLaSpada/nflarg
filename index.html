@@ -2020,27 +2020,30 @@ function numVal(s){
   const f = parseFloat(s.split(/[-\/]/)[0]);
   return isNaN(f) ? NaN : f;
 }
-/* ---------- Gamecast · habilitado para Panthers–Packers ---------- */
-const Gamecast = {event: '401873023', busy: false};
-const gamecastEnabled = r => r.view === 'game' && r.lg === 'nfl' && String(r.id) === Gamecast.event;
+/* ---------- Gamecast · en todos los partidos de todas las ligas (pedido de Iván, 01/11/2026) ---------- */
+const Gamecast = {busy: false};
+const gamecastEnabled = r => r.view === 'game' && !!r.id;
+// La CFL juega en 110 yardas (mediocampo en la 55); el dibujo es de 100, así que se escala.
+const gcLen = g => g?.lg === 'cfl' ? 110 : 100;
 const gcNum = v => v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v);
 function gamecastYard(pos, g){
   if(!pos) return null;
+  const L = gcLen(g), sc = v => +(v * 100 / L).toFixed(2);
   // El texto identifica el lado de la cancha incluso cuando ESPN manda yardsToEndzone=0 incorrecto.
   const spot = String(pos.possessionText || pos.downDistanceText || '').match(/(?:at\s+)?([A-Z0-9]{2,4})\s+(\d{1,2})\s*$/i);
   if(spot){
     const n = Number(spot[2]), ab = spot[1].toUpperCase();
-    if(n <= 50 && ab === tAbbr(g.away.team).toUpperCase()) return n;
-    if(n <= 50 && ab === tAbbr(g.home.team).toUpperCase()) return 100 - n;
+    if(n <= L / 2 && ab === tAbbr(g.away.team).toUpperCase()) return sc(n);
+    if(n <= L / 2 && ab === tAbbr(g.home.team).toUpperCase()) return sc(L - n);
   }
   const y = gcNum(pos.yardsToEndzone), team = String(pos.team?.id || '');
-  if(y != null && y >= 0 && y <= 100){
-    if(team === g.away.id) return 100 - y;
-    if(team === g.home.id) return y;
+  if(y != null && y >= 0 && y <= L){
+    if(team === g.away.id) return sc(L - y);
+    if(team === g.home.id) return sc(y);
   }
   // yardLine usa como origen fijo el extremo del local; el dibujo deja al local a la derecha.
   const raw = gcNum(pos.yardLine);
-  return raw != null && raw >= 0 && raw <= 100 ? 100 - raw : null;
+  return raw != null && raw >= 0 && raw <= L ? sc(L - raw) : null;
 }
 function gamecastModel(d, g){
   const si = d?.situation || arr(d?.header?.competitions)[0]?.situation || g.situation || {};
@@ -2064,7 +2067,8 @@ function gamecastModel(d, g){
   const ball = gamecastYard(current, g), from = gamecastYard(play.start, g), to = gamecastYard(play.end, g);
   const down = gcNum(current.down), distance = gcNum(current.distance);
   const direction = possession === g.away.id ? 1 : possession === g.home.id ? -1 : 0;
-  const firstDown = ball != null && direction && down >= 1 && down <= 4 && distance != null && distance > 0 ? Math.max(0, Math.min(100, ball + direction * distance)) : null;
+  const firstDown = ball != null && direction && down >= 1 && down <= 4 && distance != null && distance > 0 ? Math.max(0, Math.min(100, ball + direction * distance * 100 / gcLen(g))) : null;
+  const realYd = ball == null ? null : Math.round(ball * gcLen(g) / 100), half = gcLen(g) / 2;
   const type = play.type?.text || '', text = play.text || '';
   const participants = arr(play.participants);
   const person = role => participants.find(p => p?.type === role)?.athlete;
@@ -2107,7 +2111,7 @@ function gamecastModel(d, g){
   const team = possession === g.away.id ? g.away.team : possession === g.home.id ? g.home.team : null;
   const playTeam = String(play.start?.team?.id || play.driveTeam || '') === g.away.id ? g.away.team : g.home.team;
   const model = {play, possession, ball, from, to, down, distance, direction, firstDown, actor, yards, label, pathKind, summary, team, playTeam,
-    spot: current.possessionText || (ball == null ? 'Ubicación no disponible' : ball === 50 ? 'Yarda 50' : `${ball < 50 ? tAbbr(g.away.team) : tAbbr(g.home.team)} ${ball < 50 ? ball : 100 - ball}`),
+    spot: current.possessionText || (ball == null ? 'Ubicación no disponible' : realYd === half ? `Yarda ${half}` : `${realYd < half ? tAbbr(g.away.team) : tAbbr(g.home.team)} ${realYd < half ? realYd : gcLen(g) - realYd}`),
     key: String(play.id || play.sequenceNumber || [play.period?.number, play.clock?.displayValue, play.text].join(':'))};
   // ESPN puede completar el retrato o corregir una jugada sin cambiar id ni modified.
   model.signature = JSON.stringify([model.key, model.spot, from, to, ball, firstDown, down, distance, possession, label, yards, summary, actor?.displayName, actor?.headshot, g.state]);
@@ -2156,7 +2160,7 @@ function gamecastHTML(d, g, animate = true){
   const hasPlay = !!m.play.id || !!m.play.type;
   return `<section class="gc" id="gamecastBox" data-game="${esc(g.id)}" data-play="${esc(m.key)}" data-signature="${esc(m.signature)}" aria-label="Cancha del partido">
     <div class="ph"><span>★ GAMECAST</span><small>NFLARG · CENTRO DEL PARTIDO</small></div>
-    <div class="gc-top"><span class="gc-possession">${m.team ? logo(m.team) : ''}<span>${m.team ? `${m.direction < 0 ? '◀ ' : ''}${esc(tName(m.team))}${m.direction > 0 ? ' ▶' : ''}` : 'Esperando posesión'}</span></span><span>${m.down >= 1 && m.down <= 4 ? `${m.down}º y ${esc(m.distance ?? '—')}` : g.state === 'post' ? 'FINAL' : '—'} <b>· ${esc(m.spot)}</b></span><span class="gc-clock">${esc(statusInfo(g).txt)}</span></div>
+    <div class="gc-top"><span class="gc-possession">${m.team ? logo(m.team) : ''}<span>${m.team ? `${m.direction < 0 ? '◀ ' : ''}${esc(tName(m.team))}${m.direction > 0 ? ' ▶' : ''}` : (g.state === 'pre' ? 'Todavía no empezó' : g.state === 'post' ? 'Terminado' : 'Esperando posesión')}</span></span><span>${m.ball == null && !(m.down >= 1) ? (g.state === 'pre' ? 'Previa del partido' : g.state === 'post' ? 'Partido finalizado' : 'Esperando la próxima jugada') : `${m.down >= 1 && m.down <= 4 ? `${m.down}º y ${esc(m.distance ?? '—')}` : g.state === 'post' ? 'FINAL' : '—'} <b>· ${esc(m.spot)}</b>`}</span><span class="gc-clock">${esc(statusInfo(g).txt)}</span></div>
     <div class="gc-stage"><svg viewBox="0 0 1000 410" role="img" aria-labelledby="gcTitle">
       <title id="gcTitle">Cancha de ${esc(tName(A))} y ${esc(tName(H))}. ${esc(m.summary || 'Esperando la primera jugada con ubicación.')}</title>
       <defs>
