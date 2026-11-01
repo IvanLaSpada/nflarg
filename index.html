@@ -631,6 +631,9 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .pal-year{font:600 13px var(--f-head);color:#715100;padding:3px 8px;border:1px solid #c5a74d;border-radius:3px;background:linear-gradient(#fffbe9,#f0d780 48%,#e0bd54 52%,#f8e6a6);box-shadow:inset 0 1px #fff,0 1px 2px #0a1f4426}
 .pal-empty{color:var(--muted);font:12px Arial}
 .pal-summary b.pal-name{font:italic 700 20px/1.1 var(--f-head);text-transform:uppercase;padding:4px 0}
+a.pal-year{text-decoration:none!important;cursor:pointer}a.pal-year:hover{filter:brightness(1.08);box-shadow:inset 0 1px #fff,0 0 0 2px var(--red)}
+.pal-final{font-weight:700;color:var(--navy3);white-space:nowrap}
+@media(max-width:640px){.tbl.lpal td,.tbl.lpal th{padding:4px 5px}.tbl.lpal .pal-final{font-size:11px}}.pal-final:hover{color:var(--red)}
 .tbl.lpal td{padding:5px 8px}.tbl.lpal .pal-year{font-size:12px;padding:2px 6px}
 .pal-note{display:block;color:var(--muted);font:10px Arial;margin-top:2px}
 .tbl.lpal tr.vac .tmc b{text-decoration:line-through;color:var(--muted)}.pal-notes{padding:10px 12px;color:var(--muted);font:10px/1.5 Arial;background:#f7f8fb}.pal-notes p{margin:0 0 4px}.pal-notes p:last-child{margin:0}.pal-notes a{text-decoration:underline}
@@ -1145,10 +1148,11 @@ function teamHonours(id,season){
 function teamHonoursHTML(id,season){
   const h=teamHonours(id,season);
   if(!h.known) return emptyBox('Palmarés no disponible','Todavía no hay un registro verificado para esta franquicia.');
-  const row=(title,subtitle,years,empty)=>`<div class="pal-row"><div class="pal-label"><b>${esc(title)}</b><small>${esc(subtitle)}</small></div><div class="pal-years">${years.length?[...years].reverse().map(y=>`<span class="pal-year">★ ${y}</span>`).join(''):`<span class="pal-empty">${esc(empty)}</span>`}</div></div>`;
+  const chip=(y,final)=>final?`<a class="pal-year" href="#/nfl/partidos/${y}/3" onclick="App.goFinal(event,'nfl',${y})" title="Ver el Super Bowl de la temporada ${y}">★ ${y}</a>`:`<a class="pal-year" href="#/nfl/partidos/${y}" title="Ver la temporada ${y}">★ ${y}</a>`;
+  const row=(title,subtitle,years,empty,final)=>`<div class="pal-row"><div class="pal-label"><b>${esc(title)}</b><small>${esc(subtitle)}</small></div><div class="pal-years">${years.length?[...years].reverse().map(y=>chip(y,final)).join(''):`<span class="pal-empty">${esc(empty)}</span>`}</div></div>`;
   return `<section class="palmares" aria-label="Palmarés de la franquicia"><div class="ph">★ Palmarés<span class="sp"></span><span class="cnt">Hasta la temporada ${h.cutoff}</span></div><div class="box">
     <div class="sumst pal-summary"><div class="pal-total"><b>${h.total}</b><small>Temporadas campeón</small></div><div><b>${h.sb.length}</b><small>Super Bowls</small></div><div><b>${h.last??'—'}</b><small>Último título</small></div></div>
-    ${row('Super Bowls','Desde la temporada 1966',h.sb,'Todavía no ganó el Super Bowl.')}
+    ${row('Super Bowls','Desde la temporada 1966',h.sb,'Todavía no ganó el Super Bowl.',true)}
     ${h.nfl.length?row('Campeonatos NFL','Antes de la fusión de 1970',h.nfl,''):''}
     ${h.afl.length?row('Campeonatos AFL','Liga que se fusionó con la NFL',h.afl,''):''}
     ${h.aafc.length?row('Campeonatos AAFC','All-America Football Conference',h.aafc,''):''}
@@ -1306,6 +1310,34 @@ function honourCell(H, ref, strong){
   if(t && lg) return `<a class="tmc" href="#/${lg}/team/${t.id}/${lg === 'nfl' ? 'palmares' : 'plantel'}">${lgo}<span>${label}</span></a>`;
   return `<span class="tmc">${lgo}<span>${label}</span></span>`;
 }
+/* Busca en ESPN el partido de la final de una temporada (de la última semana de playoffs hacia atrás),
+   comparando campeón y rival del registro. Devuelve {id} o {fallback} con la semana de playoffs. */
+async function findFinalGame(lgKey, y){
+  const lg = LG[lgKey], H = LEAGUE_HONOURS[lgKey];
+  const row = H.rows().find(r => r.y === y && !/USFL|XFL/.test(r.inst));
+  if(!lg || !row) return {fallback: `#/${lgKey}/partidos/${y}`};
+  const first = await API.get(sbUrl(lg, {dates: y, seasontype: 3, week: 1}));
+  const cal = arr(arr(first.leagues)[0]?.calendar).find(c => String(c?.value) === '3');
+  const weeks = [...new Set(arr(cal?.entries).map(e => num(e.value)).filter(Boolean))].sort((a, b) => b - a);
+  const order = weeks.length ? weeks : (lgKey === 'nfl' ? [5, 4, 3, 2, 1] : [3, 2, 1]);
+  const loose = lgKey === 'cfl' || lgKey === 'ufl';
+  const isTeam = (c, ref) => {
+    if(ref == null) return false;
+    if(typeof ref === 'number') return String(c.id || c.team?.id) === String(ref);
+    const n = norm(ref), t = c.team || {};
+    if([t.displayName, t.location, t.shortDisplayName].some(v => v && norm(v) === n)) return true;
+    return loose && !!t.location && n.startsWith(norm(t.location));   // la CFL cambió nombres (ej. Edmonton)
+  };
+  for(const w of order){
+    const d = w === 1 ? first : await API.get(sbUrl(lg, {dates: y, seasontype: 3, week: w})).catch(() => null);
+    for(const ev of arr(d?.events)){
+      const cs = arr(arr(ev.competitions)[0]?.competitors);
+      const hasW = cs.some(c => isTeam(c, row.w)), hasL = row.l == null || cs.some(c => isTeam(c, row.l));
+      if(hasW && hasL && (row.l != null || ev.status?.type?.completed !== false)) return {id: ev.id};
+    }
+  }
+  return {fallback: `#/${lgKey}/partidos/${y}/3/${order[0]}`};
+}
 async function leagueHonoursHTML(lg, season){
   const H = LEAGUE_HONOURS[lg.key];
   if(!H) return emptyBox('Palmarés no disponible', 'Todavía no hay un registro verificado para esta liga.');
@@ -1317,9 +1349,9 @@ async function leagueHonoursHTML(lg, season){
   const cur = rows.find(r => !r.vacated) || rows[0], top = rank[0];
   const curName = honourTeam(H, cur.w).name, topName = top ? honourTeam(H, top.ref).name : '—';
   const tied = top ? rank.filter(x => x.n === top.n).length : 0;
-  const champTable = (list, title) => `<div class="ph">${esc(title)}<span class="sp"></span><span class="cnt">${pluralize(list.length, 'edición', 'ediciones')}</span></div>
-    <div class="box tw"><table class="tbl lpal"><thead><tr><th>Temp.</th><th class="l">Campeón</th><th class="l">Rival en la final</th><th class="l hm">Instancia</th></tr></thead><tbody>
-    ${list.map(r => `<tr class="${r.vacated ? 'vac' : ''}"><td><span class="pal-year">★ ${r.y}</span></td><td class="l">${honourCell(H, r.w, true)}${r.note ? `<small class="pal-note">${esc(r.note)}</small>` : ''}</td><td class="l">${honourCell(H, r.l)}</td><td class="l hm">${esc(r.inst)}</td></tr>`).join('')}
+  const champTable = (list, title, main) => `<div class="ph">${esc(title)}<span class="sp"></span><span class="cnt">${pluralize(list.length, 'edición', 'ediciones')}</span></div>
+    <div class="box tw"><table class="tbl lpal"><thead><tr><th>Temp.</th><th class="l">Campeón</th><th class="l">Rival en la final</th><th class="l">Instancia</th></tr></thead><tbody>
+    ${list.map(r => `<tr class="${r.vacated ? 'vac' : ''}"><td><a class="pal-year" href="#/${lg.key}/partidos/${r.y}" title="Ver la temporada ${r.y}">★ ${r.y}</a></td><td class="l">${honourCell(H, r.w, true)}${r.note ? `<small class="pal-note">${esc(r.note)}</small>` : ''}</td><td class="l">${honourCell(H, r.l)}</td><td class="l">${main ? `<a class="pal-final" href="#/${lg.key}/partidos/${r.y}/3" onclick="App.goFinal(event,'${lg.key}',${r.y})" title="Ver el partido">${esc(r.inst)} ›</a>` : esc(r.inst)}</td></tr>`).join('')}
     </tbody></table></div>`;
   const extra = H.extra ? H.extra(cutoff) : null;
   return `<section class="palmares" aria-label="Palmarés de la liga">
@@ -1333,7 +1365,7 @@ async function leagueHonoursHTML(lg, season){
     <div class="box tw"><table class="tbl rk lpal"><thead><tr><th>#</th><th class="l">Equipo</th><th>${esc(H.rankCols.n)}</th>${H.rankCols.sb ? `<th>${esc(H.rankCols.sb)}</th>` : ''}<th class="hm">Último</th></tr></thead><tbody>
     ${rank.map((x, i) => `<tr class="${i < 3 ? 'top' : ''}"><td class="pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td class="l">${honourCell(H, x.ref, true)}${x.note ? `<small class="pal-note">${esc(x.note)}</small>` : ''}</td><td class="rkn"><b>${x.n}</b></td>${H.rankCols.sb ? `<td class="rkn"><b>${x.sb}</b></td>` : ''}<td class="hm">${x.last || '—'}</td></tr>`).join('')}
     </tbody></table></div>
-    ${champTable(rows, H.title)}
+    ${champTable(rows, H.title, true)}
     ${extra && extra.rows.length ? champTable(extra.rows.sort((a, b) => b.y - a.y), extra.title) : ''}
     <div class="box"><div class="pal-notes">${H.notes.map(n => `<p>${esc(n)}</p>`).join('')}<p>Los años corresponden a la temporada, aunque la final se juegue al año siguiente. Fuentes: ${H.sources.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`).join(' · ')}. Registro verificado hasta ${H.through}.</p></div></div>
   </section>`;
@@ -3205,6 +3237,7 @@ function squareJpeg(file, size){
   });
 }
 function alertBox(txt){
+  document.querySelectorAll('.toast').forEach(t => t.remove());
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = txt;
   document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
 }
@@ -3289,6 +3322,16 @@ window.App = {
   draftRefresh(){ if(state.route.view === 'draft'){ DraftState.force=true; route(true); } },
   retry(){ if(!visible().length) state.readyP = null; route(); },
   sideRetry(){ state.sideKey = ''; renderSidebar(true); },
+  async goFinal(ev, lgKey, y){
+    ev?.preventDefault();
+    alertBox('Buscando el partido…');
+    try{
+      const r = await findFinalGame(lgKey, +y);
+      if(r.id) return go(`#/${lgKey}/game/${r.id}`);
+      alertBox('ESPN no tiene ese partido; te muestro los playoffs de ese año.');
+      go(r.fallback);
+    }catch(e){ alertBox('No se pudo buscar el partido; te muestro esa temporada.'); go(`#/${lgKey}/partidos/${y}`); }
+  },
   setFilter(k){ state.filter = k; route(true); },
   setStand(m){ state.standMode = m; route(true); },
   pickDate(v, base){ if(/^\d{4}-\d{2}-\d{2}$/.test(v)) go(`${base}/${v.replace(/-/g, '')}`); },

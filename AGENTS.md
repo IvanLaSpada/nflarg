@@ -169,6 +169,7 @@ ESPN **no permite** que el navegador lea `site.api.espn.com/.../teams/...` ni `s
   - **FBS:** finales BCS (1998–2013) y CFP (desde 2014). 2004 USC está marcado como vacado y no cuenta en el ranking.
   - **FCS:** campeones desde 1978 (I-AA); rival de la final desde 2011.
   - **UFL:** 2024 y 2025, más una tabla aparte de las ligas antecesoras (USFL 2022–23, XFL 2023) que no cuenta en el ranking.
+  - **Links:** el año (★ 2025) lleva a `#/{liga}/partidos/{año}`; la instancia ("Super Bowl LX ›", "Final CFP ›", "Grey Cup 112 ›") llama a `App.goFinal(evento, liga, año)`, que con `findFinalGame()` busca el partido en los playoffs de ESPN de esa temporada (de la última semana hacia atrás), comparando campeón y rival por id (NFL) o por nombre (en CFL/UFL también por ciudad, porque cambiaron nombres), y abre `#/{liga}/game/{id}`. Si no lo encuentra, avisa y lleva a los playoffs de ese año. En el palmarés de cada franquicia, los años de Super Bowl hacen lo mismo y los demás años llevan a la temporada.
   - **CFL:** Grey Cups por franquicia (ranking histórico completo, también anteriores a 1958); la tabla de campeones arranca en 1958 y en 2020 no se jugó. Número de Grey Cup: `año − 1912` hasta 2019 y `año − 1913` desde 2021.
 
 ### Partido (`VIEWS.game`)
