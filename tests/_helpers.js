@@ -1,7 +1,7 @@
 // Utilidades comunes de las pruebas. Requiere: npm i -D playwright (o un Chromium de Playwright instalado).
 const fs = require('fs');
 const path = require('path');
-const { respond } = require('./mock-espn');
+const { respond, respondTsdb } = require('./mock-espn');
 
 let chromium;
 try { ({ chromium } = require('playwright')); }
@@ -21,6 +21,8 @@ function testPage(){
 
 // Intercepta ESPN (datos simulados), Supabase (falso) y bloquea imágenes/fuentes externas
 async function mockNetwork(page){
+  await page.route(/thesportsdb/, r => /r2\.thesportsdb/.test(r.request().url()) ? r.abort()
+    : r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(respondTsdb(r.request().url())) }));
   await page.route(/espn|espncdn|googleapis|gstatic|jsdelivr|demo\.supabase/, r => {
     const url = r.request().url();
     if (/supabase-js/.test(url)) return r.fulfill({ status: 200, contentType: 'application/javascript', body: FAKE_SB });

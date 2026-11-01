@@ -5,9 +5,9 @@ const FAKE = fs.readFileSync(require('path').join(__dirname, 'fake-supabase.js')
 const cache = new Map();
 module.exports = async function realNetwork(page){
   await page.route(/supabase-js|demo\.supabase|fonts\.g/, r => /supabase-js/.test(r.request().url()) ? r.fulfill({ status: 200, contentType: 'application/javascript', body: FAKE }) : r.abort());
-  await page.route(/espn\.com|espncdn\.com/, r => {
+  await page.route(/espn\.com|espncdn\.com|thesportsdb\.com/, r => {
     const url = r.request().url();
-    if (/espncdn/.test(url)) return r.abort();   // imágenes: no hacen falta para probar
+    if (/espncdn|r2\.thesportsdb/.test(url)) return r.abort();   // imágenes: no hacen falta para probar
     let out = cache.get(url);
     if (!out) {
       try { out = execFileSync('curl', ['-sS', '-m', '20', '-w', '\n%{http_code}', url], { maxBuffer: 64 << 20 }).toString(); }

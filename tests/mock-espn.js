@@ -112,4 +112,17 @@ function respond(url) {
 }
 
 
-module.exports = { respond };
+// TheSportsDB (CFL): un partido terminado y uno próximo, con la forma real de la API
+function respondTsdb(url){
+  const ev = (id, home, away, hs, as, status, ts, round) => ({ idEvent: id, strEvent: `${home} vs ${away}`, strHomeTeam: home, strAwayTeam: away, idHomeTeam: '1' + id, idAwayTeam: '2' + id,
+    intHomeScore: hs, intAwayScore: as, strStatus: status, strTimestamp: ts, dateEvent: ts.slice(0, 10), strTime: ts.slice(11), intRound: round, strSeason: '2026', strVenue: 'BMO Field', strCity: 'Toronto, ON', strPostponed: 'no' });
+  const fin = ev('900', 'Toronto Argonauts', 'Winnipeg Blue Bombers', '22', '25', 'FT', new Date(now - 864e5).toISOString().slice(0, 19), '160');
+  const next = ev('901', 'Montreal Alouettes', 'Winnipeg Blue Bombers', null, null, 'NS', new Date(now + 6 * 864e5).toISOString().slice(0, 19), '150');
+  if (/eventspastleague/.test(url)) return { events: [fin] };
+  if (/eventsnextleague/.test(url)) return { events: [next] };
+  if (/lookupevent/.test(url)) return { events: [/901/.test(url) ? next : fin] };
+  if (/eventsseason/.test(url)) return { events: [fin, next] };
+  if (/eventsday/.test(url)) { const d = (url.match(/d=([\d-]+)/) || [])[1]; return { events: [fin, next].filter(e => e.dateEvent === d) }; }
+  return { events: null };
+}
+module.exports = { respond, respondTsdb };

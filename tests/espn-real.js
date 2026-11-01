@@ -1,4 +1,4 @@
-// Prueba con ESPN REAL (necesita internet y curl): Home de hoy, Gamecast de los partidos en vivo comparado con el
+// Prueba con ESPN REAL y TheSportsDB (CFL) (necesita internet y curl): Home de hoy, Gamecast de los partidos en vivo comparado con el
 // marcador de ESPN (posesión, sentido y yarda) y links de finales del palmarés. Uso: node tests/espn-real.js
 const { chromium, testPage } = require('./_helpers');
 const realNetwork = require('./_red-real');
@@ -9,6 +9,9 @@ const realNetwork = require('./_red-real');
   await p.goto(url + '#/hoy'); await p.waitForTimeout(12000);
   const blocks = await p.$$eval('.blk .ph', xs => xs.map(x => x.innerText.replace(/\s+/g, ' ').trim()));
   ok(blocks.length > 0, 'Home de hoy: ' + blocks.join(' / '));
+  // CFL desde TheSportsDB: que el bloque exista y muestre partidos o el próximo partido
+  const cfl = await p.$eval('.blk[data-lg="cfl"]', e => e.innerText.replace(/\s+/g, ' ')).catch(() => 'SIN BLOQUE CFL');
+  ok(/partido|Próximo/.test(cfl), 'CFL (TheSportsDB) en el Home: ' + cfl.slice(0, 120));
   const live = (await p.$$eval('a.g.st-in', xs => xs.map(a => a.getAttribute('href')))).filter(h => h.startsWith('#/nfl/')).slice(0, 6);
   if (!live.length) console.log('· No hay partidos NFL en vivo ahora: no se compara el Gamecast.');
   for (const h of live) {

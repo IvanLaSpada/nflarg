@@ -665,7 +665,7 @@ a.pal-year{text-decoration:none!important;cursor:pointer}a.pal-year:hover{filter
   <main id="view"></main>
 </div>
 <div id="scrim"></div>
-<footer><div class="made">Hecho por <a class="lspd" href="https://www.instagram.com/lspd.studio/" target="_blank" rel="noopener" title="@lspd.studio en Instagram">LSPD Studio</a></div>Datos: API pública no oficial de <b>ESPN</b> · Uso personal · Horarios en tu zona: <b id="tzName"></b></footer>
+<footer><div class="made">Hecho por <a class="lspd" href="https://www.instagram.com/lspd.studio/" target="_blank" rel="noopener" title="@lspd.studio en Instagram">LSPD Studio</a></div>Datos: API pública no oficial de <b>ESPN</b> · CFL: <b>TheSportsDB</b> · Uso personal · Horarios en tu zona: <b id="tzName"></b></footer>
 
 <script>
 "use strict";
@@ -679,8 +679,8 @@ const LEAGUES = [
   {key:'ufl', slug:'ufl', name:'UFL', full:'United Football League', minSeason:2024},
   {key:'cfl', slug:'cfl', name:'CFL', full:'Canadian Football League', minSeason:2005},
 ];
-// Logos de liga que el scoreboard de ESPN no trae (ESPN no tiene logo de la CFL: se ve el recuadro "CFL")
-const LG_LOGO = {};
+// Logos de liga que el scoreboard de ESPN no trae. CFL: logo de Wikimedia Commons (dominio público, "CFL Logo.svg"), embebido.
+const LG_LOGO = {cfl: 'data:image/png;base64,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'};
 const LG = Object.fromEntries(LEAGUES.map(l => [l.key, l]));
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports/football';
 const STAND = 'https://site.api.espn.com/apis/v2/sports/football';
@@ -825,7 +825,69 @@ function paint(ctx, el, html){ if(alive(ctx)) el.innerHTML = html; }
 /* =========================================================================
    DATOS DE LIGA (sondeo inicial, temporadas, equipos, posiciones)
    ========================================================================= */
+/* =========================================================================
+   CFL · TheSportsDB (ESPN dejó de publicar la CFL después de 2022)
+   Clave gratuita de prueba "123": partidos por día, último y próximo partido, detalle de un partido.
+   No trae posiciones, estadísticas ni jugada a jugada. Los partidos se convierten al formato de ESPN
+   para reutilizar normGame(), gameRow(), la cartelera y el Home. Los ids llevan el prefijo "t".
+   ========================================================================= */
+const TSDB = 'https://www.thesportsdb.com/api/v1/json/123', TSDB_CFL = '4405';
+const CFL_ABBR = {'Toronto Argonauts': 'TOR', 'Winnipeg Blue Bombers': 'WPG', 'Montreal Alouettes': 'MTL', 'BC Lions': 'BC', 'Calgary Stampeders': 'CGY',
+  'Edmonton Elks': 'EDM', 'Saskatchewan Roughriders': 'SSK', 'Hamilton Tiger-Cats': 'HAM', 'Ottawa Redblacks': 'OTT'};
+const CFL_COLOR = {TOR: '002f6c', WPG: '041e42', MTL: '0b2240', BC: 'f15a24', CGY: 'c8102e', EDM: '124734', SSK: '006341', HAM: 'ffb81c', OTT: 'a6192e'};
+const CFL_ROUND = {500: 'Pretemporada', 160: 'Semifinal de división', 150: 'Final de división', 200: 'Grey Cup'};
+const isTsdbId = id => /^t\d+$/.test(String(id || ''));
+function tsdbStatus(e){
+  const st = String(e.strStatus || '').toUpperCase(), post = String(e.strPostponed || '').toLowerCase() === 'yes';
+  if(post || /POSTP|PST/.test(st)) return {state: 'pre', name: 'STATUS_POSTPONED', completed: false};
+  if(/CANC/.test(st)) return {state: 'pre', name: 'STATUS_CANCELED', completed: false};
+  if(/^(FT|AOT|AET|FINAL|MATCH FINISHED)/.test(st)) return {state: 'post', name: 'STATUS_FINAL', completed: true, ot: /AOT|AET|OT/.test(st)};
+  if(!st || /^(NS|TBD|NOT STARTED)/.test(st)) return {state: 'pre', name: 'STATUS_SCHEDULED', completed: false};
+  const q = st.match(/Q(\d)/); return {state: 'in', name: /HT|HALF/.test(st) ? 'STATUS_HALFTIME' : 'STATUS_IN_PROGRESS', completed: false, period: q ? +q[1] : (/OT/.test(st) ? 5 : 0)};
+}
+function tsdbToEspn(e){
+  const st = tsdbStatus(e), hs = e.intHomeScore, as = e.intAwayScore;
+  const team = (id, name, badge) => { const ab = CFL_ABBR[name] || String(name || '').slice(0, 3).toUpperCase(); return {id: 't' + id, displayName: name, shortDisplayName: String(name || '').split(' ').slice(-1)[0], name, location: String(name || '').replace(/\s+\S+$/, ''), abbreviation: ab, color: CFL_COLOR[ab] || null, logo: badge || ''}; };
+  const home = team(e.idHomeTeam, e.strHomeTeam, e.strHomeTeamBadge), away = team(e.idAwayTeam, e.strAwayTeam, e.strAwayTeamBadge);
+  const win = (a, b) => st.state === 'post' && a != null && b != null ? +a > +b : undefined;
+  const ts = e.strTimestamp ? e.strTimestamp + (/[zZ]|[+-]\d\d:?\d\d$/.test(e.strTimestamp) ? '' : 'Z') : `${e.dateEvent}T${e.strTime || '00:00:00'}Z`;
+  const comp = {id: 't' + e.idEvent, date: ts, timeValid: !!(e.strTime && e.strTime !== '00:00:00'),
+    competitors: [
+      {id: home.id, homeAway: 'home', team: home, score: hs == null ? '' : String(hs), winner: win(hs, as)},
+      {id: away.id, homeAway: 'away', team: away, score: as == null ? '' : String(as), winner: win(as, hs)}],
+    status: {type: {state: st.state, name: st.name, completed: st.completed, detail: e.strStatus || '', shortDetail: e.strStatus || ''}, period: st.ot ? 5 : (st.period || (st.state === 'post' ? 4 : 0)), displayClock: ''},
+    venue: e.strVenue ? {fullName: e.strVenue, address: {city: e.strCity || ''}} : null,
+    broadcasts: e.strTVStation ? [{names: [e.strTVStation]}] : [], notes: CFL_ROUND[+e.intRound] ? [{headline: CFL_ROUND[+e.intRound]}] : []};
+  // Rondas de TheSportsDB: 1–21 temporada regular, 160 semifinal de división, 150 final de división, 200 Grey Cup, 500 pretemporada
+  const r = +e.intRound;
+  return {id: comp.id, date: ts, season: {year: num(e.strSeason), type: r === 500 ? 1 : [150, 160, 200].includes(r) ? 3 : 2}, week: r >= 1 && r <= 21 ? {number: r} : undefined, competitions: [comp]};
+}
+async function tsdbEvents(q, opt){ const d = await API.get(`${TSDB}/${q}`, opt); return arr(d?.events).filter(e => e && e.idEvent).map(tsdbToEspn); }
+const cflDay = date => tsdbEvents(`eventsday.php?d=${isoDay(date)}&l=${TSDB_CFL}`);
+async function cflProbe(){
+  const [past, next] = await Promise.all([tsdbEvents(`eventspastleague.php?id=${TSDB_CFL}`).catch(() => []), tsdbEvents(`eventsnextleague.php?id=${TSDB_CFL}`).catch(() => [])]);
+  const today = await cflDay(new Date()).catch(() => []);
+  const seen = new Set(), events = today.concat(past, next).filter(e => !seen.has(e.id) && seen.add(e.id));
+  const season = Math.max(...events.map(e => e.season.year || 0), 0) || new Date().getFullYear();
+  return {leagues: [{season: {year: season, type: {type: 2}}}], season: {year: season, type: 2}, events};
+}
+async function cflSummary(id){
+  const d = await API.get(`${TSDB}/lookupevent.php?id=${encodeURIComponent(String(id).replace(/^t/, ''))}`);
+  const e = arr(d?.events)[0];
+  if(!e) throw new ApiError('TheSportsDB no tiene datos de este partido.', 404, '');
+  const ev = tsdbToEspn(e);
+  return {header: {competitions: ev.competitions, season: ev.season}, gameInfo: {venue: ev.competitions[0].venue}, cflSource: true};
+}
+
 async function probeLeague(lg){
+  if(lg.key === 'cfl'){
+    try{
+      const d = await cflProbe();
+      lg.ok = true; lg.probe = d; lg.src = 'tsdb'; lg.logo = LG_LOGO.cfl;
+      lg.cur = {season: d.season.year, stype: 2, week: null};
+    }catch(e){ lg.ok = false; lg.err = e; }
+    return;
+  }
   try{
     const d = await API.get(sbUrl(lg));
     const L = arr(d.leagues)[0];
@@ -1596,12 +1658,20 @@ async function renderSidebar(force){
     <section class="sbs ${sbc('equipos')}"><div class="ph sm" onclick="App.toggleSb('equipos',this)">${esc(lg.name)} · Equipos<span class="sp"></span><span class="tog">▼</span></div>
     <div class="sb-links">
       <a class="btn" href="#/${lg.key}/hoy">Hoy</a><a class="btn" href="#/${lg.key}/partidos/${s}">Partidos</a>
-      <a class="btn" href="#/${lg.key}/posiciones/${s}">Posiciones</a><a class="btn" href="#/${lg.key}/stats/${s}">Stats</a>
+      ${lg.src === 'tsdb' ? `<a class="btn" href="#/${lg.key}/palmares">Palmarés</a><a class="btn" href="#/foro">Foro</a>` : `<a class="btn" href="#/${lg.key}/posiciones/${s}">Posiciones</a><a class="btn" href="#/${lg.key}/stats/${s}">Stats</a>`}
     </div>
     <div id="sbTeams">${spinner('', true)}</div></section>`;
   const tail = sel ? `/plantel/${sel}` : '';
   const teamLink = (t, rec) => `<a class="sb-team ${r.view === 'team' && String(r.id) === String(t.id) ? 'on' : ''}" href="#/${lg.key}/team/${t.id}${tail}">${logo(t)}<span>${esc(t.displayName || tName(t))}</span>${rec ? `<span class="r">${esc(rec)}</span>` : ''}</a>`;
   let html = '';
+  if(lg.src === 'tsdb'){
+    // CFL: sin páginas de equipo (ESPN dejó de publicar la CFL). Logos de los partidos de TheSportsDB si están.
+    const seen = {}; arr(lg.probe?.events).forEach(ev => arr(ev.competitions?.[0]?.competitors).forEach(c => { if(c.team?.displayName) seen[c.team.displayName] = c.team; }));
+    html = Object.keys(CFL_ABBR).sort().map(n => { const t = seen[n] || {displayName: n, abbreviation: CFL_ABBR[n], color: CFL_COLOR[CFL_ABBR[n]]}; return `<span class="sb-team">${logo(t)}<span>${esc(n)}</span></span>`; }).join('')
+      + '<div class="legend" style="padding:6px 8px">Sin planteles ni posiciones: ESPN dejó de publicar la CFL. Los partidos vienen de TheSportsDB.</div>';
+    if(state.sideKey === key){ const box = $('#sbTeams'); if(box) box.innerHTML = html; }
+    return;
+  }
   try{
     const groups = await standingsOf(lg, curSeason(lg), lg.college ? 'conf' : 'div');
     let lastParent = null;
@@ -1669,7 +1739,7 @@ function renderTicker(){
   requestAnimationFrame(() => { const w = tr.scrollWidth / 2; tr.style.animationDuration = Math.max(20, w / 70) + 's'; });
 }
 async function refreshTicker(){
-  await Promise.all(visible().map(async lg => { try{ lg.probe = await API.get(sbUrl(lg)); }catch(e){} }));
+  await Promise.all(visible().map(async lg => { try{ lg.probe = lg.src === 'tsdb' ? await cflProbe() : await API.get(sbUrl(lg)); }catch(e){} }));
   renderTicker();
 }
 
@@ -1782,6 +1852,12 @@ VIEWS.draft = async (r,el,ctx) => {
 /* ESPN rechaza los rangos de fechas (error 400): se piden los días por separado. Las fechas de ESPN son del
    horario del Este; para acomodar los partidos a la zona del navegador se piden el día anterior, el elegido y el siguiente. */
 async function fetchDates(lg, days){
+  if(lg.src === 'tsdb'){
+    const res = await Promise.all(days.map(d => cflDay(d).then(x => x, e => ({error: e}))));
+    if(res.every(x => x.error)) throw res[0].error;
+    const seen = new Set();
+    return res.flatMap(x => x.error ? [] : x).filter(e => !seen.has(e.id) && seen.add(e.id));
+  }
   const lim = lg.group ? {} : {limit: 500};
   const res = await Promise.all(days.map(d => API.get(sbUrl(lg, {dates: ymd(d), ...lim})).then(x => x, e => ({error: e}))));
   if(res.every(x => x.error)) throw res[0].error;
@@ -1798,7 +1874,7 @@ async function fetchDay(lg, date){
   const cands = all.concat(arr(lg.probe?.events).map(e => normGame(e, lg.key))).filter(g => g.date >= end && !/POSTPONED|CANCEL/.test(g.statusName));
   let next = cands.sort((a, b) => a.date - b.date)[0] || null;
   if(!next && !games.length){
-    for(let i = 2; i <= 12 && !next; i++){
+    for(let i = 2; i <= 12 && !next && lg.src !== 'tsdb'; i++){
       try{
         const nd = await API.get(sbUrl(lg, {dates: ymd(addDays(date, i)), ...lim}));
         next = arr(nd.events).map(e => normGame(e, lg.key)).filter(g => g.date >= end && !/POSTPONED|CANCEL/.test(g.statusName)).sort((a, b) => a.date - b.date)[0] || null;
@@ -1912,7 +1988,28 @@ function weekLabel(s){
     .replace(/Conference Championship/i, 'Final de Conf.').replace(/Hall of Fame Weekend/i, 'Hall of Fame').replace(/Bowls?$/i, 'Bowls')
     .replace(/Conference Championships?/i, 'Finales de Conf.').replace(/Semifinals?/i, 'Semifinal').replace(/Championship/i, 'Final').replace(/Quarterfinals?/i, 'Cuartos');
 }
+async function cflPartidos(lg, season, ctx){
+  const isCur = season === curSeason(lg);
+  let events, title;
+  if(isCur){
+    const today = startOfDay(new Date());
+    events = await fetchDates(lg, Array.from({length: 11}, (_, i) => addDays(today, i - 3)));
+    title = 'Partidos de estos días';
+  }else{
+    events = await tsdbEvents(`eventsseason.php?id=${TSDB_CFL}&s=${season}`);
+    title = `Temporada ${season}`;
+  }
+  const games = events.map(e => normGame(e, lg.key)).sort((a, b) => a.date - b.date);
+  if(alive(ctx)) state.liveInView = games.some(g => g.state === 'in' || isSoon(g));
+  const note = `<div class="legend">Datos de la CFL: TheSportsDB (ESPN dejó de publicarla después de 2022). ${isCur ? 'Se muestran los partidos de los últimos 3 días y los próximos 7.' : 'La fuente gratuita trae solo algunos partidos de cada temporada pasada.'}</div>`;
+  if(!games.length) return note + emptyBox('Sin partidos', isCur ? 'No hay partidos de la CFL en estos días.' : 'TheSportsDB no tiene partidos de esa temporada.');
+  let lastDay = '', rows = '';
+  for(const g of games){ const dk = ymd(g.date); if(dk !== lastDay){ rows += `<div class="dayh">${esc(fmtLong(g.date))}</div>`; lastDay = dk; } rows += gameRow(g); }
+  const live = games.filter(g => g.state === 'in').length;
+  return note + `<div class="ph ${live ? 'red' : ''}">${lgLogo(lg)} ${esc(title)} <span class="cnt">· ${pluralize(games.length, 'partido', 'partidos')}${live ? ` · ${live} en vivo` : ''}</span></div><div class="box">${rows}</div>`;
+}
 async function tabPartidos(r, lg, season, ctx){
+  if(lg.src === 'tsdb') return cflPartidos(lg, season, ctx);
   const cur = lg.cur || {};
   let stype = r.stype, week = r.week;
   if(!stype){
@@ -1952,6 +2049,7 @@ async function tabPartidos(r, lg, season, ctx){
 }
 
 async function tabPosiciones(r, lg, season){
+  if(lg.src === 'tsdb') return emptyBox('Posiciones no disponibles', `ESPN dejó de publicar la CFL después de 2022 y la fuente gratuita que usamos (TheSportsDB) no incluye la tabla. Mientras tanto, mirá los <a href="#/${lg.key}/partidos">partidos</a> o el <a href="#/${lg.key}/palmares">palmarés</a>.`);
   const mode = lg.college ? 'conf' : state.standMode;
   const groups = await standingsOf(lg, season, mode);
   const toggle = lg.college ? '' : `<div class="btnrow"><button class="btn ${mode === 'div' ? 'on' : ''}" onclick="App.setStand('div')">Por división</button><button class="btn ${mode === 'conf' ? 'on' : ''}" onclick="App.setStand('conf')">Por conferencia</button></div>`;
@@ -1996,6 +2094,7 @@ const CAT_ES = {
 };
 const CAT_ORDER = ['passingYards', 'rushingYards', 'receivingYards', 'passingTouchdowns', 'rushingTouchdowns', 'receivingTouchdowns', 'receptions', 'quarterbackRating', 'passerRating', 'QBRating', 'sacks', 'interceptions', 'totalTackles', 'tackles', 'passesDefended', 'fumblesForced', 'totalPoints'];
 async function tabStats(r, lg, season, ctx){
+  if(lg.src === 'tsdb') return emptyBox('Estadísticas no disponibles', 'ESPN dejó de publicar la CFL después de 2022 y la fuente gratuita que usamos (TheSportsDB) no incluye líderes ni estadísticas.');
   const urls = [];
   if(lg.group) urls.push(`${CORE}/${lg.slug}/seasons/${season}/types/2/groups/${lg.group}/leaders`);
   urls.push(`${CORE}/${lg.slug}/seasons/${season}/types/2/leaders`);
@@ -2044,7 +2143,7 @@ function numVal(s){
 }
 /* ---------- Gamecast · en todos los partidos de todas las ligas (pedido de Iván, 01/11/2026) ---------- */
 const Gamecast = {busy: false};
-const gamecastEnabled = r => r.view === 'game' && !!r.id;
+const gamecastEnabled = r => r.view === 'game' && !!r.id && !isTsdbId(r.id);   // la CFL (TheSportsDB) no tiene jugada a jugada
 // La CFL juega en 110 yardas (mediocampo en la 55); el dibujo es de 100, así que se escala.
 const gcLen = g => g?.lg === 'cfl' ? 110 : 100;
 const gcNum = v => v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v);
@@ -2274,7 +2373,7 @@ async function refreshGamecast(){
 VIEWS.game = async (r, el, ctx) => {
   const lg = LG[r.lg];
   if(!ctx.silent) paint(ctx, el, spinner('Cargando partido'));
-  const d = await getSite(`${SITE}/${lg.slug}/summary?event=${encodeURIComponent(r.id)}`, gamecastEnabled(r) ? {ttl: 10e3, noStale: true} : undefined);
+  const d = isTsdbId(r.id) ? await cflSummary(r.id) : await getSite(`${SITE}/${lg.slug}/summary?event=${encodeURIComponent(r.id)}`, gamecastEnabled(r) ? {ttl: 10e3, noStale: true} : undefined);
   if(!alive(ctx)) return;
   const hc = arr(d.header?.competitions)[0] || {};
   const g = normGame({id: r.id, competitions: [hc], date: hc.date, week: d.header?.week, seasonType: d.header?.season}, r.lg);
@@ -2290,7 +2389,7 @@ VIEWS.game = async (r, el, ctx) => {
   const s = statusInfo(g);
   const A = g.away, H = g.home;
   const season = num(d.header?.season?.year) || curSeason(lg);
-  const tlink = (c) => c.id ? `#/${lg.key}/team/${c.id}/plantel/${season}` : '#';
+  const tlink = (c) => isTsdbId(c.id) ? `#/${lg.key}/palmares` : c.id ? `#/${lg.key}/team/${c.id}/plantel/${season}` : '#';   // la CFL no tiene página de equipo
   const side = (c) => `<div class="side">${logo(c.team)}<a href="${tlink(c)}">${c.rank ? '#' + c.rank + ' ' : ''}${esc(c.team.displayName || tName(c.team))}</a><small>${esc(c.record || '')}</small>${c.possession ? '<span class="poss"><span class="ball"></span> Posesión</span>' : ''}</div>`;
   const pre = g.state === 'pre';
   const venue = d.gameInfo?.venue || hc.venue || {};

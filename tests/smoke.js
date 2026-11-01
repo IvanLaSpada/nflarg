@@ -4,7 +4,7 @@ const { chromium, testPage, mockNetwork } = require('./_helpers');
 
 const ROUTES = ['#/hoy', '#/nfl/hoy', '#/nfl/partidos', '#/nfl/partidos/2025/3/1', '#/nfl/posiciones/2025', '#/nfl/stats/2026', '#/nfl/palmares', '#/fbs/palmares/2010',
   '#/nfl/team/12', '#/nfl/team/12/fixture/2026', '#/nfl/team/12/stats/2024', '#/nfl/team/12/palmares', '#/nfl/team/12/foro', '#/nfl/player/3139477', '#/nfl/draft',
-  '#/nfl/game/401', '#/nfl/game/403', '#/fbs/partidos', '#/ufl/partidos', '#/foro', '#/foro/rankings', '#/zzz'];
+  '#/nfl/game/401', '#/nfl/game/403', '#/fbs/partidos', '#/ufl/partidos', '#/cfl/partidos', '#/cfl/posiciones', '#/cfl/game/t900', '#/foro', '#/foro/rankings', '#/zzz'];
 
 (async () => {
   const url = testPage();
