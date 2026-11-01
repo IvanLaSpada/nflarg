@@ -97,6 +97,7 @@ El archivo está dividido en secciones con comentarios grandes `/* ===== NOMBRE 
 | `#/{liga}/partidos[/temporada[/tipo[/semana]]]` | Liga → Partidos por semana (tipo: 1 pretemporada, 2 regular, 3 playoffs) |
 | `#/{liga}/posiciones[/temporada]` | Liga → Posiciones |
 | `#/{liga}/stats[/temporada]` | Liga → Líderes estadísticos |
+| `#/{liga}/palmares[/temporada]` | Liga → Palmarés (campeones históricos, con corte por temporada) |
 | `#/nfl/draft` | Draft 2027: 32 tarjetas, orden provisorio y picks intercambiados |
 | `#/{liga}/team/{id}[/plantel\|fixture\|stats[/temporada]]` | Equipo |
 | `#/nfl/team/{id}/palmares[/temporada]` | Palmarés de la franquicia, con corte por temporada |
@@ -163,6 +164,12 @@ ESPN **no permite** que el navegador lea `site.api.espn.com/.../teams/...` ni `s
 - Partidos: botones de tipo de temporada y "chips" de semana (del calendario de ESPN), con los partidos agrupados por día.
 - Posiciones: por división o por conferencia (botones). Columnas W, L, T, PCT, PF, PA, DIFF, STRK (en college también CONF). Indicadores de clasificación (x/y/z/*/e).
 - Estadísticas: top 10 por categoría (yardas por pase, carrera y recepción, TD, sacks, intercepciones, tackles…). El primero de cada categoría va destacado en dorado.
+- **Palmarés (todas las ligas):** solapa pedida por Iván. Resumen (campeón vigente, más ganador, ediciones), ranking "Los más ganadores" y tabla de campeones por temporada con el rival de la final. Registro propio en `LEAGUE_HONOURS` (ESPN no lo trae), con tope `through: 2025` por liga y corte por la temporada elegida. `leagueHonoursHTML(lg, season)` lo dibuja; `honourTeam()` busca el logo por id (NFL) o por nombre en la lista de equipos, y `NFL_NAMES` da los nombres si la lista de ESPN no está.
+  - **NFL:** 60 Super Bowls (campeón y rival por id) + campeones NFL 1920–1965 + tabla aparte de la AFL. El ranking reutiliza `TEAM_HONOURS`/`teamHonours()` (temporadas campeón únicas), así que coincide con el palmarés de cada equipo. Si se agrega un campeón, actualizar **los dos** registros.
+  - **FBS:** finales BCS (1998–2013) y CFP (desde 2014). 2004 USC está marcado como vacado y no cuenta en el ranking.
+  - **FCS:** campeones desde 1978 (I-AA); rival de la final desde 2011.
+  - **UFL:** 2024 y 2025, más una tabla aparte de las ligas antecesoras (USFL 2022–23, XFL 2023) que no cuenta en el ranking.
+  - **CFL:** Grey Cups por franquicia (ranking histórico completo, también anteriores a 1958); la tabla de campeones arranca en 1958 y en 2020 no se jugó. Número de Grey Cup: `año − 1912` hasta 2019 y `año − 1913` desde 2021.
 
 ### Partido (`VIEWS.game`)
 Cabecera con los colores de los dos equipos y **marcador estilo LED** (fuente Share Tech Mono, ámbar) → barra de situación si está en vivo → marcador por cuarto → líderes (pases, carreras, recepciones) → jugadas de anotación → estadísticas de equipo con barras comparativas → box score individual → "Info" (estadio, fecha, TV EE.UU., **TV Argentina**, asistencia, clima en °F y °C, línea de apuestas) → **Foro General** embebido.
@@ -343,6 +350,7 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
   - `foro.js`: registro, muro, likes, temas, citas, notificaciones, rankings y perfil.
   - `gamecast.js`: orientación, cambios de posesión, datos faltantes, última jugada adelantada al historial y enriquecimiento de participantes. Se corre con `node tests/gamecast.js`; no requiere navegador ni red.
   - `draft.js`: orden, porcentajes, SOS ponderado, calendario cruzando enero, playoffs, derechos condicionales, seeds inválidos y escape. `draft-fixture.js` aporta el calendario controlado de 32 equipos; no se usa desde la app.
+  - `ligas-palmares.js`: solapa Palmarés de NFL, FBS, FCS y CFL en compu y celular, corte por temporada y liga no disponible. Las capturas quedan en `tests/.capturas/` (no se suben).
   - `honours.js`: palmarés de las 32 franquicias, 60 Super Bowls hasta temporada 2025, mudanzas y corte por temporada, sin duplicar campeonatos.
   - `draft-ui.js`: las 32 tarjetas y la solapa Palmarés a 1280/360, navegación durante una carga lenta y conservación de los últimos datos ante un fallo. Usa foro falso y la misma dependencia Playwright.
   - Se corren con `node tests/smoke.js` y `node tests/foro.js` (necesitan `playwright` instalado). Leé el encabezado de cada archivo.

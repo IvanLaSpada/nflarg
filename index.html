@@ -629,7 +629,11 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .pal-row:nth-child(odd){background:#f0f3f8}.pal-label b{display:block;font:italic 600 15px var(--f-head);text-transform:uppercase;color:var(--navy)}
 .pal-label small{display:block;color:var(--muted);font:10px/1.4 Arial}.pal-years{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
 .pal-year{font:600 13px var(--f-head);color:#715100;padding:3px 8px;border:1px solid #c5a74d;border-radius:3px;background:linear-gradient(#fffbe9,#f0d780 48%,#e0bd54 52%,#f8e6a6);box-shadow:inset 0 1px #fff,0 1px 2px #0a1f4426}
-.pal-empty{color:var(--muted);font:12px Arial}.pal-notes{padding:10px 12px;color:var(--muted);font:10px/1.5 Arial;background:#f7f8fb}.pal-notes p{margin:0 0 4px}.pal-notes p:last-child{margin:0}.pal-notes a{text-decoration:underline}
+.pal-empty{color:var(--muted);font:12px Arial}
+.pal-summary b.pal-name{font:italic 700 20px/1.1 var(--f-head);text-transform:uppercase;padding:4px 0}
+.tbl.lpal td{padding:5px 8px}.tbl.lpal .pal-year{font-size:12px;padding:2px 6px}
+.pal-note{display:block;color:var(--muted);font:10px Arial;margin-top:2px}
+.tbl.lpal tr.vac .tmc b{text-decoration:line-through;color:var(--muted)}.pal-notes{padding:10px 12px;color:var(--muted);font:10px/1.5 Arial;background:#f7f8fb}.pal-notes p{margin:0 0 4px}.pal-notes p:last-child{margin:0}.pal-notes a{text-decoration:underline}
 @media(max-width:640px){.pal-summary{gap:5px;padding:8px}.pal-summary div{flex-basis:80px;padding:6px 3px}.pal-summary b{font-size:30px}.pal-summary small{font-size:9px}.pal-row{grid-template-columns:minmax(0,1fr);gap:7px;padding:10px}.pal-year{padding:3px 7px}.pal-notes{padding:9px 10px}}
 </style>
 </head>
@@ -1152,6 +1156,189 @@ function teamHonoursHTML(id,season){
     </div></section>`;
 }
 
+/* Palmarés de las ligas · registro propio (ESPN no lo trae). Años = temporada, no fecha de la final.
+   NFL: Super Bowls con campeón y rival (ids de franquicia de ESPN), campeones NFL previos y AFL.
+   College: finales BCS (1998–2013) y CFP (2014–) en FBS; campeones de FCS (I-AA) desde 1978.
+   UFL: desde 2024, más sus ligas antecesoras. CFL: Grey Cup por franquicia (era CFL desde 1958).
+   Actualizar el registro y su tope ("through") después de cada nuevo campeón. */
+const LEAGUE_HONOURS = (() => {
+  const nflSB = [[1966,9,12],[1967,9,13],[1968,20,11],[1969,12,16],[1970,11,6],[1971,6,15],[1972,15,28],[1973,15,16],[1974,23,16],[1975,23,6],
+    [1976,13,16],[1977,6,7],[1978,23,6],[1979,23,14],[1980,13,21],[1981,25,4],[1982,28,15],[1983,13,28],[1984,25,15],[1985,3,17],
+    [1986,19,7],[1987,28,7],[1988,25,4],[1989,25,7],[1990,19,2],[1991,28,2],[1992,6,2],[1993,6,2],[1994,25,24],[1995,6,23],
+    [1996,9,17],[1997,7,9],[1998,7,1],[1999,14,10],[2000,33,19],[2001,17,14],[2002,27,13],[2003,17,29],[2004,17,21],[2005,23,26],
+    [2006,11,3],[2007,19,17],[2008,23,22],[2009,18,11],[2010,9,23],[2011,19,17],[2012,33,25],[2013,26,7],[2014,17,26],[2015,7,29],
+    [2016,17,1],[2017,21,17],[2018,17,14],[2019,12,25],[2020,27,12],[2021,14,4],[2022,12,21],[2023,12,25],[2024,21,12],[2025,26,17]];
+  const nflPre = [[1920,'Akron Pros'],[1921,3],[1922,'Canton Bulldogs'],[1923,'Canton Bulldogs'],[1924,'Cleveland Bulldogs'],[1925,22],
+    [1926,'Frankford Yellow Jackets'],[1927,19],[1928,'Providence Steam Roller'],[1929,9],[1930,9],[1931,9],[1932,3],[1933,3],[1934,19],
+    [1935,8],[1936,9],[1937,28],[1938,19],[1939,9],[1940,3],[1941,3],[1942,28],[1943,3],[1944,9],[1945,14],[1946,3],[1947,22],[1948,21],
+    [1949,21],[1950,5],[1951,14],[1952,8],[1953,8],[1954,5],[1955,5],[1956,19],[1957,8],[1958,11],[1959,11],[1960,21],[1961,9],[1962,9],
+    [1963,3],[1964,5],[1965,9]];
+  const afl = [[1960,10,24],[1961,10,24],[1962,12,10],[1963,24,17],[1964,2,24],[1965,2,24],[1966,12,2],[1967,13,10],[1968,20,13],[1969,12,13]];
+  const roman = n => { if(n === 50) return '50'; const m = [[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; let s = ''; for(const [v, r] of m) while(n >= v){ s += r; n -= v; } return s; };
+  const fbs = [[1998,'Tennessee','Florida State'],[1999,'Florida State','Virginia Tech'],[2000,'Oklahoma','Florida State'],[2001,'Miami','Nebraska'],
+    [2002,'Ohio State','Miami'],[2003,'LSU','Oklahoma','USC fue campeón de la encuesta AP'],[2004,'USC','Oklahoma','Título vacado por la NCAA',true],
+    [2005,'Texas','USC'],[2006,'Florida','Ohio State'],[2007,'LSU','Ohio State'],[2008,'Florida','Oklahoma'],[2009,'Alabama','Texas'],
+    [2010,'Auburn','Oregon'],[2011,'Alabama','LSU'],[2012,'Alabama','Notre Dame'],[2013,'Florida State','Auburn'],[2014,'Ohio State','Oregon'],
+    [2015,'Alabama','Clemson'],[2016,'Clemson','Alabama'],[2017,'Alabama','Georgia'],[2018,'Clemson','Alabama'],[2019,'LSU','Clemson'],
+    [2020,'Alabama','Ohio State'],[2021,'Georgia','Alabama'],[2022,'Georgia','TCU'],[2023,'Michigan','Washington'],[2024,'Ohio State','Notre Dame'],
+    [2025,'Indiana','Miami']];
+  const fcs = [[1978,'Florida A&M'],[1979,'Eastern Kentucky'],[1980,'Boise State'],[1981,'Idaho State'],[1982,'Eastern Kentucky'],[1983,'Southern Illinois'],
+    [1984,'Montana State'],[1985,'Georgia Southern'],[1986,'Georgia Southern'],[1987,'Northeast Louisiana'],[1988,'Furman'],[1989,'Georgia Southern'],
+    [1990,'Georgia Southern'],[1991,'Youngstown State'],[1992,'Marshall'],[1993,'Youngstown State'],[1994,'Youngstown State'],[1995,'Montana'],
+    [1996,'Marshall'],[1997,'Youngstown State'],[1998,'Massachusetts'],[1999,'Georgia Southern'],[2000,'Georgia Southern'],[2001,'Montana'],
+    [2002,'Western Kentucky'],[2003,'Delaware'],[2004,'James Madison'],[2005,'Appalachian State'],[2006,'Appalachian State'],[2007,'Appalachian State'],
+    [2008,'Richmond'],[2009,'Villanova'],[2010,'Eastern Washington'],[2011,'North Dakota State','Sam Houston'],[2012,'North Dakota State','Sam Houston'],
+    [2013,'North Dakota State','Towson'],[2014,'North Dakota State','Illinois State'],[2015,'North Dakota State','Jacksonville State'],
+    [2016,'James Madison','Youngstown State'],[2017,'North Dakota State','James Madison'],[2018,'North Dakota State','Eastern Washington'],
+    [2019,'North Dakota State','James Madison'],[2020,'Sam Houston','South Dakota State'],[2021,'North Dakota State','Montana State'],
+    [2022,'South Dakota State','North Dakota State'],[2023,'South Dakota State','Montana'],[2024,'North Dakota State','Montana State'],
+    [2025,'Montana State','Illinois State']];
+  const cflTeams = {
+    'Toronto Argonauts': [1914,1921,1933,1937,1938,1945,1946,1947,1950,1952,1983,1991,1996,1997,2004,2012,2017,2022,2024],
+    'Edmonton Elks': [1954,1955,1956,1975,1978,1979,1980,1981,1982,1987,1993,2003,2005,2015],
+    'Winnipeg Blue Bombers': [1935,1939,1941,1958,1959,1961,1962,1984,1988,1990,2019,2021],
+    'Hamilton Tiger-Cats': [1953,1957,1963,1965,1967,1972,1986,1999],
+    'Montreal Alouettes': [1949,1970,1974,1977,2002,2009,2010,2023],
+    'Calgary Stampeders': [1948,1971,1992,1998,2001,2008,2014,2018],
+    'BC Lions': [1964,1985,1994,2000,2006,2011],
+    'Saskatchewan Roughriders': [1966,1989,2007,2013,2025],
+    'Ottawa Redblacks': [2016],
+    'Ottawa Rough Riders': [1925,1926,1940,1951,1960,1968,1969,1973,1976],
+    'Baltimore Stallions': [1995],
+  };
+  const cflDefunct = {'Ottawa Rough Riders': 'desapareció en 1996', 'Baltimore Stallions': 'desapareció en 1995'};
+  const cflRunner = {1994:'Baltimore CFLers',1995:'Calgary Stampeders',1996:'Edmonton Elks',1997:'Saskatchewan Roughriders',1998:'Hamilton Tiger-Cats',
+    1999:'Calgary Stampeders',2000:'Montreal Alouettes',2001:'Winnipeg Blue Bombers',2002:'Edmonton Elks',2003:'Montreal Alouettes',2004:'BC Lions',
+    2005:'Montreal Alouettes',2006:'Montreal Alouettes',2007:'Winnipeg Blue Bombers',2008:'Montreal Alouettes',2009:'Saskatchewan Roughriders',
+    2010:'Saskatchewan Roughriders',2011:'Winnipeg Blue Bombers',2012:'Calgary Stampeders',2013:'Hamilton Tiger-Cats',2014:'Hamilton Tiger-Cats',
+    2015:'Ottawa Redblacks',2016:'Calgary Stampeders',2017:'Calgary Stampeders',2018:'Ottawa Redblacks',2019:'Hamilton Tiger-Cats',
+    2021:'Hamilton Tiger-Cats',2022:'Winnipeg Blue Bombers',2023:'Winnipeg Blue Bombers',2024:'Winnipeg Blue Bombers',2025:'Montreal Alouettes'};
+  const greyNum = y => y >= 2021 ? y - 1913 : y - 1912;
+  const countBy = (rows, cutoff) => {
+    const c = new Map();
+    rows.filter(r => r.y <= cutoff && !r.vacated).forEach(r => { const k = String(r.w); const e = c.get(k) || {ref: r.w, n: 0, last: 0}; e.n++; e.last = Math.max(e.last, r.y); c.set(k, e); });
+    return [...c.values()].sort((a, b) => b.n - a.n || b.last - a.last);
+  };
+  return {
+    nfl: {
+      through: 2025, teamLeagues: ['nfl'], title: 'Campeones de la NFL', since: 'Desde 1920',
+      rows: () => nflSB.map(([y, w, l]) => ({y, w, l, inst: 'Super Bowl ' + roman(y - 1965)}))
+        .concat(nflPre.map(([y, w]) => ({y, w, l: null, inst: 'Campeonato NFL'}))),
+      ranking: cutoff => Object.keys(TEAM_HONOURS).map(id => { const h = teamHonours(id, cutoff); return {ref: +id, n: h.total, sb: h.sb.length, last: h.last}; })
+        .filter(x => x.n > 0).sort((a, b) => b.n - a.n || b.sb - a.sb || b.last - a.last),
+      rankCols: {n: 'Títulos', sb: 'Super Bowls'},
+      extra: cutoff => ({title: 'AFL · campeones (1960–1969)', rows: afl.filter(([y]) => y <= cutoff).map(([y, w, l]) => ({y, w, l, inst: 'Final AFL'}))}),
+      notes: ['Desde la temporada 1966 el campeón es el ganador del Super Bowl; antes, el campeón de la NFL. Los títulos siguen a la franquicia, aunque haya cambiado de ciudad o de nombre.',
+        'El ranking cuenta temporadas campeón únicas (NFL, AFL, AAFC y Super Bowl), igual que el palmarés de cada equipo.'],
+      sources: [['Pro Football Hall of Fame', 'https://www.profootballhof.com/nfl-champions'], ['NFL.com', 'https://www.nfl.com/super-bowl/history']],
+    },
+    fbs: {
+      through: 2025, teamLeagues: ['fbs', 'fcs'], title: 'Campeones nacionales FBS', since: 'Era BCS y CFP (desde 1998)',
+      rows: () => fbs.map(([y, w, l, note, vacated]) => ({y, w, l, note, vacated, inst: y >= 2014 ? 'Final CFP' : 'Final BCS'})),
+      ranking: cutoff => countBy(LEAGUE_HONOURS.fbs.rows(), cutoff),
+      rankCols: {n: 'Títulos'},
+      notes: ['Campeones de la final del BCS (1998–2013) y del College Football Playoff (desde 2014). Antes de 1998 el campeón salía de encuestas y no hubo final única.',
+        'El título de USC en 2004 fue vacado por la NCAA y no cuenta en el ranking.'],
+      sources: [['NCAA.com', 'https://www.ncaa.com/history/football/fbs'], ['College Football Playoff', 'https://collegefootballplayoff.com']],
+    },
+    fcs: {
+      through: 2025, teamLeagues: ['fcs', 'fbs'], title: 'Campeones de la FCS', since: 'Desde 1978 (ex División I-AA)',
+      rows: () => fcs.map(([y, w, l]) => ({y, w, l: l || null, inst: 'Final FCS'})),
+      ranking: cutoff => countBy(LEAGUE_HONOURS.fcs.rows(), cutoff),
+      rankCols: {n: 'Títulos'},
+      notes: ['Campeones del playoff de la División I-AA, que desde 2006 se llama FCS. Algunos campeones de antes hoy juegan en la FBS (Marshall, Boise State, Appalachian State, James Madison, entre otros).',
+        'Northeast Louisiana es la actual UL Monroe. El rival de la final figura desde 2011.'],
+      sources: [['NCAA.com', 'https://www.ncaa.com/history/football/fcs']],
+    },
+    ufl: {
+      through: 2025, teamLeagues: ['ufl'], title: 'Campeones de la UFL', since: 'Desde 2024',
+      rows: () => [{y: 2024, w: 'Birmingham Stallions', l: 'San Antonio Brahmas', inst: 'Final UFL'}, {y: 2025, w: 'DC Defenders', l: 'Michigan Panthers', inst: 'Final UFL'}],
+      ranking: cutoff => countBy(LEAGUE_HONOURS.ufl.rows(), cutoff),
+      rankCols: {n: 'Títulos'},
+      extra: cutoff => ({title: 'Ligas que formaron la UFL (USFL y XFL)', rows: [
+        {y: 2022, w: 'Birmingham Stallions', l: 'Philadelphia Stars', inst: 'Final USFL'},
+        {y: 2023, w: 'Birmingham Stallions', l: 'Pittsburgh Maulers', inst: 'Final USFL'},
+        {y: 2023, w: 'Arlington Renegades', l: 'DC Defenders', inst: 'Final XFL'}].filter(r => r.y <= cutoff)}),
+      notes: ['La UFL nació en 2024 de la fusión de la USFL y la XFL. Sus campeonatos se muestran aparte y no cuentan en el ranking.'],
+      sources: [['UFL', 'https://www.theufl.com']],
+    },
+    cfl: {
+      through: 2025, teamLeagues: ['cfl'], title: 'Grey Cup', since: 'Era CFL (desde 1958)',
+      rows: () => Object.entries(cflTeams).flatMap(([name, ys]) => ys.filter(y => y >= 1958).map(y => ({y, w: name, l: cflRunner[y] || null, inst: 'Grey Cup ' + greyNum(y)}))),
+      ranking: cutoff => Object.entries(cflTeams).map(([name, ys]) => { const v = ys.filter(y => y <= cutoff); return {ref: name, n: v.length, last: v.length ? Math.max(...v) : 0, note: cflDefunct[name] || ''}; })
+        .filter(x => x.n > 0).sort((a, b) => b.n - a.n || b.last - a.last),
+      rankCols: {n: 'Grey Cups'},
+      notes: ['El ranking cuenta todas las Grey Cups de cada franquicia, también las anteriores a la CFL (se juega desde 1909). La tabla de campeones arranca en 1958, cuando se formó la CFL. En 2020 no se jugó.',
+        'Hamilton suma solo la etapa Tiger-Cats (desde 1950). Los Ottawa Rough Riders y los Ottawa Redblacks son franquicias distintas. El rival de la final figura desde 1994.'],
+      sources: [['CFL.ca', 'https://www.cfl.ca'], ['Grey Cup', 'https://www.cfl.ca/grey-cup/']],
+    },
+  };
+})();
+
+/* Nombres de las 32 franquicias (ids de ESPN), por si la lista de equipos de ESPN no está disponible */
+const NFL_NAMES = {1:['Atlanta Falcons','ATL'],2:['Buffalo Bills','BUF'],3:['Chicago Bears','CHI'],4:['Cincinnati Bengals','CIN'],5:['Cleveland Browns','CLE'],
+  6:['Dallas Cowboys','DAL'],7:['Denver Broncos','DEN'],8:['Detroit Lions','DET'],9:['Green Bay Packers','GB'],10:['Tennessee Titans','TEN'],
+  11:['Indianapolis Colts','IND'],12:['Kansas City Chiefs','KC'],13:['Las Vegas Raiders','LV'],14:['Los Angeles Rams','LAR'],15:['Miami Dolphins','MIA'],
+  16:['Minnesota Vikings','MIN'],17:['New England Patriots','NE'],18:['New Orleans Saints','NO'],19:['New York Giants','NYG'],20:['New York Jets','NYJ'],
+  21:['Philadelphia Eagles','PHI'],22:['Arizona Cardinals','ARI'],23:['Pittsburgh Steelers','PIT'],24:['Los Angeles Chargers','LAC'],25:['San Francisco 49ers','SF'],
+  26:['Seattle Seahawks','SEA'],27:['Tampa Bay Buccaneers','TB'],28:['Washington Commanders','WSH'],29:['Carolina Panthers','CAR'],30:['Jacksonville Jaguars','JAX'],
+  33:['Baltimore Ravens','BAL'],34:['Houston Texans','HOU']};
+/* Equipo de un registro de palmarés: id de franquicia (NFL) o nombre (se busca en la lista de equipos de ESPN para el logo) */
+function honourTeam(H, ref){
+  if(typeof ref === 'number'){
+    const t = LG[H.teamLeagues[0]]?.teamIdx?.[String(ref)] || (NFL_NAMES[ref] ? {id: String(ref), displayName: NFL_NAMES[ref][0], abbreviation: NFL_NAMES[ref][1]} : null);
+    return {t, lg: H.teamLeagues[0], name: t?.displayName || ('Equipo ' + ref)};
+  }
+  const n = norm(ref);
+  for(const k of H.teamLeagues){
+    const list = arr(LG[k]?.teams);
+    const t = list.find(x => [x.displayName, x.location, x.shortDisplayName].some(v => norm(v) === n));
+    if(t) return {t, lg: k, name: H.teamLeagues[0] === 'cfl' || H.teamLeagues[0] === 'ufl' ? (t.displayName || ref) : ref};
+  }
+  return {t: null, lg: null, name: ref};
+}
+function honourCell(H, ref, strong){
+  if(ref == null) return '<span class="pal-empty">—</span>';
+  const {t, lg, name} = honourTeam(H, ref);
+  const ab = esc(name.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase());
+  const lgo = t ? logo(t) : `<span class="logo-fb">${ab}</span>`;
+  const label = strong ? `<b>${esc(name)}</b>` : esc(name);
+  if(t && lg) return `<a class="tmc" href="#/${lg}/team/${t.id}/${lg === 'nfl' ? 'palmares' : 'plantel'}">${lgo}<span>${label}</span></a>`;
+  return `<span class="tmc">${lgo}<span>${label}</span></span>`;
+}
+async function leagueHonoursHTML(lg, season){
+  const H = LEAGUE_HONOURS[lg.key];
+  if(!H) return emptyBox('Palmarés no disponible', 'Todavía no hay un registro verificado para esta liga.');
+  const cutoff = Math.min(Number.isInteger(+season) ? +season : H.through, H.through);
+  await Promise.all(H.teamLeagues.map(k => LG[k] && LG[k].ok !== false ? teamsOf(LG[k]).catch(() => null) : null));
+  const rows = H.rows().filter(r => r.y <= cutoff).sort((a, b) => b.y - a.y || String(a.inst).localeCompare(String(b.inst)));
+  const rank = H.ranking(cutoff);
+  if(!rows.length) return emptyBox('Sin campeones todavía', `El registro de esta liga empieza después de ${cutoff}.`);
+  const cur = rows.find(r => !r.vacated) || rows[0], top = rank[0];
+  const curName = honourTeam(H, cur.w).name, topName = top ? honourTeam(H, top.ref).name : '—';
+  const tied = top ? rank.filter(x => x.n === top.n).length : 0;
+  const champTable = (list, title) => `<div class="ph">${esc(title)}<span class="sp"></span><span class="cnt">${pluralize(list.length, 'edición', 'ediciones')}</span></div>
+    <div class="box tw"><table class="tbl lpal"><thead><tr><th>Temp.</th><th class="l">Campeón</th><th class="l">Rival en la final</th><th class="l hm">Instancia</th></tr></thead><tbody>
+    ${list.map(r => `<tr class="${r.vacated ? 'vac' : ''}"><td><span class="pal-year">★ ${r.y}</span></td><td class="l">${honourCell(H, r.w, true)}${r.note ? `<small class="pal-note">${esc(r.note)}</small>` : ''}</td><td class="l">${honourCell(H, r.l)}</td><td class="l hm">${esc(r.inst)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  const extra = H.extra ? H.extra(cutoff) : null;
+  return `<section class="palmares" aria-label="Palmarés de la liga">
+    <div class="ph">★ Palmarés · ${esc(lg.name)}<span class="sp"></span><span class="cnt">${esc(H.since)} · hasta la temporada ${cutoff}</span></div>
+    <div class="box"><div class="sumst pal-summary">
+      <div class="pal-total"><b class="pal-name">${esc(curName)}</b><small>Campeón vigente · ${cur.y}</small></div>
+      <div><b class="pal-name">${esc(tied > 1 ? tied + ' equipos' : topName)}</b><small>Más ganador${top ? ' · ' + pluralize(top.n, H.rankCols.n === 'Grey Cups' ? 'Grey Cup' : 'título', H.rankCols.n === 'Grey Cups' ? 'Grey Cups' : 'títulos') : ''}</small></div>
+      <div><b>${rows.length}</b><small>${rows.length === 1 ? 'Edición' : 'Ediciones'} en la lista</small></div>
+    </div></div>
+    <div class="ph">🏆 Los más ganadores</div>
+    <div class="box tw"><table class="tbl rk lpal"><thead><tr><th>#</th><th class="l">Equipo</th><th>${esc(H.rankCols.n)}</th>${H.rankCols.sb ? `<th>${esc(H.rankCols.sb)}</th>` : ''}<th class="hm">Último</th></tr></thead><tbody>
+    ${rank.map((x, i) => `<tr class="${i < 3 ? 'top' : ''}"><td class="pos">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td><td class="l">${honourCell(H, x.ref, true)}${x.note ? `<small class="pal-note">${esc(x.note)}</small>` : ''}</td><td class="rkn"><b>${x.n}</b></td>${H.rankCols.sb ? `<td class="rkn"><b>${x.sb}</b></td>` : ''}<td class="hm">${x.last || '—'}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${champTable(rows, H.title)}
+    ${extra && extra.rows.length ? champTable(extra.rows.sort((a, b) => b.y - a.y), extra.title) : ''}
+    <div class="box"><div class="pal-notes">${H.notes.map(n => `<p>${esc(n)}</p>`).join('')}<p>Los años corresponden a la temporada, aunque la final se juegue al año siguiente. Fuentes: ${H.sources.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`).join(' · ')}. Registro verificado hasta ${H.through}.</p></div></div>
+  </section>`;
+}
+
 /* =========================================================================
    NORMALIZACIÓN DE PARTIDOS
    ========================================================================= */
@@ -1462,6 +1649,7 @@ function parseHash(){
     case 'partidos': return {view: 'league', tab: 'partidos', lg, season: num(parts[2]), stype: num(parts[3]), week: num(parts[4])};
     case 'posiciones': return {view: 'league', tab: 'posiciones', lg, season: num(parts[2])};
     case 'stats': return {view: 'league', tab: 'stats', lg, season: num(parts[2])};
+    case 'palmares': return {view: 'league', tab: 'palmares', lg, season: num(parts[2])};
     case 'draft': return lg === 'nfl' ? {view: 'draft', lg, season:DRAFT.season} : {view: 'notfound'};
     case 'team':
       if(parts[3] === 'foro' && lg === 'nfl') return {view: 'team', lg, id: parts[2], tab: 'foro', season: null, ...parseForoRest(parts.slice(4))};
@@ -1639,7 +1827,7 @@ VIEWS.day = async (r, el, ctx) => {
 
 /* ---------- Liga ---------- */
 function leagueHead(lg, tab, season){
-  const tabs = [['partidos', 'Partidos'], ['posiciones', 'Posiciones'], ['stats', 'Estadísticas']];
+  const tabs = [['partidos', 'Partidos'], ['posiciones', 'Posiciones'], ['stats', 'Estadísticas'], ['palmares', 'Palmarés']];
   if(lg.key === 'nfl' && season === DRAFT.season) tabs.push(['draft','Draft']);
   return `<div class="hero" style="--tc:#0f2a62">
       ${lg.logo ? `<img class="wm" src="${esc(lg.logo)}" alt="" onerror="this.remove()">` : ''}
@@ -1657,6 +1845,7 @@ VIEWS.league = async (r, el, ctx) => {
   try{
     if(r.tab === 'partidos') body = await tabPartidos(r, lg, season, ctx);
     else if(r.tab === 'posiciones') body = await tabPosiciones(r, lg, season);
+    else if(r.tab === 'palmares') body = await leagueHonoursHTML(lg, season);
     else body = await tabStats(r, lg, season, ctx);
   }catch(e){ console.error(e); body = errorBox(e); }
   paint(ctx, el, head + `<div id="tabc">${body}</div>`);
