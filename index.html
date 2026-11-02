@@ -1914,6 +1914,10 @@ VIEWS.day = async (r, el, ctx) => {
     </div>
     <h1 class="dayttl">${esc(fmtLong(date))}${isToday ? ' · Hoy' : ''}<small>${r.lg ? esc(LG[r.lg].full) : 'Todas las ligas'} · horarios en tu zona local</small></h1>`;
   if(!ctx.silent) paint(ctx, el, head + `<div class="filters">${FILTERS.map(([k, t]) => `<span class="btn ${state.filter === k ? 'on' : ''}">${t}</span>`).join('')}</div>` + skeleton(8));
+  // El foro arranca a cargar ya, en paralelo con ESPN (antes esperaba a que llegaran los partidos)
+  const foroP = r.lg ? null : (Foro.configured()
+    ? Foro.client().then(sb => forumBody(sb, {forum: 'general', base: `#/hoy${r.date ? '/' + r.date : ''}/foro`, name: 'Foro General'}, r, ctx))
+    : Promise.resolve(foroSetup())).catch(e => errorBox(e, 'No se pudo cargar el foro'));
   const results = (await Promise.all(lgs.map(lg => fetchDay(lg, date).then(({games, next}) => ({lg, games, next}), err => ({lg, err})))))
     .sort((a, b) => LG_PRIORITY.indexOf(a.lg.key) - LG_PRIORITY.indexOf(b.lg.key));
   if(!alive(ctx)) return;
@@ -1952,12 +1956,7 @@ VIEWS.day = async (r, el, ctx) => {
   if(!ctx.silent || r.lg) paint(ctx, el, head + filters + blocks);
   // Foro General abajo de los partidos (solo en el Home de todas las ligas)
   if(!r.lg && alive(ctx)){
-    let foro;
-    try{
-      foro = Foro.configured()
-        ? await forumBody(await Foro.client(), {forum: 'general', base: `#/hoy${r.date ? '/' + r.date : ''}/foro`, name: 'Foro General'}, r, ctx)
-        : foroSetup();
-    }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro'); }
+    const foro = await foroP;
     paint(ctx, el, head + filters + blocks + `<div class="star-sep" id="foroSec"><span>Foro General</span></div>${foro}`);
     if(r.foroLink && !ctx.silent && alive(ctx)) $('#foroSec')?.scrollIntoView({block: 'start'});
   }
@@ -2380,6 +2379,11 @@ async function refreshGamecast(){
 
 VIEWS.game = async (r, el, ctx) => {
   const lg = LG[r.lg];
+  const keepForo0 = gamecastEnabled(r) && ctx.silent && ctx.preserveForo && !!$('#foroBox');
+  // El foro se consulta en paralelo con el partido
+  const foroP = keepForo0 ? null : (Foro.configured()
+    ? Foro.client().then(sb => forumBody(sb, {forum: 'general', base: `#/${r.lg}/game/${r.id}/foro`, name: 'Foro General'}, r, ctx))
+    : Promise.resolve(foroSetup())).catch(e => errorBox(e, 'No se pudo cargar el foro'));
   if(!ctx.silent) paint(ctx, el, spinner('Cargando partido'));
   const d = isTsdbId(r.id) ? await cflSummary(r.id) : await getSite(`${SITE}/${lg.slug}/summary?event=${encodeURIComponent(r.id)}`, gamecastEnabled(r) ? {ttl: 10e3, noStale: true} : undefined);
   if(!alive(ctx)) return;
@@ -2523,12 +2527,9 @@ VIEWS.game = async (r, el, ctx) => {
   // Foro General (el mismo de la sección Foro), embebido abajo del partido
   // El refresco deportivo de Gamecast conserva el foro y su estado sin volver a consultarlo.
   const keepForo = gamecastEnabled(r) && ctx.silent && ctx.preserveForo ? $('#foroBox') : null;
-  let foro;
-  try{
-    foro = keepForo ? '<div id="gcForoSlot"></div>' : Foro.configured()
-      ? await forumBody(await Foro.client(), {forum: 'general', base: `#/${r.lg}/game/${r.id}/foro`, name: 'Foro General'}, r, ctx)
-      : foroSetup();
-  }catch(e){ foro = errorBox(e, 'No se pudo cargar el foro'); }
+  const foro = keepForo ? '<div id="gcForoSlot"></div>' : await (foroP || (Foro.configured()
+    ? Foro.client().then(sb => forumBody(sb, {forum: 'general', base: `#/${r.lg}/game/${r.id}/foro`, name: 'Foro General'}, r, ctx))
+    : Promise.resolve(foroSetup())).catch(e => errorBox(e, 'No se pudo cargar el foro')));
   html += `<div class="star-sep" id="foroSec"><span>Foro General</span></div>${foro}`;
   paint(ctx, el, html);
   if(keepForo && alive(ctx)) $('#gcForoSlot')?.replaceWith(keepForo);
@@ -2998,6 +2999,20 @@ async function refreshForoBox(){
     const b = $('#foroBox'); if(b) b.innerHTML = inner;
   }catch(e){}
 }
+/* Recarga solo el foro (sin blanquear la página ni volver a pedir ESPN) y, si hace falta, cambia la dirección sin disparar route() */
+async function foroReload(after){
+  const cur = Foro.current;
+  if(!cur || !$('#foroBox') || !Foro.sb) return false;
+  if(after && after !== location.hash){
+    if(!after.startsWith(cur.fc.base)) return false;
+    history.pushState(null, '', after);
+  }
+  const r = parseHash(); state.route = r;
+  const inner = await forumInner(Foro.sb, cur.fc, r);
+  Foro.current = {fc: cur.fc, r: {...r}, inner};
+  const b = $('#foroBox'); if(b) b.innerHTML = inner;
+  return true;
+}
 async function forumInner(sb, fc, r){
   const sub = r.fsub || 'muro';
   const rk = fc.forum === 'general';   // los rankings son globales: solo en el Foro General
@@ -3184,7 +3199,7 @@ const ForoActions = {
       const sb = await Foro.client();
       if(Foro.mine[id] === v) await Foro.q(sb.from('reactions').delete().eq('post_id', id).eq('user_id', Foro.user.id));
       else await Foro.q(sb.from('reactions').upsert({post_id: id, user_id: Foro.user.id, value: v}, {onConflict: 'post_id,user_id'}));
-      route(true);
+      if(!(await foroReload().catch(() => false))) route(true);
     }catch(e){ alertBox(e.message); }
   },
   async foroAuth(ev, reg){
@@ -3273,7 +3288,7 @@ const ForoActions = {
       const sb = await Foro.client();
       await Foro.q(sb.from('posts').insert({forum, thread_id: threadId, body, author: Foro.user.id}));
       $('#foText', f).value = '';
-      go(after);
+      if(!(await foroReload(after).catch(() => false))) go(after);
     }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
   async foroCreate(ev, forum, base){
@@ -3286,7 +3301,7 @@ const ForoActions = {
     try{
       const sb = await Foro.client();
       const {data} = await Foro.q(sb.rpc('create_thread', {p_forum: forum, p_title: title, p_body: body}));
-      go(`${base}/t/${data}`);
+      if(!(await foroReload(`${base}/t/${data}`).catch(() => false))) go(`${base}/t/${data}`);
     }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
 };
