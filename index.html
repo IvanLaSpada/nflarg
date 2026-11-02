@@ -2910,7 +2910,14 @@ function avatar(name, url, cls = ''){
   const img = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/|^blob:/.test(url || '') ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.remove()">` : '';
   return `<span class="av ${cls}" style="background:linear-gradient(hsl(${hue} 60% 48%),hsl(${hue} 65% 30%))">${esc(n.charAt(0).toUpperCase())}${img}</span>`;
 }
-const nflTeam = id => (id && LG.nfl.teamIdx?.[String(id)]) || null;
+// Si la lista de equipos de ESPN todavía no cargó (Home, partido), se usa la tabla fija NFL_NAMES: el escudo del hincha se ve siempre
+const nflTeam = id => {
+  if(!id) return null;
+  const t = LG.nfl.teamIdx?.[String(id)];
+  if(t) return t;
+  const n = NFL_NAMES[String(id)];
+  return n ? {id: String(id), displayName: n[0], abbreviation: n[1], logo: `https://a.espncdn.com/i/teamlogos/nfl/500/${n[1].toLowerCase()}.png`} : null;
+};
 function teamBadge(id){
   const t = nflTeam(id);
   return t ? `<a class="fteam" href="#/nfl/team/${t.id}/foro" title="Hincha de ${esc(t.displayName)}">${logo(t)}<span>${esc(t.abbreviation || '')}</span></a>` : '';
