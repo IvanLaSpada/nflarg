@@ -1493,18 +1493,23 @@ function etParts(date){
 function arInfo(lgKey, usTv, date, stype){
   const us = String(usTv || '');
   if(lgKey === 'nfl'){
+    // Temporada 2026: Fox Sports Argentina (FS1/FS2/FS3) pasa el jueves por la noche, algún partido del domingo a la tarde,
+    // Acción de Gracias, playoffs de la NFC y Super Bowl; ESPN / Disney+ los de la noche del domingo, el lunes y los internacionales.
+    // Fuente: grillas de canales argentinos en TheSportsDB (sep–nov 2026). Es una estimación: no hay una fuente oficial por partido.
     const GP = {short: 'Game Pass', long: 'Solo NFL Game Pass (DAZN)'};
-    const FULL = {short: 'ESPN + Game Pass', long: 'Completo por ESPN / Disney+ · también en NFL Game Pass (DAZN)'};
-    const RZ = {short: 'RedZone + Game Pass', long: 'En la RedZone de ESPN / Disney+ (no completo) · completo en NFL Game Pass (DAZN)'};
+    const ESPN = {short: 'ESPN + Game Pass', long: 'Completo por ESPN / Disney+ · también en NFL Game Pass (DAZN)'};
+    const FOX = {short: 'Fox Sports + GP', long: 'Completo por Fox Sports (suele ir en Fox Sports 3; revisá la grilla) · también en NFL Game Pass (DAZN)'};
+    const TARDE = {short: 'Fox / RedZone + GP', long: 'Algunos partidos van completos por Fox Sports (FS1, FS2 o FS3: revisá la grilla) · el resto, en la RedZone de ESPN / Disney+ (no completo) · todos completos en NFL Game Pass (DAZN)'};
+    const PO = {short: 'Fox / ESPN + GP', long: 'Fox Sports pasa los playoffs de la NFC y el Super Bowl; ESPN / Disney+, los de la AFC · todos también en NFL Game Pass (DAZN)'};
     if(stype === 1) return GP;
-    if(/prime|amazon|netflix|youtube/i.test(us)) return GP;
     const {wd, h} = etParts(date instanceof Date ? date : new Date(date));
-    if(stype === 3) return FULL;
-    if(wd === 'Thu' || wd === 'Fri') return GP;
-    if(/ESPN|ABC/i.test(us)) return FULL;
+    if(stype === 3) return PO;
+    if(wd === 'Thu') return FOX;                        // jueves por la noche y Acción de Gracias
+    if(/prime|amazon|netflix|youtube/i.test(us)) return GP;
+    if(/ESPN|ABC/i.test(us)) return ESPN;
     if(wd === 'Sun'){
-      if(h >= 19 || h < 12) return FULL;   // noche del domingo o partido internacional de la mañana
-      return RZ;                           // franja de la tarde (CBS/FOX)
+      if(h >= 19 || h < 12) return ESPN;                // noche del domingo o partido internacional de la mañana
+      return TARDE;                                     // franja de la tarde (CBS/FOX en EE.UU.)
     }
     return GP;
   }

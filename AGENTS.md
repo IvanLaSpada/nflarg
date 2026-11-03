@@ -266,12 +266,15 @@ Funciona desde 360 px de ancho **sin scroll horizontal**. Las tablas anchas scro
 
 ESPN solo informa la TV de EE.UU.; lo de Argentina es una **estimación por reglas** (siempre se muestra con "estimado" o un asterisco). En las filas se ve la versión corta (`AR · …`) y en el detalle la larga.
 
-**NFL** (según el día y la hora **en horario del Este de EE.UU.**, función `etParts`):
+**NFL, temporada 2026** (según el día y la hora **en horario del Este de EE.UU.**, función `etParts`). Revisado el 03/11/2026 con las grillas de canales argentinos de TheSportsDB: Fox Sports 3 pasó los jueves por la noche (Bills–Lions, Packers–Falcons, Broncos–Seahawks) y partidos del domingo a la tarde (Chargers–Cardinals, Dolphins–Patriots); Fox Sports 2, Texans–Bills a la 1 p. m.; ESPN Extra, los internacionales de la mañana. Coincide con el paquete que Fox anunció para México (jueves, domingos, Acción de Gracias, playoffs NFC y Super Bowl). Esas grillas las cargan usuarios y están incompletas (con la clave gratis la API solo devuelve 1 o 2 canales por partido): no sirven para consultarlas en vivo.
 | Caso | Corto | Largo |
 |---|---|---|
-| Pretemporada, jueves, viernes, o TV con Prime/Amazon/Netflix/YouTube | `Game Pass` | Solo NFL Game Pass (DAZN) |
-| Playoffs, TV con ESPN/ABC, domingo desde las 19 h o antes de las 12 h (internacionales) | `ESPN + Game Pass` | Completo por ESPN / Disney+ · también en NFL Game Pass (DAZN) |
-| Domingo de 12 a 19 h (franja CBS/FOX) | `RedZone + Game Pass` | En la RedZone de ESPN / Disney+ (no completo) · completo en NFL Game Pass (DAZN) |
+| Pretemporada | `Game Pass` | Solo NFL Game Pass (DAZN) |
+| Jueves (noche y Acción de Gracias) | `Fox Sports + GP` | Completo por Fox Sports (suele ir en FS3) · también en Game Pass |
+| Prime/Amazon/Netflix/YouTube en otro día | `Game Pass` | Solo NFL Game Pass |
+| TV con ESPN/ABC, domingo desde las 19 h o antes de las 12 h (internacionales) | `ESPN + Game Pass` | Completo por ESPN / Disney+ · también en Game Pass |
+| Domingo de 12 a 19 h (franja CBS/FOX) | `Fox / RedZone + GP` | Algunos completos por Fox Sports (revisá la grilla) · el resto en la RedZone de ESPN / Disney+ · todos en Game Pass |
+| Playoffs | `Fox / ESPN + GP` | Fox Sports: NFC y Super Bowl; ESPN / Disney+: AFC · todos en Game Pass |
 | Resto (ej. sábado de NFL Network) | `Game Pass` | Solo NFL Game Pass |
 
 **College / UFL:** `Disney+` si la TV de EE.UU. es ESPN/ABC/SEC Network/ACC Network; si no, nada. **CFL:** `CFL+`.
