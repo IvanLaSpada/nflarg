@@ -253,7 +253,10 @@ Hero con la foto, la camiseta y el equipo; ficha (posición, edad, nacimiento, a
 - Debajo del header va la franja `.stripes` (**sin** línea roja lisa).
 
 ### Logo e imágenes
-- **Logo:** mapa de Argentina con el escudo estilo NFL (estrellas, pelota, letras rojas). Está **embebido como data URI** en el `<img class="brand-logo">` del header (68 px de alto; 48 px en el celular).
+- **Logo (nuevo desde el 03/11/2026):** archivos originales de Iván en su Google Drive, carpeta `NFLARG/LOGO`.
+  - **Header y mediocampo del Gamecast:** `1x/Primario-noBG.png`, el mapa entero de Argentina con el escudo y "NFL ARG" arriba y el resto en blanco, con fondo transparente. En el header va **embebido como data URI** en el `<img class="brand-logo">` (68 px de alto, 48 px en el celular; Iván aprobó ese tamaño). En el Gamecast va como WebP dentro del SVG (`.gc-midfield`).
+  - **Favicons:** `NFLARG--03.png` (escudo cuadrado sobre azul) → `favicon.ico` (16–64), `favicon-32.png`, `favicon-192.png` y `apple-touch-icon.png` (180).
+  - **`og-image.jpg`:** el mismo Primario a la izquierda.
 - **Favicons:** archivos en la raíz (`favicon.ico`, etc.). No uses data URI para el favicon: Safari lo ignora.
 - **`og-image.jpg`:** logo + "NFLARG" + "El Promiedos de la NFL" + chips + `nflarg.com.ar`, sobre el césped. WhatsApp guarda las vistas previas en caché: para probar un cambio hay que compartir con algo al final (`?wpp`).
 
@@ -391,7 +394,7 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
   - En este partido, el intervalo deportivo de 30 s llama `route(true, true)`: `ctx.preserveForo` conserva y reinserta el mismo nodo `#foroBox`, sin llamar `forumBody()` ni alterar `Foro.current`. Las acciones explícitas del foro (publicar, abrir un tema, reaccionar) usan `foroReload(destino)`: vuelven a consultar solo el foro, cambian la dirección con `history.pushState` sin disparar `route()` y reemplazan `#foroBox`; si no hay foro en pantalla, caen a `go()`/`route(true)`. No conservar el foro para todas las llamadas silenciosas: eso deja viejos los likes/dislikes. El muro se actualiza por separado cada 20 s también mientras el partido está en vivo. No reemplazar un foro guardado por HTML recién consultado: eso desincroniza `Foro.current.inner` del contenido visible.
   - `situation.lastPlay` tiene prioridad si su secuencia o ID numérico es más nuevo que el historial. La clave estable por jugada controla la animación; la firma visual también incluye geometría, descripción y retrato, porque ESPN puede completar participantes sin cambiar `modified` (que tiene precisión de minuto).
   - Los nombres de las zonas de anotación se transforman en el plano del césped, siguiendo los dos ejes de `pt()`. Los arcos se proyectan desde el centro de cada línea de fondo: el travesaño sigue el ancho del campo y los postes se elevan con profundidad. No volver a dibujarlos de frente ni resolver los textos con una rotación sola.
-  - El mediocampo usa el logo original de NFLARG que entregó el dueño, embebido como WebP con transparencia dentro del SVG de `index.html`. Está centrado sobre la yarda 50 y proyectado en el plano del césped; no depende de un archivo externo ni de la carpeta Descargas.
+  - El mediocampo usa el logo de NFLARG que entregó el dueño (desde el 03/11/2026, `Primario-noBG.png`), embebido como WebP con transparencia dentro del SVG de `index.html`. Está centrado sobre la yarda 50 y proyectado en el plano del césped; no depende de un archivo externo ni de la carpeta Descargas.
 - **Moderación mínima del foro**: botón de borrar solo para el admin, bloquear usuarios, que cada uno borre lo suyo, botón de reportar, captcha (Cloudflare Turnstile) en el registro. Para el admin hace falta el nombre de usuario del dueño en el foro.
 - **Publicidad** que no moleste: banner en la barra lateral, entre bloques del Home o en el footer (nunca pop-ups). Antes, revisar el tema marca "NFL" y las condiciones de uso de ESPN.
 - **Riesgo legal conocido**: "NFL" en el nombre, el dominio y el logo es marca registrada. Para uso personal sin fines de lucro el riesgo es bajo; si se monetiza, conviene cambiar el nombre y el logo.
