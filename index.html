@@ -232,7 +232,20 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .sc .at{font:italic 700 16px var(--f-head);color:#9aa3b1}
 .g .tv{font:10px Arial;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis}
 .g .tv{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.g .tv b.ar{color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border-color:#5a9bd0;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.g .sub .tvm{display:none}   /* en el celular se muestra abajo de la fila (ver max-width:640px) */
+.arw{display:inline-flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:2px;vertical-align:middle}
+.arw b.arch{display:inline-block;color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border:1px solid #5a9bd0;border-radius:2px;padding:0 3px;font:700 10px Arial;white-space:nowrap}
+.arw .arx{font:700 9px Arial;color:#0b3b6e;white-space:nowrap}
+.arw .ops{display:inline-flex;gap:2px}
+.arw .arsep{font-style:normal}
+.g .tv .arw{flex-direction:column;align-items:flex-end;gap:2px}
+.g .tv .arw .arsep{display:none}
+.op{display:inline-block;font:italic 700 8px/11px Arial;padding:0 3px;border-radius:3px;color:#fff;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 1px rgba(0,0,0,.25);text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.op-flow{background:linear-gradient(135deg,#7a2ff0,#1fa6ff);text-transform:lowercase;font-size:9px;font-style:normal}
+.op-directv{background:linear-gradient(#35b4ec,#0a64ad);font-size:7px;letter-spacing:.2px}
+.op-claro{background:linear-gradient(#f0463c,#c4140b);border-radius:7px;font-style:normal}
+.gh .info .arw{justify-content:center}
+.gh .info .arw .arx{color:inherit}
 .g .tv b{display:inline-block;color:var(--navy);background:linear-gradient(#fff,#dde2ea);border:1px solid #aab3c2;border-radius:2px;padding:0 3px;font-weight:700}
 .g .sub{grid-column:2/6;font:11px Arial;color:#333;padding-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .g .sub.note{color:var(--muted);font-style:italic}
@@ -535,7 +548,6 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
   .sp-row{grid-template-columns:28px 44px 1fr 56px;gap:5px}
   .cmp{grid-template-columns:52px 1fr 52px}
 }
-.g .sub .tvm{display:none}
 @media (max-width:440px){
   .brand small{display:none}
 }
@@ -1490,17 +1502,23 @@ function etParts(date){
     return {wd: f.find(x => x.type === 'weekday')?.value, h: +(f.find(x => x.type === 'hour')?.value) % 24};
   }catch(e){ return {wd: '', h: 12}; }
 }
+/* Dónde verlo en Argentina. ch = canales de cable (ESPN, Fox Sports), que pasan Flow, DirecTV y Claro;
+   extra = plataformas por internet. Es una estimación por reglas: ESPN solo informa la TV de EE.UU. */
+// Cableoperadores que tienen cada señal (grillas de Flow, DirecTV y Claro: ESPN 1/2/3/Extra y Fox Sports 1/2/3 están en los tres)
+const AR_OPS = {'ESPN': ['flow', 'directv', 'claro'], 'Fox Sports': ['flow', 'directv', 'claro']};
+const OP_NAME = {flow: 'Flow', directv: 'DirecTV', claro: 'Claro TV'};
 function arInfo(lgKey, usTv, date, stype){
   const us = String(usTv || '');
+  const mk = (ch, extra, long) => ({ch, extra, long, short: ch.length ? ch.join(' / ') : extra.join(' · ')});
   if(lgKey === 'nfl'){
     // Temporada 2026: Fox Sports Argentina (FS1/FS2/FS3) pasa el jueves por la noche, algún partido del domingo a la tarde,
     // Acción de Gracias, playoffs de la NFC y Super Bowl; ESPN / Disney+ los de la noche del domingo, el lunes y los internacionales.
-    // Fuente: grillas de canales argentinos en TheSportsDB (sep–nov 2026). Es una estimación: no hay una fuente oficial por partido.
-    const GP = {short: 'Game Pass', long: 'Solo NFL Game Pass (DAZN)'};
-    const ESPN = {short: 'ESPN + Game Pass', long: 'Completo por ESPN / Disney+ · también en NFL Game Pass (DAZN)'};
-    const FOX = {short: 'Fox Sports + GP', long: 'Completo por Fox Sports (suele ir en Fox Sports 3; revisá la grilla) · también en NFL Game Pass (DAZN)'};
-    const TARDE = {short: 'Fox / RedZone + GP', long: 'Algunos partidos van completos por Fox Sports (FS1, FS2 o FS3: revisá la grilla) · el resto, en la RedZone de ESPN / Disney+ (no completo) · todos completos en NFL Game Pass (DAZN)'};
-    const PO = {short: 'Fox / ESPN + GP', long: 'Fox Sports pasa los playoffs de la NFC y el Super Bowl; ESPN / Disney+, los de la AFC · todos también en NFL Game Pass (DAZN)'};
+    // Fuente: grillas de canales argentinos en TheSportsDB (sep–nov 2026). No hay una fuente oficial por partido.
+    const GP = mk([], ['Game Pass'], 'Solo por NFL Game Pass (DAZN)');
+    const ESPN = mk(['ESPN'], ['Disney+', 'Game Pass'], 'Completo por ESPN (también en Disney+) · y en NFL Game Pass (DAZN)');
+    const FOX = mk(['Fox Sports'], ['Game Pass'], 'Completo por Fox Sports (suele ir en Fox Sports 3) · y en NFL Game Pass (DAZN)');
+    const TARDE = mk(['Fox Sports', 'ESPN'], ['Game Pass'], 'Algunos partidos van completos por Fox Sports (FS1, FS2 o FS3: revisá la grilla) · el resto, en la RedZone de ESPN / Disney+ (no completo) · todos completos en NFL Game Pass (DAZN)');
+    const PO = mk(['Fox Sports', 'ESPN'], ['Disney+', 'Game Pass'], 'Fox Sports pasa los playoffs de la NFC y el Super Bowl; ESPN / Disney+, los de la AFC · todos también en NFL Game Pass (DAZN)');
     if(stype === 1) return GP;
     const {wd, h} = etParts(date instanceof Date ? date : new Date(date));
     if(stype === 3) return PO;
@@ -1513,13 +1531,26 @@ function arInfo(lgKey, usTv, date, stype){
     }
     return GP;
   }
-  if(lgKey === 'cfl') return {short: 'CFL+', long: 'CFL+ (gratis fuera de Canadá)'};
-  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return {short: 'Disney+', long: 'Disney+ (ESPN)'};
+  if(lgKey === 'cfl') return mk([], ['CFL+'], 'CFL+ (gratis fuera de Canadá)');
+  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return mk(['ESPN'], ['Disney+'], 'Por ESPN (también en Disney+)');
   return null;
 }
-const AR_TIP = 'Dónde verlo en Argentina (estimado: ESPN solo informa la TV de EE.UU.)';
+const AR_TIP = 'Dónde verlo en Argentina (según el día y el horario del partido)';
+// Íconos de los cableoperadores que tienen las señales del partido
+function opIcons(chs){
+  const ops = [...new Set(arr(chs).flatMap(c => AR_OPS[c] || []))];
+  return ops.map(o => `<i class="op op-${o}" title="${OP_NAME[o]}">${o === 'directv' ? 'DIRECTV' : o}</i>`).join('');
+}
+// Bloque "dónde verlo": canales + íconos de Flow/DirecTV/Claro + plataformas por internet
+function arHTML(g, compact = false){
+  const a = g.ar; if(!a) return '';
+  const extra = compact && a.ch.length ? a.extra.filter(x => x !== 'Disney+') : a.extra;
+  const ch = a.ch.length ? `<b class="arch">${esc(a.ch.join(' / '))}</b><span class="ops">${opIcons(a.ch)}</span>` : '';
+  const ex = extra.length ? `<span class="arx">${a.ch.length ? '<i class="arsep">+ </i>' : ''}${esc(extra.join(' · '))}</span>` : '';
+  return `<span class="arw" title="${esc(a.long || AR_TIP)}">${ch}${ex}</span>`;
+}
 function tvBadges(g){
-  return `${g.tv ? `<b title="TV en EE.UU.">${esc(g.tv)}</b>` : ''}${g.tvAR ? `<b class="ar" title="${esc(g.tvARlong || AR_TIP)}">AR · ${esc(g.tvAR)}</b>` : ''}`;
+  return arHTML(g);
 }
 function normGame(ev, lgKey){
   const comp = arr(ev?.competitions)[0] || ev || {};
@@ -1549,7 +1580,7 @@ function normGame(ev, lgKey){
     week: ev?.week, stype: num(ev?.seasonType?.type) || num(ev?.season?.type) || null,
   };
   const ar = arInfo(lgKey, g.tv, g.date, g.stype || num(ev?.season?.type));
-  g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
+  g.ar = ar; g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
   // Ganador
   const a = parseFloat(g.away.score), h = parseFloat(g.home.score);
   if(g.state === 'post'){
@@ -1639,11 +1670,11 @@ function gameRow(g){
     const si = g.situation;
     const pTeam = g.away.possession ? g.away.team : g.home.possession ? g.home.team : null;
     const dd = si.downDistanceText || si.shortDownDistanceText || '';
-    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}${g.tv || g.tvAR ? `<span class="tvm">· ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span>` : ''}</div>`;
+    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}${g.ar ? `<span class="tvm"> · ${arHTML(g, true)}</span>` : ''}</div>`;
   } else if(g.note){
-    sub = `<div class="sub note">${esc(g.note)}${g.tv || g.tvAR ? `<span class="tvm"> · ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span>` : ''}</div>`;
-  } else if((g.tv || g.tvAR) && pre){
-    sub = `<div class="sub note"><span class="tvm">📺 ${esc([g.tv, g.tvAR && 'AR: ' + g.tvAR].filter(Boolean).join(' · '))}</span></div>`;
+    sub = `<div class="sub note">${esc(g.note)}${g.ar ? `<span class="tvm"> · ${arHTML(g, true)}</span>` : ''}</div>`;
+  } else if(g.ar && pre){
+    sub = `<div class="sub note"><span class="tvm">📺 ${arHTML(g, true)}</span></div>`;
   }
   return `<a class="g st-${g.state}" href="#/${g.lg}/game/${esc(g.id)}" title="${esc(tName(g.away.team))} @ ${esc(tName(g.home.team))}${g.situation?.lastPlay?.text ? ' — ' + esc(g.situation.lastPlay.text) : ''}">
     <div class="stc">${s.html}</div>${team(g.away, 'a')}${score}${team(g.home, 'h')}
@@ -2401,7 +2432,7 @@ VIEWS.game = async (r, el, ctx) => {
   if(g.state !== 'in'){ g.away.possession = g.home.possession = false; }
   if(!g.tv) g.tv = getTV({broadcasts: d.broadcasts}) || '';
   const ar = arInfo(r.lg, g.tv, g.date, num(d.header?.season?.type));
-  g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
+  g.ar = ar; g.tvAR = ar?.short || ''; g.tvARlong = ar?.long || '';
   state.liveInView = g.state === 'in' || isSoon(g);
   const s = statusInfo(g);
   const A = g.away, H = g.home;
@@ -2418,7 +2449,7 @@ VIEWS.game = async (r, el, ctx) => {
       <div class="mid">
         ${pre ? `<div class="ledrow"><span class="led" style="font-size:30px">@</span></div>` : `<div class="ledrow"><span class="led ${H.win ? 'lose' : ''}">${esc(A.score ?? '0')}</span><span class="led ${A.win ? 'lose' : ''}">${esc(H.score ?? '0')}</span></div>`}
         <div class="stat">${g.state === 'in' ? '<span class="live">EN VIVO</span> ' : ''}${esc(stTxt)}</div>
-        <div class="info">${esc(g.tv ? '📺 EE.UU.: ' + g.tv : '')}${g.tvAR ? `${g.tv ? ' · ' : ''}<span title="${AR_TIP}">🇦🇷 Argentina: ${esc(g.tvARlong || g.tvAR)}*</span>` : ''}${(g.tv || g.tvAR) && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
+        <div class="info">${g.ar ? `<span class="arhd">📺 ${arHTML(g)}</span>` : ''}${g.ar && vtxt ? '<br>' : ''}${esc(vtxt)}</div>
       </div>
       ${side(H)}
     </div>`;
@@ -2521,8 +2552,7 @@ VIEWS.game = async (r, el, ctx) => {
   const kv = [];
   if(vtxt) kv.push(['Estadio', vtxt]);
   kv.push(['Fecha', `${fmtLong(g.date)} · ${fmtTime(g.date)}`]);
-  if(g.tv) kv.push(['TV EE.UU.', g.tv]);
-  if(g.tvAR) kv.push(['TV Argentina', (g.tvARlong || g.tvAR) + ' (estimado)']);
+  if(g.tvAR) kv.push(['Dónde verlo', g.tvARlong || g.tvAR]);
   if(gi.attendance) kv.push(['Asistencia', Number(gi.attendance).toLocaleString('es-AR')]);
   if(gi.weather) kv.push(['Clima', [gi.weather.displayValue, gi.weather.temperature != null ? gi.weather.temperature + '°F (' + Math.round((gi.weather.temperature - 32) * 5 / 9) + '°C)' : ''].filter(Boolean).join(' · ')]);
   if(odds?.details) kv.push(['Línea', odds.details + (odds.overUnder ? ` · O/U ${odds.overUnder}` : '')]);
@@ -2727,9 +2757,9 @@ async function teamFixture(lg, id, season, ctx){
       const wlabel = ev.week?.text ? weekLabel(ev.week.text) : (wk ? wk : '-');
       rows += `<tr onclick="location.hash='#/${lg.key}/game/${esc(g.id)}'" style="cursor:pointer"><td>${esc(wlabel)}</td><td class="l">${esc(fmtShort(g.date))}</td>
         <td class="l"><span class="tmc"><span style="color:#888;width:16px">${at}</span>${logo(op.team)}<a href="#/${lg.key}/game/${esc(g.id)}">${esc(op.team.displayName || tName(op.team))}</a></span></td>
-        <td class="l">${result}</td><td class="hm">${esc(g.tv || '')}</td><td class="hm">${esc(g.tvAR || '')}</td><td class="hm">${esc(me.record || '')}</td></tr>`;
+        <td class="l">${result}</td><td class="hm">${arHTML(g, true)}</td><td class="hm">${esc(me.record || '')}</td></tr>`;
     }
-    html += `<div class="sect"><div class="ph">${esc(STYPE[t] || 'Partidos')} <span class="cnt">· ${list.length} partidos</span></div><div class="box tw"><table class="tbl"><thead><tr><th>Sem</th><th class="l">Fecha</th><th class="l">Rival</th><th class="l">Resultado</th><th class="hm">TV EE.UU.</th><th class="hm" title="${AR_TIP}">TV AR*</th><th class="hm">Récord</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    html += `<div class="sect"><div class="ph">${esc(STYPE[t] || 'Partidos')} <span class="cnt">· ${list.length} partidos</span></div><div class="box tw"><table class="tbl"><thead><tr><th>Sem</th><th class="l">Fecha</th><th class="l">Rival</th><th class="l">Resultado</th><th class="hm l" title="${AR_TIP}">Dónde verlo</th><th class="hm">Récord</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
   if(alive(ctx)) state.liveInView = live;
   return html;

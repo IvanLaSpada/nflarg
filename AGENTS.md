@@ -264,7 +264,10 @@ Funciona desde 360 px de ancho **sin scroll horizontal**. Las tablas anchas scro
 
 ## 9. "Dónde verlo en Argentina" (`arInfo`)
 
-ESPN solo informa la TV de EE.UU.; lo de Argentina es una **estimación por reglas** (siempre se muestra con "estimado" o un asterisco). En las filas se ve la versión corta (`AR · …`) y en el detalle la larga.
+ESPN solo informa la TV de EE.UU.; lo de Argentina es una **estimación por reglas**. **La TV de EE.UU. no se muestra** (Iván lo pidió el 03/11/2026; solo se usa por dentro para las reglas) y **sin asterisco ni "(estimado)"** a la vista: la aclaración queda en el `title`.
+- `arInfo()` devuelve `{ch, extra, short, long}`: `ch` = canales de cable (`ESPN`, `Fox Sports`), `extra` = plataformas por internet (`Disney+`, `Game Pass`, `CFL+`).
+- `AR_OPS` dice qué cableoperador tiene cada señal; hoy ESPN y Fox Sports están en **Flow, DirecTV y Claro TV** (`opIcons()` dibuja los íconos `.op-flow`, `.op-directv`, `.op-claro`: insignias de CSS con los colores de cada marca, no logos oficiales). Si una señal deja un operador, se cambia solo `AR_OPS`.
+- `arHTML(g, compacto)` arma el bloque: canal + íconos + plataformas. En la compu va en la columna derecha de la fila, en renglones; en el celular, abajo de la fila (`.tvm`). En el partido: cabecera e "Info" → "Dónde verlo". En el fixture del equipo, columna "Dónde verlo".
 
 **NFL, temporada 2026** (según el día y la hora **en horario del Este de EE.UU.**, función `etParts`). Revisado el 03/11/2026 con las grillas de canales argentinos de TheSportsDB: Fox Sports 3 pasó los jueves por la noche (Bills–Lions, Packers–Falcons, Broncos–Seahawks) y partidos del domingo a la tarde (Chargers–Cardinals, Dolphins–Patriots); Fox Sports 2, Texans–Bills a la 1 p. m.; ESPN Extra, los internacionales de la mañana. Coincide con el paquete que Fox anunció para México (jueves, domingos, Acción de Gracias, playoffs NFC y Super Bowl). Esas grillas las cargan usuarios y están incompletas (con la clave gratis la API solo devuelve 1 o 2 canales por partido): no sirven para consultarlas en vivo.
 | Caso | Corto | Largo |
