@@ -1532,7 +1532,12 @@ function arInfo(lgKey, usTv, date, stype){
     return GP;
   }
   if(lgKey === 'cfl') return mk([], ['CFL+'], 'CFL+ (gratis fuera de Canadá)');
-  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)) return mk(['ESPN'], ['Disney+'], 'Por ESPN (también en Disney+)');
+  // College y UFL: los canales de ESPN de Argentina casi nunca los pasan; los transmitidos por ESPN/ABC en EE.UU. van por Disney+ (plan Premium).
+  // Solo la postemporada de FBS (bowls y College Football Playoff) suele ir también por el cable.
+  if(/ESPN|ABC|SEC ?N|ACC ?N|ACCN|SECN/i.test(us)){
+    if(lgKey === 'fbs' && stype === 3) return mk(['ESPN'], ['Disney+'], 'Por ESPN y Disney+ (postemporada universitaria)');
+    return mk([], ['Disney+'], 'Por Disney+ (plan Premium, con ESPN) · no va por los canales de cable');
+  }
   return null;
 }
 const AR_TIP = 'Dónde verlo en Argentina (según el día y el horario del partido)';

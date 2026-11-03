@@ -280,7 +280,7 @@ ESPN solo informa la TV de EE.UU.; lo de Argentina es una **estimación por regl
 | Playoffs | `Fox / ESPN + GP` | Fox Sports: NFC y Super Bowl; ESPN / Disney+: AFC · todos en Game Pass |
 | Resto (ej. sábado de NFL Network) | `Game Pass` | Solo NFL Game Pass |
 
-**College / UFL:** `Disney+` si la TV de EE.UU. es ESPN/ABC/SEC Network/ACC Network; si no, nada. **CFL:** `CFL+`.
+**College / UFL:** solo `Disney+` (sin canal de cable ni íconos de operadores) si la TV de EE.UU. es ESPN/ABC/SEC Network/ACC Network: Iván confirmó el 03/11/2026 que los canales de ESPN de Argentina no pasan esos partidos (ej. los de la MAC entre semana). Excepción: postemporada de FBS (bowls y CFP) → ESPN + Disney+. Si la TV de EE.UU. es otra, nada. **CFL:** `CFL+`.
 
 El dueño puede pedir ajustar estas reglas: cambiá solo `arInfo()`.
 
