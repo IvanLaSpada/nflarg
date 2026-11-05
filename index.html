@@ -390,6 +390,7 @@ a.bk-m:hover{box-shadow:0 0 0 2px var(--gold2),0 1px 3px rgba(10,31,68,.25)}
 .ftr small{display:block;font:10px Arial;color:var(--muted);margin-top:2px}
 .ftr.on{background:linear-gradient(90deg,#fff3c4,#fff);border-left:4px solid var(--red);padding-left:6px}
 .ftabs .tab.mob{display:none}
+#foroBox.fo-loading{opacity:.55;pointer-events:none;transition:opacity .15s}
 .fside .pager{margin-top:6px}
 @media (max-width:760px){
   .fgrid{grid-template-columns:1fr}
@@ -3222,7 +3223,7 @@ const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_aut
 const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
 
 const Foro = {
-  sb: null, user: null, loading: null, cache: new Map(), mine: {},
+  sb: null, user: null, loading: null, cache: new Map(), mine: {}, navId: 0,
   configured(){ return /^https:\/\/\S+$/.test(FORO_CFG.url) && String(FORO_CFG.key).length > 20; },
   client(){
     if(this.sb) return Promise.resolve(this.sb);
@@ -3398,17 +3399,30 @@ async function refreshForoBox(){
   }catch(e){}
 }
 /* Recarga solo el foro (sin blanquear la página ni volver a pedir ESPN) y, si hace falta, cambia la dirección sin disparar route() */
-async function foroReload(after){
-  const cur = Foro.current;
-  if(!cur || !$('#foroBox') || !Foro.sb) return false;
+/* Navegación dentro del foro sin recargar la página: cambia la dirección (pushState, no dispara route())
+   y reemplaza solo #foroBox. La usan los links del foro, atrás/adelante del navegador, publicar y reaccionar. */
+const foroInBase = (h, base) => !!h && (h === base || h.startsWith(base + '/'));
+// Misma página con otra sub-ruta del foro (Home del mismo día, el mismo partido, el mismo equipo o la sección Foro)
+const foroSamePage = (a, b) => !!a && !!b && !a.acct && !b.acct && ['view', 'lg', 'id', 'date', 'tab', 'season'].every(k => (a[k] ?? null) === (b[k] ?? null));
+async function foroReload(after, opt = {}){
+  const cur = Foro.current, box = $('#foroBox');
+  if(!cur || !box || !Foro.sb) return false;
   if(after && after !== location.hash){
-    if(!after.startsWith(cur.fc.base)) return false;
-    history.pushState(null, '', after);
+    if(!foroInBase(after, cur.fc.base)) return false;
+    if(!opt.noPush) history.pushState(null, '', after);
   }
   const r = parseHash(); state.route = r;
-  const inner = await forumInner(Foro.sb, cur.fc, r);
-  Foro.current = {fc: cur.fc, r: {...r}, inner};
-  const b = $('#foroBox'); if(b) b.innerHTML = inner;
+  const nav = ++Foro.navId;
+  box.classList.add('fo-loading');
+  try{
+    const inner = await forumInner(Foro.sb, cur.fc, r);
+    if(nav !== Foro.navId) return true;   // ya hay una navegación más nueva en camino
+    Foro.current = {fc: cur.fc, r: {...r}, inner};
+    const b = $('#foroBox');
+    if(b){ b.innerHTML = inner; if(opt.scroll && b.getBoundingClientRect().top < 0) b.scrollIntoView({block: 'start'}); }
+  }finally{
+    if(nav === Foro.navId) $('#foroBox')?.classList.remove('fo-loading');
+  }
   return true;
 }
 async function forumInner(sb, fc, r){
@@ -3423,7 +3437,7 @@ async function forumInner(sb, fc, r){
   const reading = sub === 't' || sub === 'nuevo';
   const [main, side] = await Promise.all([
     sub === 't' ? foroThread(sb, fc, r) : sub === 'nuevo' ? foroNewTopic(fc) : foroWall(sb, fc, sub === 'temas' ? {...r, page: 1} : r),
-    foroTopicsSide(sb, fc, sub === 'temas' ? Math.max(1, r.page || 1) : 1, sub === 't' ? num(r.id) : null),
+    foroTopicsSide(sb, fc, sub === 'temas' ? Math.max(1, r.page || 1) : 1, sub === 't' ? num(r.tid) : null),
   ]);
   const v = reading ? 'v-leer' : sub === 'temas' ? 'v-temas' : 'v-muro';
   return foroUserBar() + tabs + `<div class="fgrid ${v}${reading ? ' reading' : ''}"><div class="fmain">${main}</div><aside class="fside">${side}</aside></div>`;
@@ -3467,7 +3481,7 @@ async function foroTopics(sb, fc, r){
 }
 
 async function foroThread(sb, fc, r){
-  const id = num(r.id);
+  const id = num(r.tid);
   const th = id ? await Foro.q(sb.from('threads').select('id,title,forum,post_count').eq('id', id).maybeSingle()) : {data: null};
   const t = th.data;
   if(!t) return emptyBox('Ese tema no existe', `<a class="btn" href="${fc.base}/temas">Volver a los temas</a>`);
@@ -3759,7 +3773,7 @@ const ForoActions = {
     try{
       const sb = await Foro.client();
       const {data} = await Foro.q(sb.rpc('create_thread', {p_forum: forum, p_title: title, p_body: body}));
-      if(!(await foroReload(`${base}/t/${data}`).catch(() => false))) go(`${base}/t/${data}`);
+      if(!(await foroReload(`${base}/t/${data}`, {scroll: true}).catch(() => false))) go(`${base}/t/${data}`);
     }catch(e){ msg.textContent = e.message; btn.disabled = false; }
   },
 };
@@ -3894,7 +3908,7 @@ function alertBox(txt){
 function parseForoRest(p){
   const s = p[0];
   if(s === 'temas') return {fsub: 'temas', page: num(p[1])};
-  if(s === 't') return {fsub: 't', id: p[1], page: num(p[2])};
+  if(s === 't') return {fsub: 't', tid: p[1], page: num(p[2])};   // tid: el id del partido o del equipo queda en r.id
   if(s === 'nuevo') return {fsub: 'nuevo'};
   if(s === 'muro') return {fsub: 'muro', page: num(p[1])};
   if(s === 'rankings') return {fsub: 'rankings', rank: p[1] === 'actividad' ? 'actividad' : 'equipos'};
@@ -3999,7 +4013,20 @@ window.App = {
 
 function init(){
   try{ $('#tzName').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local'; }catch(e){ $('#tzName').textContent = 'local'; }
-  window.addEventListener('hashchange', () => route());
+  window.addEventListener('hashchange', () => {
+    // Atrás/adelante entre sub-rutas del foro de la misma página: solo se actualiza el foro
+    if(Foro.current && Foro.sb && $('#foroBox') && foroSamePage(parseHash(), state.route)){ foroReload(location.hash, {noPush: true, scroll: true}).catch(() => route()); return; }
+    route();
+  });
+  // Links internos del foro (solapas, temas, páginas, rankings): sin recargar la página
+  document.addEventListener('click', e => {
+    if(e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest?.('#foroBox a[href^="#"]');
+    const h = a?.getAttribute('href'), cur = Foro.current;
+    if(!a || !cur || !foroInBase(h, cur.fc.base)) return;
+    e.preventDefault();
+    foroReload(h, {scroll: true}).then(ok => { if(!ok) go(h); }, () => go(h));
+  });
   $('#burger').addEventListener('click', () => document.body.classList.toggle('menu'));
   $('#scrim').addEventListener('click', () => document.body.classList.remove('menu'));
   $('#seasonSel').addEventListener('change', e => onSeasonChange(e.target.value));

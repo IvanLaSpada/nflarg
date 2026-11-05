@@ -352,6 +352,8 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
 2. **No uses la clase `.post`**: los estados de partido generan clases como `st-post` y `tk-st post`, y un estilo `.post` rompía la cartelera. El foro usa `.fpost`.
 3. **`[hidden]` vs `display`**: si un elemento tiene `display:flex` en el CSS, el atributo `hidden` no lo oculta. Agregá `X[hidden]{display:none}` (ya está para `.emo`, `.nbadge` y `.npanel`).
 4. **El foro tardaba y blanqueaba la página**: en el Home y en el partido el foro se pide en paralelo con ESPN (`foroP`), y publicar o reaccionar usa `foroReload()` en lugar de recargar toda la vista. Prueba: `tests/foro-rapido.js`.
+4c. **Navegar dentro del foro nunca recarga la página** (pedido de Iván, 05/11/2026): un manejador de clics en `init()` intercepta los links de `#foroBox` que empiezan con `Foro.current.fc.base` (solapas, temas, páginas, rankings, "Temas" del tema abierto) y llama `foroReload(destino, {scroll})`, que hace `history.pushState` y reemplaza solo `#foroBox` (con `Foro.navId` para descartar respuestas viejas y `.fo-loading` mientras carga). En `hashchange`, si la nueva dirección es la misma página con otra sub-ruta del foro (`foroSamePage`), también se actualiza solo el foro: así funcionan atrás/adelante. Prueba: `tests/foro-navegacion.js`.
+4d. **El id del tema es `r.tid`**, no `r.id`: en el partido y en el equipo `r.id` es el partido o el equipo. Antes, entrar a `#/nfl/game/{id}/foro/t/3` mostraba el partido 3.
 4b. **El foro parpadeaba** porque el refresco redibujaba toda la vista (y en el Home pintaba primero sin el foro). Ahora: el muro usa `refreshForoBox()` (solo reemplaza `#foroBox` si cambió) y `VIEWS.day` en modo silencioso pinta una sola vez con el foro incluido. **No vuelvas a refrescar el foro con `route(true)`.**
 5. **No refresques mientras el usuario escribe**: `typing()` revisa `#foText`; también se respeta el panel de emojis abierto.
 6. **Embeds ambiguos de PostgREST** (sección 10).
@@ -381,6 +383,7 @@ Si escribís `profiles(username)` a secas, falla con *"more than one relationshi
   - `foro.js`: registro, muro, likes, temas, citas, notificaciones, rankings y perfil.
   - `foro-imagenes.js`: subir imagen (achicada a JPEG en la carpeta del usuario), tamaño en pantalla, verla grande, imágenes de otros sitios como texto, cita con "(imagen)" y el foro en dos columnas en compu y celular.
   - `foro-rapido.js`: publicar y reaccionar sin recargar la página, y escudo del hincha.
+  - `foro-navegacion.js`: abrir temas, volver, solapas, atrás/adelante y responder sin recargar la página, en el Home, en un partido y en el celular.
   - `playoffs-real.js`: **con ESPN real** (curl): cuadros de NFL 1985/1995/2019/2025, FBS 2014/2018/2024/2025, UFL 2026, aviso de FBS 2010 y proyecciones NFL y CFP de la temporada actual, en compu y celular.
   - `gamecast.js`: orientación, cambios de posesión, datos faltantes, última jugada adelantada al historial y enriquecimiento de participantes. Se corre con `node tests/gamecast.js`; no requiere navegador ni red.
   - `draft.js`: orden, porcentajes, SOS ponderado, calendario cruzando enero, playoffs, derechos condicionales, seeds inválidos y escape. `draft-fixture.js` aporta el calendario controlado de 32 equipos; no se usa desde la app.
