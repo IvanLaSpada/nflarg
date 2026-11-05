@@ -329,6 +329,37 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .fq{margin:4px 0 8px;padding:6px 10px;border-left:4px solid var(--navy3);background:#eef2f8;border-radius:0 4px 4px 0;font-size:12px;color:#333}
 .fq cite{display:block;font:italic 700 11px Arial;color:var(--navy3);margin-bottom:2px}
 .fq .fq{background:#e3e9f3}
+/* Imágenes de los mensajes: del ancho del texto como máximo, nunca más altas que 320 px; tocándolas se ven grandes */
+.fimg-w{display:block;width:max-content;max-width:100%;margin:6px 0;line-height:0}
+.fimg{display:block;max-width:min(100%,420px);max-height:320px;width:auto;height:auto;border:1px solid #9aa7bd;border-radius:4px;background:#eef2f8;box-shadow:0 2px 4px rgba(10,31,68,.25);cursor:zoom-in}
+.fq .fimg{max-height:160px;max-width:min(100%,240px)}
+.flbx{position:fixed;inset:0;z-index:300;background:rgba(5,14,32,.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+.flbx img{max-width:100%;max-height:100%;border:3px solid #fff;border-radius:4px;box-shadow:0 6px 30px rgba(0,0,0,.6)}
+.flbx-x{position:absolute;top:10px;right:14px;color:#fff;font:700 26px Arial;text-shadow:0 1px 3px #000}
+/* Foro en dos columnas: muro (o tema abierto) a la izquierda y la lista de temas a la derecha */
+.fgrid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:12px;align-items:start}
+.fgrid>*{min-width:0}
+.fside{position:sticky;top:8px}
+.ftph{background:linear-gradient(#e3263f,#b10d26 48%,#8e0a1f 52%,#a70e25);border-color:#5c0614}
+.ftl{padding:0}
+.ftnew{padding:8px;border-bottom:1px solid var(--line);background:linear-gradient(#f4f6fa,#e2e7ef)}
+.ftnew .btn{display:block;text-align:center;margin:0}
+.ftr{display:block;padding:7px 10px;border-bottom:1px solid var(--line);text-decoration:none!important;color:var(--ink)!important}
+.ftr:nth-child(even){background:#f6f8fb}
+.ftr:hover{background:var(--hover)}
+.ftr b{display:block;color:var(--navy);font:700 13px/1.3 Verdana,Arial,sans-serif;overflow-wrap:anywhere}
+.ftr small{display:block;font:10px Arial;color:var(--muted);margin-top:2px}
+.ftr.on{background:linear-gradient(90deg,#fff3c4,#fff);border-left:4px solid var(--red);padding-left:6px}
+.ftmore{display:none;margin:8px;width:calc(100% - 16px)}
+.fside .pager{margin-top:6px}
+@media (max-width:760px){
+  .fgrid{grid-template-columns:1fr}
+  .fside{position:static}
+  .fgrid:not(.reading) .fside{order:-1}          /* en el celular los temas van primero (los 5 más activos) */
+  .fside:not(.all) .ftr:nth-of-type(n+6){display:none}
+  .fside:not(.all) .ftmore{display:block}
+  .fside:not(.all) .pager{display:none}
+}
 .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .rx{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border:1px solid #a1abbb;border-radius:12px;background:linear-gradient(#fff,#e4e8ee);cursor:pointer;font:12px Arial;color:var(--navy)}
 .rx:hover{background:var(--hover)}
@@ -2872,7 +2903,10 @@ VIEWS.player = async (r, el, ctx) => {
 const FORO_CFG = {url: 'https://qdcimhqpgobtvcfvxnpj.supabase.co', key: 'sb_publishable_2lUMRJE-VoAIgPv47XHarg_0yjp2pR_'};
 const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js';
 const FORO_MAIL = '@foro-nflarg.com';   // mail interno de cada cuenta (Supabase exige uno); el real es opcional
-const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40;
+const WALL_PER_PAGE = 30, THREADS_PER_PAGE = 30, POSTS_PER_PAGE = 40, THREADS_SIDE = 15;
+// Imágenes del foro: carpeta pública de Supabase, una subcarpeta por usuario. Hasta 4 por mensaje.
+const FORO_IMG_BUCKET = 'foro-imagenes', FORO_IMG_MAX = 4, FORO_IMG_BYTES = 1048576;
+const FORO_IMG_RE = /\[img\](https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/foro-imagenes\/[0-9a-f-]{36}\/[A-Za-z0-9._-]{1,80})\[\/img\]/g;
 const POST_SEL = 'id,body,created_at,likes,dislikes,thread_id,profiles!posts_author_fkey(username,team_id,avatar_url)';
 const EMOJIS = ('😀 😂 🤣 😅 😉 😎 🤔 😐 😮 😢 😭 😡 🤬 🥳 😴 🙄 🤯 😱 🤡 💀 👍 👎 👏 🙌 💪 🙏 🤝 ✌️ 👀 🔥 💯 ⭐ ⚡ 🏆 🥇 🏈 🏟️ 📺 🎉 🐐 👑 💸 🚑 🧊 🦅 🐻 🦁 🐬 🐎 🐆 🐯 🦬 ❤️ 💙 💚 💛 💜 🖤 🇦🇷 🇺🇸').split(' ');
 
@@ -2920,6 +2954,8 @@ function foroErr(e){
   const m = String(e?.message || e || '');
   if(/does not exist|schema cache|could not find the (table|function)/i.test(m)) return 'La base del foro está desactualizada: volvé a ejecutar supabase/foro.sql completo en el SQL Editor de Supabase. (' + m + ')';
   if(/too_fast/i.test(m)) return 'Esperá unos segundos antes de volver a publicar.';
+  if(/bucket not found/i.test(m)) return 'Falta instalar el almacenamiento de imágenes del foro: volvé a ejecutar supabase/foro.sql completo en el SQL Editor de Supabase.';
+  if(/payload too large|maximum allowed size|mime type|invalid_mime/i.test(m)) return 'la imagen no es válida o pesa más de 1 MB.';
   if(/already registered|already been registered/i.test(m)) return 'Ese mail ya está registrado en otra cuenta.';
   if(/invalid login credentials/i.test(m)) return 'Usuario/mail o contraseña incorrectos.';
   if(/password should be|weak password|at least/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
@@ -2962,14 +2998,18 @@ function teamBadge(id){
   const t = nflTeam(id);
   return t ? `<a class="fteam" href="#/nfl/team/${t.id}/foro" title="Hincha de ${esc(t.displayName)}">${logo(t)}<span>${esc(t.abbreviation || '')}</span></a>` : '';
 }
-/* Texto del mensaje: escapado, citas [quote=usuario]…[/quote], links y saltos de línea. Sin imágenes. */
+/* Texto del mensaje: escapado, citas [quote=usuario]…[/quote], links, imágenes [img]…[/img] y saltos de línea.
+   Solo se muestran imágenes subidas a la carpeta del foro en Supabase (nunca de otros sitios), hasta 4 por mensaje. */
 function renderBody(txt){
   let h = esc(txt);
+  const imgs = [];
+  h = h.replace(FORO_IMG_RE, (m, u) => imgs.length < FORO_IMG_MAX ? (imgs.push(u), `\u0000${imgs.length - 1}\u0000`) : '');
   for(let i = 0; i < 6; i++){
     const n = h.replace(/\[quote=([A-Za-z0-9_]{1,20})\]((?:(?!\[quote=)[\s\S])*?)\[\/quote\]\n?/g, (m, u, b) => `<blockquote class="fq"><cite>${u} escribió:</cite>${b.trim()}</blockquote>`);
     if(n === h) break; h = n;
   }
   h = h.replace(/https?:\/\/[^\s<"']+/g, u => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${u}</a>`);
+  h = h.replace(/\u0000(\d+)\u0000\n?/g, (m, i) => `<a class="fimg-w" href="${imgs[i]}" target="_blank" rel="noopener" onclick="return App.foroImgOpen(this)"><img class="fimg" src="${imgs[i]}" alt="Imagen del mensaje" loading="lazy"></a>`);
   return h.replace(/\n/g, '<br>');
 }
 function pager(base, page, total, per){
@@ -2990,9 +3030,9 @@ function foroUserBar(){
 function composer(forum, threadId, after, placeholder){
   if(!Foro.user) return `<div class="empty" style="padding:14px"><a class="btn on" href="#/foro/entrar" onclick="App.foroBack()">Entrá</a> o <a class="btn" href="#/foro/registro" onclick="App.foroBack()">creá una cuenta</a> para escribir.</div>`;
   return `<form class="fo-form" onsubmit="App.foroSend(event,'${forum}',${threadId || 'null'},'${after}')">
-    <textarea id="foText" maxlength="5000" required placeholder="${esc(placeholder)}"></textarea>
+    <textarea id="foText" maxlength="5000" required placeholder="${esc(placeholder)}" onpaste="App.foroPaste(event)"></textarea>
     <div class="emo" id="foEmo" hidden>${EMOJIS.map(e => `<button type="button" onclick="App.foroIns(this.textContent)">${e}</button>`).join('')}</div>
-    <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><span class="fo-msg" id="foMsg"></span></div>
+    <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><button class="btn" type="button" onclick="document.getElementById('foImg').click()">🖼️ Imagen</button><input type="file" id="foImg" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="App.foroImgPick(this)"><span class="fo-msg" id="foMsg"></span></div>
   </form>`;
 }
 async function loadMine(sb, posts){
@@ -3063,14 +3103,31 @@ async function foroReload(after){
 async function forumInner(sb, fc, r){
   const sub = r.fsub || 'muro';
   const rk = fc.forum === 'general';   // los rankings son globales: solo en el Foro General
-  const tabs = `<div class="ftabs"><a class="tab ${sub === 'muro' ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab ${['temas', 't', 'nuevo'].includes(sub) ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a>${rk ? `<a class="tab ${sub === 'rankings' ? 'on' : ''}" href="${fc.base}/rankings">🏆 Rankings</a>` : ''}</div>`;
-  let html;
-  if(sub === 'rankings' && rk) html = await foroRankings(sb, fc, r);
-  else if(sub === 'temas') html = await foroTopics(sb, fc, r);
-  else if(sub === 't') html = await foroThread(sb, fc, r);
-  else if(sub === 'nuevo') html = foroNewTopic(fc);
-  else html = await foroWall(sb, fc, r);
-  return foroUserBar() + tabs + html;
+  const isRk = sub === 'rankings' && rk;
+  const tabs = `<div class="ftabs"><a class="tab ${isRk ? '' : 'on'}" href="${fc.base}">💬 Foro</a>${rk ? `<a class="tab ${isRk ? 'on' : ''}" href="${fc.base}/rankings">🏆 Rankings</a>` : ''}</div>`;
+  if(isRk) return foroUserBar() + tabs + await foroRankings(sb, fc, r);
+  // Dos columnas: a la izquierda el muro (o el tema abierto / el formulario de tema nuevo), a la derecha la lista de temas
+  const reading = sub === 't' || sub === 'nuevo';
+  const [main, side] = await Promise.all([
+    sub === 't' ? foroThread(sb, fc, r) : sub === 'nuevo' ? foroNewTopic(fc) : foroWall(sb, fc, sub === 'temas' ? {...r, page: 1} : r),
+    foroTopicsSide(sb, fc, sub === 'temas' ? Math.max(1, r.page || 1) : 1, sub === 't' ? num(r.id) : null),
+  ]);
+  return foroUserBar() + tabs + `<div class="fgrid${reading ? ' reading' : ''}"><div class="fmain">${main}</div><aside class="fside">${side}</aside></div>`;
+}
+
+/* Columna de temas (derecha): los más activos primero, con el botón para abrir uno nuevo */
+async function foroTopicsSide(sb, fc, page, cur){
+  const from = (page - 1) * THREADS_SIDE;
+  const {data, count} = await Foro.q(sb.from('threads').select('id,title,last_post_at,post_count,profiles!threads_author_fkey(username,team_id)', {count: 'exact'})
+    .eq('forum', fc.forum).order('last_post_at', {ascending: false}).range(from, from + THREADS_SIDE - 1));
+  const list = arr(data);
+  const rows = list.map(t => { const n = Math.max(0, (t.post_count || 1) - 1);
+    return `<a class="ftr${cur === t.id ? ' on' : ''}" href="${fc.base}/t/${t.id}"><b>${esc(t.title)}</b><small>por ${esc(t.profiles?.username || '—')} · ${pluralize(n, 'respuesta', 'respuestas')} · ${esc(timeAgo(t.last_post_at))}</small></a>`; }).join('');
+  return `<div class="ph ftph">📋 Temas <span class="cnt">· ${pluralize(count || 0, 'tema', 'temas')}</span></div>
+    <div class="box ftl"><div class="ftnew"><a class="btn on" href="${fc.base}/nuevo">＋ Nuevo tema</a></div>
+      ${rows || '<div class="empty"><b>Todavía no hay temas</b>Abrí el primero.</div>'}
+      ${list.length > 5 ? `<button class="btn ftmore" type="button" onclick="this.closest('.fside').classList.add('all')">Ver todos los temas</button>` : ''}</div>
+    ${pager(fc.base + '/temas', page, count, THREADS_SIDE)}`;
 }
 
 async function foroWall(sb, fc, r){
@@ -3108,7 +3165,7 @@ async function foroThread(sb, fc, r){
   const posts = arr(data);
   await loadMine(sb, posts);
   const base = `${fc.base}/t/${id}`;
-  return `<div class="crumb"><a href="${fc.base}/temas">Temas</a> › ${esc(t.title)}</div>
+  return `<div class="crumb"><a href="${fc.base}">Foro</a> › ${esc(t.title)}</div>
     <div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
     <div class="box">${posts.map((p, i) => postHtml(p, from + i + 1)).join('') || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
     <div class="ph">Responder</div><div class="box">${composer(t.forum, id, base + '/-1', 'Escribí tu respuesta…')}</div>`;
@@ -3153,9 +3210,9 @@ function foroNewTopic(fc){
       <label for="foTitle">Título</label>
       <input id="foTitle" required minlength="3" maxlength="120" placeholder="¿De qué querés hablar?">
       <label for="foText">Mensaje</label>
-      <textarea id="foText" required maxlength="5000" placeholder="Escribí el primer mensaje…"></textarea>
+      <textarea id="foText" required maxlength="5000" placeholder="Escribí el primer mensaje…" onpaste="App.foroPaste(event)"></textarea>
       <div class="emo" id="foEmo" hidden>${EMOJIS.map(e => `<button type="button" onclick="App.foroIns(this.textContent)">${e}</button>`).join('')}</div>
-      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar tema</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><span class="fo-msg" id="foMsg"></span></div>
+      <div class="btnrow" style="margin:0"><button class="btn on" type="submit">Publicar tema</button><button class="btn" type="button" onclick="App.foroEmo()">😀 Emojis</button><button class="btn" type="button" onclick="document.getElementById('foImg').click()">🖼️ Imagen</button><input type="file" id="foImg" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="App.foroImgPick(this)"><span class="fo-msg" id="foMsg"></span></div>
     </form></div>`;
 }
 
@@ -3226,6 +3283,46 @@ const ForoActions = {
     ForoActions._back = h;
   },
   foroEmo(){ const p = $('#foEmo'); if(p) p.hidden = !p.hidden; },
+  /* Imágenes: se eligen con el botón o se pegan en el cuadro de texto; se achican en el navegador y se suben a Supabase */
+  foroImgPick(input){ const f = input.files && input.files[0]; input.value = ''; if(f) ForoActions.foroImgFile(f); },
+  foroPaste(ev){
+    const it = [...(ev.clipboardData?.items || [])].find(i => i.kind === 'file' && /^image\//.test(i.type));
+    if(!it) return;
+    ev.preventDefault(); ForoActions.foroImgFile(it.getAsFile());
+  },
+  async foroImgFile(file){
+    const msg = $('#foMsg'), ta = $('#foText'), say = t => { if(msg){ msg.style.color = ''; msg.textContent = t; } };
+    if(!ta || !file) return;
+    if(!Foro.user){ ForoActions.foroBack(); go('#/foro/entrar'); return; }
+    if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type)){ say('Elegí una imagen JPG, PNG, WEBP o GIF.'); return; }
+    if((ta.value.match(/\[img\]/g) || []).length >= FORO_IMG_MAX){ say(`Hasta ${FORO_IMG_MAX} imágenes por mensaje.`); return; }
+    if(ForoActions._uploading){ say('Esperá que termine de subir la anterior…'); return; }
+    ForoActions._uploading = true; say('Subiendo imagen…');
+    try{
+      let blob = file, ext = 'gif';
+      if(file.type === 'image/gif'){ if(file.size > FORO_IMG_BYTES) throw new Error('el GIF pesa más de 1 MB.'); }
+      else { blob = await shrinkJpeg(file, 1280); ext = 'jpg'; }
+      const sb = await Foro.client();
+      const path = `${Foro.user.id}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const up = await sb.storage.from(FORO_IMG_BUCKET).upload(path, blob, {contentType: blob.type || 'image/jpeg', cacheControl: '31536000', upsert: false});
+      if(up.error) throw up.error;
+      const url = sb.storage.from(FORO_IMG_BUCKET).getPublicUrl(path).data.publicUrl.split('?')[0];
+      const pre = ta.value && !/\n$/.test(ta.value.slice(0, ta.selectionStart ?? ta.value.length)) ? '\n' : '';
+      ForoActions.foroIns(`${pre}[img]${url}[/img]\n`);
+      say('');
+    }catch(e){ say('No se pudo subir la imagen: ' + foroErr(e)); }
+    finally{ ForoActions._uploading = false; }
+  },
+  // Ver la imagen grande sin salir de la página (tocar afuera o Esc para cerrar)
+  foroImgOpen(a){
+    const d = document.createElement('div'); d.className = 'flbx'; d.setAttribute('role', 'dialog');
+    d.innerHTML = `<img src="${esc(a.getAttribute('href'))}" alt="Imagen del mensaje"><span class="flbx-x">✕</span>`;
+    const close = () => { d.remove(); document.removeEventListener('keydown', key); };
+    const key = e => { if(e.key === 'Escape') close(); };
+    d.onclick = close; document.addEventListener('keydown', key);
+    document.body.appendChild(d);
+    return false;
+  },
   foroIns(txt){
     const ta = $('#foText'); if(!ta) return;
     const a = ta.selectionStart ?? ta.value.length, b = ta.selectionEnd ?? ta.value.length;
@@ -3236,7 +3333,7 @@ const ForoActions = {
     if(!Foro.user){ ForoActions.foroBack(); go('#/foro/entrar'); return; }
     const p = Foro.cache.get(id); const ta = $('#foText');
     if(!p || !ta) return;
-    const own = String(p.body).replace(/\[quote=[^\]]*\][\s\S]*?\[\/quote\]\s*/g, '').trim().slice(0, 600);
+    const own = String(p.body).replace(/\[quote=[^\]]*\][\s\S]*?\[\/quote\]\s*/g, '').replace(/\[img\][\s\S]*?\[\/img\]/g, '(imagen)').trim().slice(0, 600);
     ForoActions.foroIns(`[quote=${p.username || 'alguien'}]${own}[/quote]\n`);
     ta.scrollIntoView({block: 'center'});
   },
@@ -3446,6 +3543,30 @@ function squareJpeg(file, size){
       x.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, size, size);
       URL.revokeObjectURL(url);
       c.toBlob(b => b ? res(b) : rej(new Error('No se pudo procesar la imagen.')), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la imagen.')); };
+    img.src = url;
+  });
+}
+/* Achica una imagen para el foro (lado mayor ≤ max px) y la convierte a JPEG; si queda pesada, baja la calidad */
+function shrinkJpeg(file, max){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+      x.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const tryQ = q => c.toBlob(b => {
+        if(!b) return rej(new Error('No se pudo procesar la imagen.'));
+        if(b.size > FORO_IMG_BYTES && q > 0.45) return tryQ(q - 0.15);
+        if(b.size > FORO_IMG_BYTES) return rej(new Error('la imagen es demasiado pesada.'));
+        res(b);
+      }, 'image/jpeg', q);
+      tryQ(0.82);
     };
     img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la imagen.')); };
     img.src = url;

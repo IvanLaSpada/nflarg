@@ -14,7 +14,7 @@ const { chromium, testPage, mockNetwork } = require('./_helpers');
   const msg = () => p.$eval('#foMsg', e => e.textContent);
 
   await p.goto(url + '#/foro'); await p.waitForTimeout(1200);
-  ok((await p.$$eval('#foroBox .ftabs a', x => x.length)) === 3, 'Foro General con 3 solapas (Mensajes, Temas, Rankings)');
+  ok((await p.$$eval('#foroBox .ftabs a', x => x.length)) === 2 && !!(await p.$('#foroBox .fgrid .fmain')) && !!(await p.$('#foroBox .fgrid .fside')), 'Foro General con 2 solapas (Foro, Rankings) y temas en columna aparte');
   await reg('ivan_ls', '12');
   ok((await p.$eval('.fbar', e => e.innerText)).includes('ivan_ls'), 'Registro sin mail y sesión iniciada');
   await nav('#/foro'); await p.click('button:has-text("Emojis")'); await p.click('.emo button:has-text("🏈")');

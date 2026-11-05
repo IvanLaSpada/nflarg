@@ -83,7 +83,7 @@ window.supabase = { createClient(){
       onAuthStateChange(fn){ return {data: {subscription: {unsubscribe(){}}}}; },
       async signUp({email, password, options}){
         if(users[email]) return {data: {}, error: {message: 'User already registered'}};
-        const id = 'u' + Object.keys(users).length; users[email] = {id, password, meta: options.data};
+        const id = '00000000-0000-4000-8000-' + String(Object.keys(users).length + 1).padStart(12, '0'); users[email] = {id, password, meta: options.data};
         db.profiles.push({id, username: options.data.username, team_id: options.data.team_id || null});
         session = {user: {id, email, user_metadata: options.data}}; return {data: {session, user: session.user}, error: null};
       },

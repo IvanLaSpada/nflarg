@@ -350,5 +350,24 @@ exception when others then
   raise warning 'No se pudo configurar el almacenamiento de fotos de perfil: %', sqlerrm;
 end $$;
 
+-- Imágenes de los mensajes del foro: públicas para ver; cada uno sube solo a su carpeta ({id del usuario}/…), hasta 1 MB.
+-- La página las achica antes de subirlas (JPEG de 1280 px como máximo) y solo muestra las que están en esta carpeta.
+do $$
+begin
+  insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values ('foro-imagenes', 'foro-imagenes', true, 1048576, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+  on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+  execute 'drop policy if exists "foro imagenes: ver" on storage.objects';
+  execute 'drop policy if exists "foro imagenes: subir a mi carpeta" on storage.objects';
+  execute 'drop policy if exists "foro imagenes: borrar las mias" on storage.objects';
+  execute $p$create policy "foro imagenes: ver" on storage.objects for select using (bucket_id = 'foro-imagenes')$p$;
+  execute $p$create policy "foro imagenes: subir a mi carpeta" on storage.objects for insert to authenticated
+    with check (bucket_id = 'foro-imagenes' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+  execute $p$create policy "foro imagenes: borrar las mias" on storage.objects for delete to authenticated
+    using (bucket_id = 'foro-imagenes' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+exception when others then
+  raise warning 'No se pudo configurar el almacenamiento de imágenes del foro: %', sqlerrm;
+end $$;
+
 -- Que la API de Supabase vea los cambios de inmediato
 notify pgrst, 'reload schema';
