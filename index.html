@@ -389,15 +389,15 @@ a.bk-m:hover{box-shadow:0 0 0 2px var(--gold2),0 1px 3px rgba(10,31,68,.25)}
 .ftr b{display:block;color:var(--navy);font:700 13px/1.3 Verdana,Arial,sans-serif;overflow-wrap:anywhere}
 .ftr small{display:block;font:10px Arial;color:var(--muted);margin-top:2px}
 .ftr.on{background:linear-gradient(90deg,#fff3c4,#fff);border-left:4px solid var(--red);padding-left:6px}
-.ftmore{display:none;margin:8px;width:calc(100% - 16px)}
+.ftabs .tab.mob{display:none}
 .fside .pager{margin-top:6px}
 @media (max-width:760px){
   .fgrid{grid-template-columns:1fr}
   .fside{position:static}
-  .fgrid:not(.reading) .fside{order:-1}          /* en el celular los temas van primero (los 5 más activos) */
-  .fside:not(.all) .ftr:nth-of-type(n+6){display:none}
-  .fside:not(.all) .ftmore{display:block}
-  .fside:not(.all) .pager{display:none}
+  /* En el celular, mensajes y temas van en solapas separadas (pedido de Iván): se muestra una sola columna */
+  .fgrid.v-muro .fside,.fgrid.v-leer .fside,.fgrid.v-temas .fmain{display:none}
+  .ftabs .tab.dsk{display:none}
+  .ftabs .tab.mob{display:block}
 }
 .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .rx{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border:1px solid #a1abbb;border-radius:12px;background:linear-gradient(#fff,#e4e8ee);cursor:pointer;font:12px Arial;color:var(--navy)}
@@ -3415,7 +3415,9 @@ async function forumInner(sb, fc, r){
   const sub = r.fsub || 'muro';
   const rk = fc.forum === 'general';   // los rankings son globales: solo en el Foro General
   const isRk = sub === 'rankings' && rk;
-  const tabs = `<div class="ftabs"><a class="tab ${isRk ? '' : 'on'}" href="${fc.base}">💬 Foro</a>${rk ? `<a class="tab ${isRk ? 'on' : ''}" href="${fc.base}/rankings">🏆 Rankings</a>` : ''}</div>`;
+  // Compu: una solapa "Foro" con mensajes y temas uno al lado del otro. Celular: solapas separadas "Mensajes" y "Temas".
+  const temasOn = ['temas', 't', 'nuevo'].includes(sub);
+  const tabs = `<div class="ftabs"><a class="tab dsk ${isRk ? '' : 'on'}" href="${fc.base}">💬 Foro</a><a class="tab mob ${!isRk && !temasOn ? 'on' : ''}" href="${fc.base}">💬 Mensajes</a><a class="tab mob ${temasOn ? 'on' : ''}" href="${fc.base}/temas">📋 Temas</a>${rk ? `<a class="tab ${isRk ? 'on' : ''}" href="${fc.base}/rankings">🏆 Rankings</a>` : ''}</div>`;
   if(isRk) return foroUserBar() + tabs + await foroRankings(sb, fc, r);
   // Dos columnas: a la izquierda el muro (o el tema abierto / el formulario de tema nuevo), a la derecha la lista de temas
   const reading = sub === 't' || sub === 'nuevo';
@@ -3423,7 +3425,8 @@ async function forumInner(sb, fc, r){
     sub === 't' ? foroThread(sb, fc, r) : sub === 'nuevo' ? foroNewTopic(fc) : foroWall(sb, fc, sub === 'temas' ? {...r, page: 1} : r),
     foroTopicsSide(sb, fc, sub === 'temas' ? Math.max(1, r.page || 1) : 1, sub === 't' ? num(r.id) : null),
   ]);
-  return foroUserBar() + tabs + `<div class="fgrid${reading ? ' reading' : ''}"><div class="fmain">${main}</div><aside class="fside">${side}</aside></div>`;
+  const v = reading ? 'v-leer' : sub === 'temas' ? 'v-temas' : 'v-muro';
+  return foroUserBar() + tabs + `<div class="fgrid ${v}${reading ? ' reading' : ''}"><div class="fmain">${main}</div><aside class="fside">${side}</aside></div>`;
 }
 
 /* Columna de temas (derecha): los más activos primero, con el botón para abrir uno nuevo */
@@ -3437,7 +3440,7 @@ async function foroTopicsSide(sb, fc, page, cur){
   return `<div class="ph ftph">📋 Temas <span class="cnt">· ${pluralize(count || 0, 'tema', 'temas')}</span></div>
     <div class="box ftl"><div class="ftnew"><a class="btn on" href="${fc.base}/nuevo">＋ Nuevo tema</a></div>
       ${rows || '<div class="empty"><b>Todavía no hay temas</b>Abrí el primero.</div>'}
-      ${list.length > 5 ? `<button class="btn ftmore" type="button" onclick="this.closest('.fside').classList.add('all')">Ver todos los temas</button>` : ''}</div>
+</div>
     ${pager(fc.base + '/temas', page, count, THREADS_SIDE)}`;
 }
 
@@ -3476,7 +3479,7 @@ async function foroThread(sb, fc, r){
   const posts = arr(data);
   await loadMine(sb, posts);
   const base = `${fc.base}/t/${id}`;
-  return `<div class="crumb"><a href="${fc.base}">Foro</a> › ${esc(t.title)}</div>
+  return `<div class="crumb"><a href="${fc.base}/temas">Temas</a> › ${esc(t.title)}</div>
     <div class="ph">${esc(t.title)} <span class="cnt">· ${pluralize(count || total, 'mensaje', 'mensajes')}</span></div>
     <div class="box">${posts.map((p, i) => postHtml(p, from + i + 1)).join('') || '<div class="empty">Sin mensajes.</div>'}</div>${pager(base, page, count || total, POSTS_PER_PAGE)}
     <div class="ph">Responder</div><div class="box">${composer(t.forum, id, base + '/-1', 'Escribí tu respuesta…')}</div>`;
