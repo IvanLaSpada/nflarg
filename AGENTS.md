@@ -270,6 +270,11 @@ Hero con la foto, la camiseta y el equipo; ficha (posición, edad, nacimiento, a
 - **Favicons:** archivos en la raíz (`favicon.ico`, etc.). No uses data URI para el favicon: Safari lo ignora.
 - **`og-image.jpg`:** logo + "NFLARG" + "El Promiedos de la NFL" + chips + `nflarg.com.ar`, sobre el césped. WhatsApp guarda las vistas previas en caché: para probar un cambio hay que compartir con algo al final (`?wpp`).
 
+### Íconos 3D (pedido de Iván, 05/11/2026)
+- Los emojis de la **interfaz** se reemplazaron por íconos 3D de **3dicons.co** (versión V1 del repo `realvjy/3dicons`, licencia **CC0**, estilo *color*, ángulo *dynamic*). Las vistas previas de 3dicons.co tienen fondo blanco: se usan los PNG con transparencia de V1 (`3dicons.sgp1.cdn.digitaloceanspaces.com/v1/dynamic/color/{nombre}-dynamic-color.png`), recortados y achicados a 72 px en WebP, **embebidos** en el CSS (`.i3d-{nombre}`, ~37 KB en total).
+- `ic(nombre, clase)` devuelve `<i class="i3d i3d-nombre">`. Disponibles: `trophy`, `medal` (`m1` oro, `m2` plata y `m3` bronce con filtros; `medalIc(i)` para los rankings), `chat`, `notebook`, `up`, `down`, `picture`, `tv` (monitor: no hay televisor), `fire`, `star`, `mail`.
+- **No se tocan:** los emojis que escribe la gente en el foro (y el panel `EMOJIS`), el botón "😀 Emojis" (no hay caritas), ⚠ ☰ ↻ y las ★ del diseño. La pelota del cargando y la de posesión ya eran dibujos propios.
+
 ### Responsive
 Funciona desde 360 px de ancho **sin scroll horizontal**. Las tablas anchas scrollean dentro de `.tw`. Puntos de corte: 1100, 900, 640, 440 y 380 px.
 
