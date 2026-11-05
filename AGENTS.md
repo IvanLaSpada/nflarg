@@ -285,7 +285,7 @@ ESPN solo informa la TV de EE.UU.; lo de Argentina es una **estimación por regl
 | Caso | Corto | Largo |
 |---|---|---|
 | Pretemporada | `Game Pass` | Solo NFL Game Pass (DAZN) |
-| Jueves (noche y Acción de Gracias) | `Fox Sports + GP` | Completo por Fox Sports (suele ir en FS3) · también en Game Pass |
+| Jueves (noche y Acción de Gracias) | `Fox Sports 3` + Game Pass | Completo por Fox Sports 3 · también en Game Pass. **Confirmado por Iván el 05/11/2026: en Flow el TNF va por Fox Sports 3.** DirecTV (canal 623 según guías de programación) y Claro (grilla oficial) también tienen FS3; Telecentro sin confirmar, no se muestra |
 | Prime/Amazon/Netflix/YouTube en otro día | `Game Pass` | Solo NFL Game Pass |
 | TV con ESPN/ABC, domingo desde las 19 h o antes de las 12 h (internacionales) | `ESPN + Game Pass` | Completo por ESPN / Disney+ · también en Game Pass |
 | Domingo de 12 a 19 h (franja CBS/FOX) | `Fox / RedZone + GP` | Algunos completos por Fox Sports (revisá la grilla) · el resto en la RedZone de ESPN / Disney+ · todos en Game Pass |

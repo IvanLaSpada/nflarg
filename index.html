@@ -1576,7 +1576,8 @@ function etParts(date){
 /* Dónde verlo en Argentina. ch = canales de cable (ESPN, Fox Sports), que pasan Flow, DirecTV y Claro;
    extra = plataformas por internet. Es una estimación por reglas: ESPN solo informa la TV de EE.UU. */
 // Cableoperadores que tienen cada señal (grillas de Flow, DirecTV y Claro: ESPN 1/2/3/Extra y Fox Sports 1/2/3 están en los tres)
-const AR_OPS = {'ESPN': ['flow', 'directv', 'claro'], 'Fox Sports': ['flow', 'directv', 'claro']};
+// Fox Sports 3: Iván confirmó que en Flow el TNF va por FS3 (05/11/2026); la grilla oficial de Claro y la guía de DirecTV (canal 623) también lo listan.
+const AR_OPS = {'ESPN': ['flow', 'directv', 'claro'], 'Fox Sports': ['flow', 'directv', 'claro'], 'Fox Sports 3': ['flow', 'directv', 'claro']};
 const OP_NAME = {flow: 'Flow', directv: 'DirecTV', claro: 'Claro TV'};
 function arInfo(lgKey, usTv, date, stype){
   const us = String(usTv || '');
@@ -1587,7 +1588,7 @@ function arInfo(lgKey, usTv, date, stype){
     // Fuente: grillas de canales argentinos en TheSportsDB (sep–nov 2026). No hay una fuente oficial por partido.
     const GP = mk([], ['Game Pass'], 'Solo por NFL Game Pass (DAZN)');
     const ESPN = mk(['ESPN'], ['Disney+', 'Game Pass'], 'Completo por ESPN (también en Disney+) · y en NFL Game Pass (DAZN)');
-    const FOX = mk(['Fox Sports'], ['Game Pass'], 'Completo por Fox Sports (suele ir en Fox Sports 3) · y en NFL Game Pass (DAZN)');
+    const FOX = mk(['Fox Sports 3'], ['Game Pass'], 'Completo por Fox Sports 3 · y en NFL Game Pass (DAZN)');
     const TARDE = mk(['Fox Sports', 'ESPN'], ['Game Pass'], 'Algunos partidos van completos por Fox Sports (FS1, FS2 o FS3: revisá la grilla) · el resto, en la RedZone de ESPN / Disney+ (no completo) · todos completos en NFL Game Pass (DAZN)');
     const PO = mk(['Fox Sports', 'ESPN'], ['Disney+', 'Game Pass'], 'Fox Sports pasa los playoffs de la NFC y el Super Bowl; ESPN / Disney+, los de la AFC · todos también en NFL Game Pass (DAZN)');
     if(stype === 1) return GP;
