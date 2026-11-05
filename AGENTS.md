@@ -54,6 +54,7 @@
   - `A @ 185.199.108.153` · `A @ 185.199.109.153` · `A @ 185.199.110.153` · `A @ 185.199.111.153`
   - `CNAME www ivanlaspada.github.io`
 - Después de publicar, el dueño recarga con **Ctrl+Shift+R** para evitar la caché.
+- **Comprobar que se publicó:** `curl -s https://nflarg.com.ar/?v=$(date +%s) | grep -c …` con algo del cambio. Si no aparece, mirar `https://api.github.com/repos/IvanLaSpada/nflarg/actions/runs?per_page=3`: el 05/11/2026 una publicación falló en el paso "Deploy to GitHub Pages" (la construcción anduvo y githubstatus.com estaba todo bien). Se arregla volviendo a correrla (GitHub → Actions → "pages build and deployment" → Re-run failed jobs) o con el siguiente push.
 
 ---
 
