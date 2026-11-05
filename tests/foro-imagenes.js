@@ -88,19 +88,19 @@ const CAP = path.join(ROOT, 'tests', '.capturas'); fs.mkdirSync(CAP, { recursive
   await m.waitForFunction(() => { const i = document.querySelector('.fpost .tx img.fimg'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 });
   const lay = await m.evaluate(() => ({ tabs: [...document.querySelectorAll('#foroBox .ftabs a')].filter(e => e.offsetParent).map(e => e.textContent.trim()), side: !!document.querySelector('.fside').offsetParent, main: !!document.querySelector('.fmain').offsetParent,
     sw: document.documentElement.scrollWidth, img: document.querySelector('.fpost .tx img.fimg').getBoundingClientRect().width }));
-  ok(lay.tabs.join('|') === '💬 Mensajes|📋 Temas|🏆 Rankings' && lay.main && !lay.side, `Celular: solapas ${lay.tabs.join(' / ')} y en Mensajes no aparece la lista de temas`);
+  ok(lay.tabs.join('|') === 'Mensajes|Temas|Rankings' && lay.main && !lay.side, `Celular: solapas ${lay.tabs.join(' / ')} y en Mensajes no aparece la lista de temas`);
   ok(lay.sw <= 360 && lay.img <= 330, `Celular: sin scroll horizontal y la imagen entra (${Math.round(lay.img)} px)`);
   await m.screenshot({ path: path.join(CAP, 'foro-360.png'), fullPage: true });
   await m.click('#foroBox .ftabs a:has-text("Temas")'); await m.waitForTimeout(900);
   const lt = await m.evaluate(() => ({ side: !!document.querySelector('.fside').offsetParent, main: !!document.querySelector('.fmain').offsetParent, n: [...document.querySelectorAll('.fside .ftr')].filter(e => e.offsetParent).length, on: document.querySelector('#foroBox .ftabs a.on:not(.dsk)')?.textContent.trim() }));
-  ok(lt.side && !lt.main && lt.n === 7 && lt.on === '📋 Temas', `Celular: la solapa Temas muestra los ${lt.n} temas solos`);
+  ok(lt.side && !lt.main && lt.n === 7 && lt.on === 'Temas', `Celular: la solapa Temas muestra los ${lt.n} temas solos`);
   await m.screenshot({ path: path.join(CAP, 'foro-360-temas.png'), fullPage: true });
   await m.click('.fside .ftr'); await m.waitForTimeout(900);
   const lr = await m.evaluate(() => ({ side: !!document.querySelector('.fside').offsetParent, crumb: !!document.querySelector('.fmain .crumb')?.offsetParent, on: document.querySelector('#foroBox .ftabs a.on:not(.dsk)')?.textContent.trim() }));
-  ok(!lr.side && lr.crumb && lr.on === '📋 Temas', 'Celular: al abrir un tema se lee solo, con la solapa Temas marcada');
+  ok(!lr.side && lr.crumb && lr.on === 'Temas', 'Celular: al abrir un tema se lee solo, con la solapa Temas marcada');
   // En la compu sigue uno al lado del otro
   const dsk = await p.evaluate(() => [...document.querySelectorAll('#foroBox .ftabs a')].filter(e => e.offsetParent).map(e => e.textContent.trim()).join('|'));
-  ok(dsk === '💬 Foro|🏆 Rankings', 'Compu: solapas Foro y Rankings (mensajes y temas juntos)');
+  ok(dsk === 'Foro|Rankings', 'Compu: solapas Foro y Rankings (mensajes y temas juntos)');
 
   await b.close();
   fs.unlinkSync(IMG);
