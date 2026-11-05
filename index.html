@@ -203,7 +203,7 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .lgbadge{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 3px;border-radius:3px;background:linear-gradient(#fff,#cfd5de);color:var(--navy);font:italic 700 10px var(--f-head);text-shadow:none;border:1px solid #071636}
 .dayh{font:700 11px Arial;text-transform:uppercase;color:var(--navy);background:linear-gradient(#f4f6fa,#dce2eb);border-bottom:1px solid #b9c3d3;padding:4px 10px;letter-spacing:.3px}
 .dayh:not(:first-child){border-top:1px solid #b9c3d3}
-.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 150px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
+.g{display:grid;grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 86px;align-items:center;column-gap:6px;padding:5px 8px;min-height:38px;color:var(--ink);border-bottom:1px solid var(--line);background:var(--row);text-decoration:none!important;position:relative}
 .g:nth-child(even){background:var(--row2)}
 .g:hover{background:var(--hover)!important;box-shadow:inset 4px 0 0 var(--red)}
 .g:last-child{border-bottom:0}
@@ -230,33 +230,23 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .st-in .sc b{color:var(--ink)}
 .sc i{font-style:normal;color:#9aa3b1}
 .sc .at{font:italic 700 16px var(--f-head);color:#9aa3b1}
-.g .tv{font:10px Arial;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis}
-.g .tv{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.g .sub .tvm{display:none}   /* en el celular se muestra abajo de la fila (ver max-width:640px) */
-.arw{display:inline-flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:2px;vertical-align:middle}
-.arw b.arch{display:inline-block;color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border:1px solid #5a9bd0;border-radius:2px;padding:0 3px;font:700 10px Arial;white-space:nowrap}
-.arw .arx{font:700 9px Arial;color:#0b3b6e;white-space:nowrap}
-.arw .ops{display:inline-flex;flex-wrap:wrap;gap:2px 4px;justify-content:flex-end}
-.arw .artop{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap}
-.arw b.arch{text-transform:uppercase}
+.g .tv{display:none}
+/* Dónde verlo (pedido de Iván): abajo de los equipos, centrado en la fila, en dos renglones:
+   1) quién lo transmite (canal + plataformas, cada uno con su etiqueta)  2) en qué cableoperador y canal */
+.g .arl{grid-column:1/-1;display:flex;justify-content:center;padding-top:4px}
+.arw{display:inline-flex;flex-direction:column;align-items:center;gap:3px;vertical-align:middle}
+.arw .arl1,.arw .arl2{display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 6px}
+.arw b.arch{display:inline-block;color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border:1px solid #5a9bd0;border-radius:2px;padding:0 4px;font:700 10px/13px Arial;white-space:nowrap;text-transform:uppercase}
+.arw .arplus{font:700 10px Arial;color:#0b3b6e}
+.pf{display:inline-block;font:italic 700 9px/13px Arial;padding:0 5px;border-radius:3px;color:#fff!important;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 1px 1px rgba(0,0,0,.3);text-shadow:0 1px 0 rgba(0,0,0,.4);letter-spacing:.2px}
+.pf-gamepass{background:linear-gradient(#3a3a3a,#000 60%);border-left:3px solid #d50a0a;font-style:normal}
+.pf-disney{background:linear-gradient(#2f57e0,#0b1f78 70%);font-style:normal}
+.pf-cfl{background:linear-gradient(#e3263f,#a70e25)}
+.arw.inl{flex-direction:row;flex-wrap:wrap;align-items:center;gap:3px 6px}
+.arw.inl .arl1,.arw.inl .arl2{justify-content:flex-start}
 .opn{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
 .opn small{font:700 9px Arial;color:#0b3b6e}
 .op-telecentro{background:linear-gradient(#6fd3f8,#2fb3ea 55%,#1b9fd8);font-style:normal}   /* celeste de Telecentro */
-.tvm .arw{display:inline}
-.tvm .artop,.tvm .ops{display:inline-flex;justify-content:flex-start;vertical-align:middle;margin:1px 4px 1px 0}
-/* Compu ancha: "dónde verlo" en un solo renglón (columna fija para que los marcadores queden alineados entre filas) */
-@media (min-width:1200px){
-  .g{grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 370px}
-  .g .tv span.arw{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px}
-  .g .tv span.arw .ops{flex-wrap:nowrap}
-}
-/* Celular: "dónde verlo" centrado en su propio renglón */
-@media (max-width:640px){
-  .g .sub span.tvm{display:block;text-align:center;margin-top:2px}
-  .tvm .artop,.tvm .ops{margin:1px 2px}
-}
-.arw .arsep{font-style:normal}
-.g .tv .arw{flex-direction:column;align-items:flex-end;gap:2px}
 
 .op{display:inline-block;font:italic 700 8px/11px Arial;padding:0 3px;border-radius:3px;color:#fff;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 1px rgba(0,0,0,.25);text-shadow:0 1px 0 rgba(0,0,0,.3)}
 .op-flow{background:linear-gradient(135deg,#7a2ff0,#1fa6ff);text-transform:lowercase;font-size:9px;font-style:normal}
@@ -606,7 +596,6 @@ a.bk-m:hover{box-shadow:0 0 0 2px var(--gold2),0 1px 3px rgba(10,31,68,.25)}
   .g{grid-template-columns:58px minmax(0,1fr) 66px minmax(0,1fr);padding:5px 6px;column-gap:4px}
   .g .tv{display:none}
   .g .sub{grid-column:1/5}
-  .g .sub .tvm{display:inline}
   .tm .tn .full{display:none}
   .tm .tn .ab{display:inline}
   .sc b{min-width:22px;font-size:21px}
@@ -1650,18 +1639,18 @@ function opIcons(chs, compact = false){
   return out.join('');
 }
 // Bloque "dónde verlo": canales + íconos de Flow/DirecTV/Claro + plataformas por internet
-function arHTML(g, compact = false, shortNums = compact){
+const PF = {'Game Pass': ['gamepass', 'GAME PASS'], 'Disney+': ['disney', 'Disney+'], 'CFL+': ['cfl', 'CFL+']};
+// Bloque "dónde verlo": renglón 1, canal + plataformas (etiquetas); renglón 2, cableoperadores con su número.
+// inline = todo seguido en un renglón (tabla del fixture).
+function arHTML(g, inline = false){
   const a = g.ar; if(!a) return '';
-  const extra = compact && a.ch.length ? a.extra.filter(x => x !== 'Disney+') : a.extra;
-  // Arriba el canal y las plataformas por internet; abajo los cableoperadores (con su número de canal si lo sabemos)
-  const ch = a.ch.length ? `<b class="arch">${esc(a.ch.join(' / '))}</b>` : '';
-  const ex = extra.length ? `<span class="arx">${a.ch.length ? '<i class="arsep">+ </i>' : ''}${esc(extra.join(' · '))}</span>` : '';
-  const ops = a.ch.length ? `<span class="ops">${opIcons(a.ch, shortNums)}</span>` : '';
-  return `<span class="arw" title="${esc(a.long || AR_TIP)}"><span class="artop">${ch}${ex}</span>${ops}</span>`;
+  const ch = a.ch.map(c => `<b class="arch">${esc(c)}</b>`).join('');
+  const ex = a.extra.map(x => PF[x] ? `<i class="pf pf-${PF[x][0]}">${esc(PF[x][1])}</i>` : `<i class="pf">${esc(x)}</i>`).join('');
+  const l1 = `<span class="arl1">${ch}${ch && ex ? '<span class="arplus">+</span>' : ''}${ex}</span>`;
+  const l2 = a.ch.length ? `<span class="arl2">${opIcons(a.ch, true)}</span>` : '';
+  return `<span class="arw${inline ? ' inl' : ''}" title="${esc(a.long || AR_TIP)}">${l1}${l2}</span>`;
 }
-function tvBadges(g){
-  return arHTML(g, false, true);   // en la fila, el número corto (el completo queda en el globito)
-}
+function tvBadges(g){ return ''; }   // la TV ya no va en una columna: va abajo de la fila (arHTML)
 function normGame(ev, lgKey){
   const comp = arr(ev?.competitions)[0] || ev || {};
   const status = comp.status || ev?.status || {};
@@ -1780,12 +1769,11 @@ function gameRow(g){
     const si = g.situation;
     const pTeam = g.away.possession ? g.away.team : g.home.possession ? g.home.team : null;
     const dd = si.downDistanceText || si.shortDownDistanceText || '';
-    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}${g.ar ? `<span class="tvm"> · ${arHTML(g, true)}</span>` : ''}</div>`;
+    if(dd || pTeam) sub = `<div class="sub">${pTeam ? `<span class="ball"></span><b>${esc(tAbbr(pTeam))}</b>` : ''}${dd ? ' · ' + esc(dd) : ''}${si.isRedZone ? ' <span class="rz">ZONA ROJA</span>' : ''}</div>`;
   } else if(g.note){
-    sub = `<div class="sub note">${esc(g.note)}${g.ar ? `<span class="tvm"> · ${arHTML(g, true)}</span>` : ''}</div>`;
-  } else if(g.ar && pre){
-    sub = `<div class="sub note"><span class="tvm">📺 ${arHTML(g, true)}</span></div>`;
+    sub = `<div class="sub note">${esc(g.note)}</div>`;
   }
+  if(g.ar) sub += `<div class="arl">${arHTML(g)}</div>`;
   return `<a class="g st-${g.state}" href="#/${g.lg}/game/${esc(g.id)}" title="${esc(tName(g.away.team))} @ ${esc(tName(g.home.team))}${g.situation?.lastPlay?.text ? ' — ' + esc(g.situation.lastPlay.text) : ''}">
     <div class="stc">${s.html}</div>${team(g.away, 'a')}${score}${team(g.home, 'h')}
     <div class="tv">${tvBadges(g)}</div>${sub}</a>`;
