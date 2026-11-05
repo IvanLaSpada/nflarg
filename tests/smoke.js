@@ -2,7 +2,7 @@
 // Uso: node tests/smoke.js   → imprime el comienzo de cada vista y la lista de errores de JS.
 const { chromium, testPage, mockNetwork } = require('./_helpers');
 
-const ROUTES = ['#/hoy', '#/nfl/hoy', '#/nfl/partidos', '#/nfl/partidos/2025/3/1', '#/nfl/posiciones/2025', '#/nfl/stats/2026', '#/nfl/palmares', '#/fbs/palmares/2010',
+const ROUTES = ['#/hoy', '#/nfl/hoy', '#/nfl/partidos', '#/nfl/partidos/2025/3/1', '#/nfl/posiciones/2025', '#/nfl/stats/2026', '#/nfl/palmares', '#/nfl/playoffs', '#/nfl/playoffs/2019', '#/fbs/playoffs', '#/fbs/playoffs/2010', '#/ufl/playoffs', '#/cfl/playoffs', '#/fbs/palmares/2010',
   '#/nfl/team/12', '#/nfl/team/12/fixture/2026', '#/nfl/team/12/stats/2024', '#/nfl/team/12/palmares', '#/nfl/team/12/foro', '#/nfl/player/3139477', '#/nfl/draft',
   '#/nfl/game/401', '#/nfl/game/403', '#/fbs/partidos', '#/ufl/partidos', '#/cfl/partidos', '#/cfl/posiciones', '#/cfl/game/t900', '#/foro', '#/foro/rankings', '#/zzz'];
 

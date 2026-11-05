@@ -329,6 +329,45 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .fq{margin:4px 0 8px;padding:6px 10px;border-left:4px solid var(--navy3);background:#eef2f8;border-radius:0 4px 4px 0;font-size:12px;color:#333}
 .fq cite{display:block;font:italic 700 11px Arial;color:var(--navy3);margin-bottom:2px}
 .fq .fq{background:#e3e9f3}
+/* Cuadro de playoffs: árbol de izquierda (primera ronda) a derecha (final), con líneas entre rondas */
+.bk-box{padding:0}
+.bk-note{padding:8px 12px;font:12px/1.5 Arial;color:#2a3550;background:linear-gradient(#fffbea,#fff3c4);border-bottom:1px solid #e5d48a}
+.bk-hint{padding:5px 12px;font:10px Arial;color:var(--muted);border-bottom:1px solid var(--line)}
+.bk-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 10px 14px;background:linear-gradient(#f6f8fb,#e9eef6)}
+.bk{display:inline-flex;--bw:150px;--bc:14px;--bl:#7f91b1}
+.bk-node{display:flex;align-items:center}
+.bk-kids{display:flex;flex-direction:column;justify-content:center}
+.bk-kids>.bk-node{position:relative;padding:5px var(--bc) 5px 0}
+.bk-kids>.bk-node::after{content:'';position:absolute;right:0;top:50%;width:var(--bc);border-top:2px solid var(--bl)}
+.bk-kids>.bk-node::before{content:'';position:absolute;right:0;height:50%;border-right:2px solid var(--bl)}
+.bk-kids>.bk-node:first-child::before{top:50%}
+.bk-kids>.bk-node:last-child::before{top:0}
+.bk-kids>.bk-node:only-child::before{display:none}
+.bk-link{flex:none;width:var(--bc);border-top:2px solid var(--bl)}
+.bk-sp{flex:none}
+.bk-m{flex:none;width:var(--bw);display:block;background:#fff;border:1px solid #9aa7bd;border-radius:4px;box-shadow:0 1px 3px rgba(10,31,68,.25);overflow:hidden;text-decoration:none!important;color:var(--ink)!important}
+a.bk-m:hover{box-shadow:0 0 0 2px var(--gold2),0 1px 3px rgba(10,31,68,.25)}
+.bk-m.virt{border-style:dashed;background:#fbfcfe}
+.bk-m.bye{opacity:.92}
+.bk-cap{display:block;font:italic 700 9px/1.5 var(--f-head);letter-spacing:.3px;text-transform:uppercase;color:#fff;background:linear-gradient(#3a5fa8,#13306b 55%,#0f2a62);padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-m.st-in .bk-cap{background:linear-gradient(#e3263f,#a70e25)}
+.bk-t{display:grid;grid-template-columns:14px 18px minmax(0,1fr) auto;align-items:center;gap:4px;padding:3px 6px;border-top:1px solid #e3e8f0;min-height:24px}
+.bk-t .sd{font:700 10px Arial;color:var(--muted);font-style:normal;text-align:right}
+.bk-t .logo,.bk-t .logo-fb{width:18px;height:18px;font-size:6px}
+.bk-t .nm{font:700 12px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-t b{font:600 16px/1 var(--f-num);color:var(--ink)}
+.bk-t b small{font:10px Arial;color:var(--muted)}
+.bk-t.w{background:linear-gradient(90deg,#fff3c4,#fff)}
+.bk-t.w .nm{color:var(--navy)}
+.bk-t.l{color:#8a93a3}.bk-t.l .nm,.bk-t.l b{color:#8a93a3;font-weight:400}.bk-t.l .logo{opacity:.55}
+.bk-t.tbd .nm{font:italic 11px Arial;color:var(--muted)}
+.bk-ft{display:block;font:10px Arial;color:var(--muted);padding:2px 6px;border-top:1px solid #e3e8f0;background:#f6f8fb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-m.st-in .bk-ft{color:var(--red);font-weight:700}
+.bk-champ{flex:none;width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;text-align:center;background:linear-gradient(#fff6cf,#f5cf4a);border:2px solid var(--gold);border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.bk-champ span{font:italic 700 11px var(--f-head);text-transform:uppercase;color:#6b4e00}
+.bk-champ .logo,.bk-champ .logo-fb{width:44px;height:44px}
+.bk-champ b{font:italic 700 13px/1.2 var(--f-head);color:var(--navy);text-transform:uppercase}
+@media (max-width:640px){.bk{--bw:128px;--bc:10px}}
 /* Imágenes de los mensajes: del ancho del texto como máximo, nunca más altas que 320 px; tocándolas se ven grandes */
 .fimg-w{display:block;width:max-content;max-width:100%;margin:6px 0;line-height:0}
 .fimg{display:block;max-width:min(100%,420px);max-height:320px;width:auto;height:auto;border:1px solid #9aa7bd;border-radius:4px;background:#eef2f8;box-shadow:0 2px 4px rgba(10,31,68,.25);cursor:zoom-in}
@@ -1847,6 +1886,7 @@ function parseHash(){
     case 'posiciones': return {view: 'league', tab: 'posiciones', lg, season: num(parts[2])};
     case 'stats': return {view: 'league', tab: 'stats', lg, season: num(parts[2])};
     case 'palmares': return {view: 'league', tab: 'palmares', lg, season: num(parts[2])};
+    case 'playoffs': return BRACKET_LG.includes(lg) ? {view: 'league', tab: 'playoffs', lg, season: num(parts[2])} : {view: 'notfound'};
     case 'draft': return lg === 'nfl' ? {view: 'draft', lg, season:DRAFT.season} : {view: 'notfound'};
     case 'team':
       if(parts[3] === 'foro' && lg === 'nfl') return {view: 'team', lg, id: parts[2], tab: 'foro', season: null, ...parseForoRest(parts.slice(4))};
@@ -2036,7 +2076,7 @@ VIEWS.day = async (r, el, ctx) => {
 
 /* ---------- Liga ---------- */
 function leagueHead(lg, tab, season){
-  const tabs = [['partidos', 'Partidos'], ['posiciones', 'Posiciones'], ['stats', 'Estadísticas'], ['palmares', 'Palmarés']];
+  const tabs = [['partidos', 'Partidos'], ['posiciones', 'Posiciones'], ...(BRACKET_LG.includes(lg.key) ? [['playoffs', 'Playoffs']] : []), ['stats', 'Estadísticas'], ['palmares', 'Palmarés']];
   if(lg.key === 'nfl' && season === DRAFT.season) tabs.push(['draft','Draft']);
   return `<div class="hero" style="--tc:#0f2a62">
       ${lg.logo ? `<img class="wm" src="${esc(lg.logo)}" alt="" onerror="this.remove()">` : ''}
@@ -2045,6 +2085,276 @@ function leagueHead(lg, tab, season){
     </div>
     <div class="tabs">${tabs.map(([k, t]) => `<a class="tab ${k === tab ? 'on' : ''}" href="#/${lg.key}/${k}${k==='draft'?'':'/'+season}">${t}</a>`).join('')}<a class="tab" href="#/${lg.key}/hoy">Hoy</a></div>`;
 }
+/* =========================================================================
+   CUADRO DE PLAYOFFS (NFL, NCAA FBS y UFL)
+   - Temporada terminada: el cuadro se arma desde la final hacia atrás con los partidos reales
+     (sirve para cualquier formato y época; los equipos sin partido previo "descansaron").
+   - Temporada en curso: NFL según los seeds de las posiciones de ESPN; FBS con el ranking CFP
+     y las reglas de esa temporada (CFP_RULES). Los partidos ya jugados reemplazan a la proyección.
+   ========================================================================= */
+const BRACKET_LG = ['nfl', 'fbs', 'ufl'];
+const BK_LEVELS = {
+  nfl: ['Super Bowl', 'Final de conferencia', 'Divisional', 'Wild Card', 'Primera ronda'],
+  fbs: ['Final', 'Semifinal', 'Cuartos de final', 'Primera ronda'],
+  ufl: ['Final', 'Semifinal', 'Primera ronda'],
+};
+// Reglas del College Football Playoff por temporada (para proyectar el cuadro con el ranking CFP).
+// 2026: 12 equipos. Entran los campeones de ACC, Big Ten, Big 12 y SEC, el mejor rankeado del Group of Six
+// (American, Conference USA, MAC, Mountain West, Pac-12, Sun Belt) y Notre Dame si está en el top 12;
+// el resto, por ranking. Seeds 1–12 por ranking (los clasificados automáticos fuera del top 12 van al fondo);
+// del 1 al 4 descansan en primera ronda. Cuadro fijo: 1–8/9, 2–7/10, 3–6/11, 4–5/12; semis 1/4–... y 2/3.
+const CFP_RULES = {
+  2026: {teams: 12, p4: ['ACC', 'Big Ten', 'Big 12', 'SEC'], g6: /American|Conference USA|C-USA|Mid-American|\bMAC\b|Mountain West|Pac-12|Sun Belt/i, notreDame: '87'},
+};
+const BK_CFP_RE = /College Football Playoff|\bCFP\b/i;
+
+async function postseasonEvents(lg, season){
+  // Universitarios: "semana 1" de postemporada trae todos los bowls de esa temporada (por año calendario ESPN corta en 300 partidos)
+  const urls = lg.group ? [sbUrl(lg, {dates: season, seasontype: 3, week: 1})] : [season, season + 1].map(y => sbUrl(lg, {dates: y, limit: 500}));
+  const res = await Promise.all(urls.map(u => getSite(u).then(x => x, () => null)));
+  if(res.every(x => !x)) throw new ApiError('No se pudo cargar la postemporada.', 0, urls[0]);
+  const map = new Map();
+  res.forEach(d => arr(d?.events).forEach(e => { if(num(e?.season?.year) === season && num(e?.season?.type) === 3 && e?.id) map.set(String(e.id), e); }));
+  let games = [...map.values()].map(e => normGame(e, lg.key)).filter(g => !/POSTPONED|CANCEL/.test(g.statusName));
+  if(lg.key === 'nfl') games = games.filter(g => !/pro bowl/i.test(g.note) && !['AFC', 'NFC'].includes(tAbbr(g.home.team)));
+  return games.sort((a, b) => a.date - b.date);
+}
+
+/* Árbol desde la final: cada equipo viene del partido de playoff que ganó antes; si no tiene, descansó */
+function bkTreeFromFinal(games, final){
+  const used = new Set([final.id]);
+  const node = (g, lvl) => {
+    const sides = [g.away, g.home];
+    const prev = sides.map(s => s.id ? games.filter(x => !used.has(x.id) && x.date < g.date && x.state === 'post' && [x.away, x.home].some(t => t.id === s.id && t.win)).sort((a, b) => b.date - a.date)[0] || null : null);
+    prev.forEach(p => p && used.add(p.id));
+    const kids = prev.some(Boolean) ? sides.map((s, i) => prev[i] ? node(prev[i], lvl + 1) : {team: s.team, id: s.id, lvl: lvl + 1}) : [];
+    return {g, lvl, kids};
+  };
+  return node(final, 0);
+}
+function bkDepth(n){ return n.kids?.length ? 1 + Math.max(...n.kids.map(bkDepth)) : 0; }
+
+/* Tarjeta de un partido (real o proyectado) */
+function bkSide(s, seedOf, g, slot){
+  const t = s?.team, id = s?.id || t?.id;
+  if(!id || id === '-1') return `<div class="bk-t tbd"><i class="sd"></i><span></span><span class="nm">${esc(slot || 'Por definir')}</span><b></b></div>`;
+  const sd = seedOf(String(id));
+  const cls = g && g.state === 'post' ? (s.win ? 'w' : 'l') : '';
+  const val = g && g.state !== 'pre' ? esc(s.score ?? '') : `<small>${esc(s.record || '')}</small>`;
+  return `<div class="bk-t ${cls}"><i class="sd">${sd || ''}</i>${logo(t)}<span class="nm" title="${esc(tName(t))}">${esc(tAbbr(t))}</span><b>${val}</b></div>`;
+}
+function bkFoot(g){
+  if(!g || g.virtual) return g?.foot || 'A jugarse';
+  if(g.state === 'post') return /OT/i.test(g.detail) ? 'Final · alargue' : 'Final';
+  if(g.state === 'in') return '● ' + (g.detail || 'En vivo');
+  return g.timeValid === false ? fmtShort(g.date) : `${fmtShort(g.date)} · ${fmtTime(g.date)}`;
+}
+function bkCard(n, lgKey, seedOf, label){
+  const g = n.g;
+  const body = `<span class="bk-cap" title="${esc(label)}">${esc(label)}</span>${bkSide(g.away, seedOf, g, g.slots?.[0])}${bkSide(g.home, seedOf, g, g.slots?.[1])}<span class="bk-ft">${esc(bkFoot(g))}</span>`;
+  return g.virtual || !g.id ? `<div class="bk-m virt">${body}</div>` : `<a class="bk-m st-${g.state}" href="#/${lgKey}/game/${esc(g.id)}">${body}</a>`;
+}
+function bkLeaf(n, seedOf, label){
+  return `<div class="bk-m bye"><span class="bk-cap">${esc(label)}</span>${bkSide({team: n.team, id: n.id, record: n.record}, seedOf, null)}<span class="bk-ft">Descansa en esta ronda</span></div>`;
+}
+// Nodo recursivo: hijos a la izquierda, líneas y tarjeta; los nodos sin hijos se corren con un espaciador para alinear columnas
+function bkNode(n, ctx, maxLvl){
+  const pad = maxLvl - n.lvl;
+  const sp = pad > 0 && !n.kids?.length ? `<div class="bk-sp" style="width:calc(${pad} * (var(--bw) + 2 * var(--bc)))"></div>` : '';
+  const label = ctx.label(n);
+  if(!n.g) return `<div class="bk-node">${sp}${bkLeaf(n, ctx.seedOf, label)}</div>`;
+  const kids = n.kids?.length ? `<div class="bk-kids">${n.kids.map(k => bkNode(k, ctx, maxLvl)).join('')}</div><div class="bk-link"></div>` : '';
+  return `<div class="bk-node">${sp}${kids}${bkCard(n, ctx.lg, ctx.seedOf, label)}${n.lvl === 0 ? ctx.champ(n) : ''}</div>`;
+}
+function bkRender(root, ctx){
+  const maxLvl = bkDepth(root);
+  return `<div class="bk-scroll"><div class="bk">${bkNode(root, ctx, maxLvl)}</div></div>`;
+}
+function bkChamp(n){
+  const g = n.g;
+  if(!g || g.state !== 'post') return '';
+  const w = g.away.win ? g.away : g.home.win ? g.home : null;
+  if(!w) return '';
+  return `<div class="bk-link"></div><div class="bk-champ"><span>🏆 Campeón</span>${logo(w.team)}<b>${esc(tName(w.team))}</b></div>`;
+}
+// Etiqueta de cada tarjeta: conferencia o estadio del bowl + ronda
+function bkLabelFn(lgKey, depth){
+  const lv = BK_LEVELS[lgKey];
+  return n => {
+    const name = lv[Math.min(n.lvl, lv.length - 1)];
+    const note = n.g?.note || '';
+    const conf = n.conf || (/^\s*(AFC|NFC)\b/i.exec(note) || [])[1]?.toUpperCase() || '';
+    if(lgKey === 'nfl'){
+      if(n.lvl === 0) return note && /super bowl/i.test(note) ? note : 'Super Bowl';
+      if(!conf && /AFL|NFL/.test(note)) return note.replace(/Championship/i, 'Final');
+      if(n.lvl === 1 && conf) return `Final ${conf}`;
+      return conf ? `${conf} · ${name}` : name;
+    }
+    if(lgKey === 'fbs'){
+      const bowl = (/at the (?:[A-Z][\w&'.-]* )*?((?:[\w&'.-]+ )?Bowl(?: Classic)?)/.exec(note) || [])[1];
+      return bowl && n.lvl ? `${name} · ${bowl.replace(/^(Capital One|Goodyear|Allstate|Vrbo|Chick-fil-A|Prudential)\s+/i, '')}` : name;
+    }
+    return name;
+  };
+}
+
+/* ---------- Proyección NFL: seeds 1–7 por conferencia según las posiciones ---------- */
+async function nflSeeds(season){
+  const groups = await standingsOf(LG.nfl, season);
+  const out = {};
+  for(const gr of groups){
+    const conf = /AFC/i.test(gr.abbr + gr.name + (gr.parent || '')) ? 'AFC' : /NFC/i.test(gr.abbr + gr.name + (gr.parent || '')) ? 'NFC' : null;
+    if(!conf) continue;
+    for(const e of arr(gr.entries)){
+      const s = sn(e, 'playoffSeed');
+      if(Number.isFinite(s) && s >= 1 && s <= 7){
+        const w = sn(e, 'wins'), l = sn(e, 'losses'), t = sn(e, 'ties');
+        (out[conf] = out[conf] || {})[s] = {team: e.team || {}, id: String(e.team?.id || ''), record: Number.isFinite(w) ? [w, l, ...(t > 0 ? [t] : [])].join('-') : ''};
+      }
+    }
+  }
+  return ['AFC', 'NFC'].every(c => out[c] && [1, 2, 3, 4, 5, 6, 7].every(s => out[c][s]?.id)) ? out : null;
+}
+// Busca el partido real entre dos equipos; si no existe, arma uno proyectado
+function bkGame(games, a, b, slots, foot){
+  if(a?.id && b?.id){
+    const g = games.find(x => [x.away.id, x.home.id].includes(a.id) && [x.away.id, x.home.id].includes(b.id));
+    if(g) return g;
+  }
+  const side = s => s ? {id: s.id, team: s.team, record: s.record} : {id: '', team: null};
+  // Proyectado: arriba el mejor seed (a), abajo el rival (b)
+  return {virtual: true, away: side(a), home: side(b), state: 'pre', slots: [a ? '' : slots?.[0], b ? '' : slots?.[1]], foot};
+}
+const bkWinner = (g, seedsById) => g && !g.virtual && g.state === 'post' ? [g.away, g.home].find(s => s.win) || null : null;
+function nflConfTree(conf, S, games){
+  const T = s => S[s];
+  const wcPairs = [[2, 7], [3, 6], [4, 5]];
+  const wc = wcPairs.map(([h, a]) => ({g: bkGame(games, T(h), T(a)), lvl: 3, kids: [], conf, pair: [h, a]}));
+  const seedById = id => +Object.keys(S).find(k => S[k].id === id);
+  const wins = wc.map(n => { const w = bkWinner(n.g); return w ? seedById(w.id) : null; });
+  const ent = s => s ? {...T(s)} : null;
+  let divA, divB;
+  if(wins.every(Boolean)){
+    // Ronda divisional con reordenamiento: el 1 juega contra el seed más bajo que quedó
+    const order = wins.map((s, i) => ({s, i})).sort((x, y) => x.s - y.s);
+    const low = order[2], others = order.slice(0, 2);
+    divA = {g: bkGame(games, T(1), ent(low.s)), lvl: 2, conf, kids: [{team: T(1).team, id: T(1).id, record: T(1).record, lvl: 3, conf}, wc[low.i]]};
+    divB = {g: bkGame(games, ent(others[0].s), ent(others[1].s)), lvl: 2, conf, kids: [wc[others[0].i], wc[others[1].i]]};
+  } else {
+    divA = {g: bkGame(games, T(1), null, ['', 'Peor seed vivo']), lvl: 2, conf, kids: [{team: T(1).team, id: T(1).id, record: T(1).record, lvl: 3, conf}, wc[2]]};
+    divB = {g: bkGame(games, null, null, ['Ganador 2–7', 'Ganador 3–6']), lvl: 2, conf, kids: [wc[0], wc[1]]};
+  }
+  const wa = bkWinner(divA.g), wb = bkWinner(divB.g);
+  const hi = (x, y) => { if(!x || !y) return [x, y]; return seedById(x.id) <= seedById(y.id) ? [x, y] : [y, x]; };
+  const [h, a] = hi(wa ? ent(seedById(wa.id)) : null, wb ? ent(seedById(wb.id)) : null);
+  const cg = {g: bkGame(games, h, a, ['Ganador', 'Ganador']), lvl: 1, conf, kids: [divA, divB]};
+  return cg;
+}
+async function nflProjected(season, games){
+  const S = await nflSeeds(season);
+  if(!S) return null;
+  const afc = nflConfTree('AFC', S.AFC, games), nfc = nflConfTree('NFC', S.NFC, games);
+  const ca = bkWinner(afc.g), cn = bkWinner(nfc.g);
+  const pick = (w, conf) => w ? Object.values(S[conf]).find(x => x.id === w.id) : null;
+  const sb = {g: bkGame(games, pick(cn, 'NFC'), pick(ca, 'AFC'), ['Campeón NFC', 'Campeón AFC']), lvl: 0, kids: [afc, nfc]};
+  const seedOf = id => { for(const c of ['AFC', 'NFC']) for(const k in S[c]) if(S[c][k].id === id) return k; return ''; };
+  return {root: sb, seedOf, S};
+}
+
+/* ---------- Proyección FBS: ranking CFP + reglas de la temporada ---------- */
+async function cfpRanking(season){
+  const d = await getSite(`${SITE}/${LG.fbs.slug}/rankings`);
+  const r = arr(d?.rankings).find(x => x?.type === 'cfp');
+  if(!r || num(r.season?.year) !== season) return null;
+  return {date: r.date ? new Date(r.date) : null, week: r.occurrence?.displayValue || '', ranks: arr(r.ranks).map(x => ({rank: num(x.current), id: String(x.team?.id || ''), team: x.team || {}, conf: x.conference || '', record: x.recordSummary || ''})).filter(x => x.rank && x.id)};
+}
+function cfpField(rule, ranks){
+  const top = ranks.slice().sort((a, b) => a.rank - b.rank);
+  const why = new Map();
+  for(const c of rule.p4){ const t = top.find(x => x.conf === c); if(t) why.set(t.id, `Campeón proyectado de ${c} (el mejor rankeado)`); }
+  const g6 = top.find(x => rule.g6.test(x.conf));
+  if(g6 && !why.has(g6.id)) why.set(g6.id, `Mejor rankeado del Group of Six (${g6.conf})`);
+  const nd = top.find(x => x.id === rule.notreDame);
+  if(nd && nd.rank <= 12 && !why.has(nd.id)) why.set(nd.id, 'Notre Dame en el top 12');
+  const field = top.filter(x => why.has(x.id));
+  for(const t of top){ if(field.length >= rule.teams) break; if(!why.has(t.id)) field.push(t); }
+  const inTop = field.filter(t => t.rank <= rule.teams).sort((a, b) => a.rank - b.rank), out = field.filter(t => t.rank > rule.teams).sort((a, b) => a.rank - b.rank);
+  return {seeds: inTop.concat(out).map((t, i) => ({...t, seed: i + 1, why: why.get(t.id) || 'Por ranking'})), g6Missing: !g6};
+}
+function cfpTree(seeds, games){
+  const T = s => seeds[s - 1] ? {id: seeds[s - 1].id, team: seeds[s - 1].team, record: seeds[s - 1].record} : null;
+  const fr = [[8, 9], [7, 10], [6, 11], [5, 12]].map(([h, a]) => ({g: bkGame(games, T(h), T(a)), lvl: 3, kids: []}));
+  const seedById = id => (seeds.find(s => s.id === id) || {}).seed;
+  const ent = w => w ? T(seedById(w.id)) : null;
+  const qf = [1, 2, 3, 4].map((s, i) => { const w = bkWinner(fr[i].g); const pair = [[8, 9], [7, 10], [6, 11], [5, 12]][i];
+    return {g: bkGame(games, T(s), ent(w), ['', `Ganador ${pair[0]}–${pair[1]}`]), lvl: 2, kids: [{team: T(s).team, id: T(s).id, record: T(s).record, lvl: 3}, fr[i]]}; });
+  const semi = (x, y) => { const a = ent(bkWinner(x.g)), b = ent(bkWinner(y.g)); return {g: bkGame(games, a, b, ['Ganador', 'Ganador']), lvl: 1, kids: [x, y]}; };
+  const s1 = semi(qf[0], qf[3]), s2 = semi(qf[1], qf[2]);
+  const f = {g: bkGame(games, ent(bkWinner(s1.g)), ent(bkWinner(s2.g)), ['Ganador semifinal', 'Ganador semifinal']), lvl: 0, kids: [s1, s2]};
+  return f;
+}
+
+/* ---------- Solapa "Playoffs" de la liga ---------- */
+async function tabPlayoffs(r, lg, season){
+  if(!BRACKET_LG.includes(lg.key)) return emptyBox('Esta liga todavía no tiene cuadro de playoffs', '');
+  if(lg.key === 'fbs' && season < 2014) return emptyBox('Antes de 2014 no había playoff en FBS', `El campeón salía de la final del BCS (1998–2013) o de las encuestas. Mirá la solapa <a href="#/fbs/palmares/${season}">Palmarés</a>.`);
+  const games = await postseasonEvents(lg, season);
+  const lv = BK_LEVELS[lg.key];
+  const finalRe = lg.key === 'nfl' ? /super bowl/i : lg.key === 'fbs' ? /national championship/i : /./;
+  // FBS: la final es la del CFP; el resto del cuadro sale de los partidos que ganaron los finalistas antes (algunas semis viejas no dicen "CFP")
+  const final = games.filter(g => (finalRe.test(g.note) && (lg.key !== 'fbs' || BK_CFP_RE.test(g.note))) || lg.key === 'ufl').slice(-1)[0];
+  const cfpGames = lg.key === 'fbs' ? games.filter(g => BK_CFP_RE.test(g.note)) : games;
+  const title = {nfl: 'Playoffs de la NFL', fbs: 'College Football Playoff', ufl: 'Playoffs de la UFL'}[lg.key];
+  const hint = '<div class="bk-hint">Tocá un partido para ver el detalle · en el celular deslizá el cuadro hacia los costados</div>';
+  // 1) Temporada con la final jugada: cuadro real
+  if(final && final.state === 'post' && final.away.id && final.home.id){
+    const root = bkTreeFromFinal(games, final);
+    let seedOf = () => '';
+    const ids = new Set(); (function walk(n){ if(n.g){ ids.add(n.g.away.id); ids.add(n.g.home.id); } else ids.add(n.id); arr(n.kids).forEach(walk); })(root);
+    if(lg.key === 'fbs'){ const m = {}; cfpGames.forEach(g => [g.away, g.home].forEach(s => { if(s.rank && s.rank <= 12 && !m[s.id]) m[s.id] = s.rank; })); if([...ids].every(id => m[id])) seedOf = id => m[id] || ''; }
+    if(lg.key === 'nfl'){
+      try{ const groups = await standingsOf(lg, season); const m = {}; groups.forEach(gr => arr(gr.entries).forEach(e => { const s = sn(e, 'playoffSeed'); if(Number.isFinite(s) && s > 0) m[String(e.team?.id)] = s; }));
+        if([...ids].every(id => m[id])) seedOf = id => m[id] || ''; }catch(e){}
+    }
+    const ctx = {lg: lg.key, seedOf, label: bkLabelFn(lg.key), champ: bkChamp};
+    return `<div class="ph">🏆 ${esc(title)} ${season} <span class="cnt">· cuadro final</span></div><div class="box bk-box">${hint}${bkRender(root, ctx)}</div>`;
+  }
+  // 2) Temporada en curso: proyección + partidos ya jugados
+  if(lg.key === 'nfl'){
+    const p = await nflProjected(season, games).catch(() => null);
+    if(!p) return games.length ? bkPartial(lg, season, games, title) : emptyBox('Todavía no hay cuadro de playoffs para esta temporada', 'ESPN no informa los seeds de los equipos.');
+    const started = games.some(g => g.state !== 'pre');
+    const note = started ? 'Playoffs en curso: los partidos jugados ya están en el cuadro.'
+      : 'Si los playoffs empezaran hoy · seeds según las posiciones de ESPN: del 1 al 4 los líderes de división y del 5 al 7 los comodines. El 1 de cada conferencia descansa en la primera ronda y en la divisional juega contra el seed más bajo que avance.';
+    const ctx = {lg: 'nfl', seedOf: p.seedOf, label: bkLabelFn('nfl'), champ: bkChamp};
+    return `<div class="ph">🏆 ${esc(title)} ${season} <span class="cnt">· ${started ? 'en juego' : 'proyección'}</span></div><div class="box bk-box"><div class="bk-note">${esc(note)}</div>${hint}${bkRender(p.root, ctx)}</div>`;
+  }
+  if(lg.key === 'fbs'){
+    const rule = CFP_RULES[season];
+    // Si ya hay partidos del playoff con equipos, los seeds salen de esos partidos
+    const fromGames = {}; cfpGames.forEach(g => [g.away, g.home].forEach(s => { if(s.id && s.id !== '-1' && s.rank && s.rank <= 12) fromGames[s.rank] = fromGames[s.rank] || {id: s.id, team: s.team, record: s.record, rank: s.rank}; }));
+    let seeds = null, rk = null, field = null;
+    if(Object.keys(fromGames).length === 12) seeds = Array.from({length: 12}, (_, i) => ({...fromGames[i + 1], seed: i + 1}));
+    else if(rule && season === curSeason(lg)){
+      rk = await cfpRanking(season).catch(() => null);
+      if(rk?.ranks.length){ field = cfpField(rule, rk.ranks); seeds = field.seeds; }
+    }
+    if(!seeds) return cfpGames.some(g => g.away.id && g.away.id !== '-1') ? bkPartial(lg, season, cfpGames, title) : emptyBox('Todavía no hay cuadro para esta temporada', rule ? 'El primer ranking del College Football Playoff sale a principios de noviembre.' : 'No tenemos las reglas de clasificación de esta temporada.');
+    const root = cfpTree(seeds, cfpGames);
+    const seedOf = id => (seeds.find(s => s.id === id) || {}).seed || '';
+    const ctx = {lg: 'fbs', seedOf, label: bkLabelFn('fbs'), champ: bkChamp};
+    const when = rk?.date ? ` del ${rk.date.toLocaleDateString('es-AR', {day: 'numeric', month: 'long'})}` : '';
+    const note = field ? `Si el playoff empezara hoy · ranking CFP${when}${rk.week ? ' (' + weekLabel(rk.week) + ')' : ''}. Entran los campeones de ACC, Big Ten, Big 12 y SEC (acá, el mejor rankeado de cada una), el mejor del Group of Six y Notre Dame si está en el top 12; el resto, por ranking. Del 1 al 4 descansan en primera ronda.${field.g6Missing ? ' Ningún equipo del Group of Six está en el top 25: ese lugar todavía no se puede proyectar.' : ''}` : 'Playoff en curso: los partidos jugados ya están en el cuadro.';
+    const table = field ? `<div class="ph sm">Los 12 de hoy</div><div class="box tw"><table class="tbl"><thead><tr><th>Seed</th><th class="l">Equipo</th><th>CFP</th><th>Récord</th><th class="l hm">Por qué entra</th></tr></thead><tbody>${seeds.map(s => `<tr><td><b>${s.seed}</b></td><td class="l"><a class="tmc" href="#/fbs/team/${esc(s.id)}">${logo(s.team)}<span>${esc(tName(s.team))}</span></a></td><td>#${s.rank}</td><td>${esc(s.record)}</td><td class="l hm">${esc(s.why)}</td></tr>`).join('')}</tbody></table></div>` : '';
+    return `<div class="ph">🏆 ${esc(title)} ${season} <span class="cnt">· ${field ? 'proyección' : 'en juego'}</span></div><div class="box bk-box"><div class="bk-note">${esc(note)}</div>${hint}${bkRender(root, ctx)}</div>${table}`;
+  }
+  return games.length ? bkPartial(lg, season, games, title) : emptyBox('Todavía no hay playoffs para esta temporada', 'El cuadro aparece cuando se jueguen.');
+}
+// Sin proyección posible: lista de los partidos de playoff por fecha
+function bkPartial(lg, season, games, title){
+  return `<div class="ph">🏆 ${esc(title)} ${season} <span class="cnt">· en juego</span></div><div class="box">${games.map(gameRow).join('')}</div>`;
+}
+
 VIEWS.league = async (r, el, ctx) => {
   const lg = LG[r.lg];
   const season = r.season || curSeason(lg);
@@ -2055,6 +2365,7 @@ VIEWS.league = async (r, el, ctx) => {
     if(r.tab === 'partidos') body = await tabPartidos(r, lg, season, ctx);
     else if(r.tab === 'posiciones') body = await tabPosiciones(r, lg, season);
     else if(r.tab === 'palmares') body = await leagueHonoursHTML(lg, season);
+    else if(r.tab === 'playoffs') body = await tabPlayoffs(r, lg, season);
     else body = await tabStats(r, lg, season, ctx);
   }catch(e){ console.error(e); body = errorBox(e); }
   paint(ctx, el, head + `<div id="tabc">${body}</div>`);
