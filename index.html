@@ -236,10 +236,17 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .arw{display:inline-flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:2px;vertical-align:middle}
 .arw b.arch{display:inline-block;color:#0b3b6e;background:linear-gradient(#e8f4ff,#9fd0f5);border:1px solid #5a9bd0;border-radius:2px;padding:0 3px;font:700 10px Arial;white-space:nowrap}
 .arw .arx{font:700 9px Arial;color:#0b3b6e;white-space:nowrap}
-.arw .ops{display:inline-flex;gap:2px}
+.arw .ops{display:inline-flex;flex-wrap:wrap;gap:2px 4px;justify-content:flex-end}
+.arw .artop{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap}
+.arw b.arch{text-transform:uppercase}
+.opn{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+.opn small{font:700 9px Arial;color:#0b3b6e}
+.op-telecentro{background:linear-gradient(#ff9a2e,#e2560b);font-style:normal}
+.tvm .arw{display:inline}
+.tvm .artop,.tvm .ops{display:inline-flex;justify-content:flex-start;vertical-align:middle;margin:1px 4px 1px 0}
 .arw .arsep{font-style:normal}
 .g .tv .arw{flex-direction:column;align-items:flex-end;gap:2px}
-.g .tv .arw .arsep{display:none}
+
 .op{display:inline-block;font:italic 700 8px/11px Arial;padding:0 3px;border-radius:3px;color:#fff;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 1px rgba(0,0,0,.25);text-shadow:0 1px 0 rgba(0,0,0,.3)}
 .op-flow{background:linear-gradient(135deg,#7a2ff0,#1fa6ff);text-transform:lowercase;font-size:9px;font-style:normal}
 .op-directv{background:linear-gradient(#35b4ec,#0a64ad);font-size:7px;letter-spacing:.2px}
@@ -1577,8 +1584,15 @@ function etParts(date){
    extra = plataformas por internet. Es una estimación por reglas: ESPN solo informa la TV de EE.UU. */
 // Cableoperadores que tienen cada señal (grillas de Flow, DirecTV y Claro: ESPN 1/2/3/Extra y Fox Sports 1/2/3 están en los tres)
 // Fox Sports 3: Iván confirmó que en Flow el TNF va por FS3 (05/11/2026); la grilla oficial de Claro y la guía de DirecTV (canal 623) también lo listan.
-const AR_OPS = {'ESPN': ['flow', 'directv', 'claro'], 'Fox Sports': ['flow', 'directv', 'claro'], 'Fox Sports 3': ['flow', 'directv', 'claro']};
-const OP_NAME = {flow: 'Flow', directv: 'DirecTV', claro: 'Claro TV'};
+// Cada operador puede llevar su número de canal: [operador, número, número corto para el celular].
+// Números de Fox Sports 3 pasados por Iván el 05/11/2026 (Flow 108, DirecTV 623, Telecentro 103 SD y 1017 HD, Claro 112).
+const AR_OPS = {
+  'ESPN': ['flow', 'directv', 'claro'],
+  'Fox Sports': ['flow', 'directv', 'claro'],
+  'Fox Sports 3': [['flow', '108'], ['directv', '623'], ['telecentro', '103 SD · 1017 HD', '103/1017'], ['claro', '112']],
+};
+const OP_NAME = {flow: 'Flow', directv: 'DirecTV', claro: 'Claro TV', telecentro: 'Telecentro'};
+const OP_TXT = {flow: 'flow', directv: 'DIRECTV', claro: 'claro', telecentro: 'TLC'};
 function arInfo(lgKey, usTv, date, stype){
   const us = String(usTv || '');
   const mk = (ch, extra, long) => ({ch, extra, long, short: ch.length ? ch.join(' / ') : extra.join(' · ')});
@@ -1614,17 +1628,25 @@ function arInfo(lgKey, usTv, date, stype){
 }
 const AR_TIP = 'Dónde verlo en Argentina (según el día y el horario del partido)';
 // Íconos de los cableoperadores que tienen las señales del partido
-function opIcons(chs){
-  const ops = [...new Set(arr(chs).flatMap(c => AR_OPS[c] || []))];
-  return ops.map(o => `<i class="op op-${o}" title="${OP_NAME[o]}">${o === 'directv' ? 'DIRECTV' : o}</i>`).join('');
+function opIcons(chs, compact = false){
+  const seen = new Set(), out = [];
+  for(const c of arr(chs)) for(const x of arr(AR_OPS[c])){
+    const [o, n, nc] = Array.isArray(x) ? x : [x];
+    if(seen.has(o)) continue; seen.add(o);
+    const num = compact && nc ? nc : n;
+    out.push(`<span class="opn" title="${esc(OP_NAME[o] + (n ? ' · canal ' + n : ''))}"><i class="op op-${o}">${OP_TXT[o]}</i>${num ? `<small>${esc(num)}</small>` : ''}</span>`);
+  }
+  return out.join('');
 }
 // Bloque "dónde verlo": canales + íconos de Flow/DirecTV/Claro + plataformas por internet
 function arHTML(g, compact = false){
   const a = g.ar; if(!a) return '';
   const extra = compact && a.ch.length ? a.extra.filter(x => x !== 'Disney+') : a.extra;
-  const ch = a.ch.length ? `<b class="arch">${esc(a.ch.join(' / '))}</b><span class="ops">${opIcons(a.ch)}</span>` : '';
+  // Arriba el canal y las plataformas por internet; abajo los cableoperadores (con su número de canal si lo sabemos)
+  const ch = a.ch.length ? `<b class="arch">${esc(a.ch.join(' / '))}</b>` : '';
   const ex = extra.length ? `<span class="arx">${a.ch.length ? '<i class="arsep">+ </i>' : ''}${esc(extra.join(' · '))}</span>` : '';
-  return `<span class="arw" title="${esc(a.long || AR_TIP)}">${ch}${ex}</span>`;
+  const ops = a.ch.length ? `<span class="ops">${opIcons(a.ch, compact)}</span>` : '';
+  return `<span class="arw" title="${esc(a.long || AR_TIP)}"><span class="artop">${ch}${ex}</span>${ops}</span>`;
 }
 function tvBadges(g){
   return arHTML(g);
