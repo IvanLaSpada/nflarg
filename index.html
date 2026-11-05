@@ -241,9 +241,20 @@ footer a.lspd:hover{color:var(--gold2);text-decoration:none}
 .arw b.arch{text-transform:uppercase}
 .opn{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
 .opn small{font:700 9px Arial;color:#0b3b6e}
-.op-telecentro{background:linear-gradient(#ff9a2e,#e2560b);font-style:normal}
+.op-telecentro{background:linear-gradient(#6fd3f8,#2fb3ea 55%,#1b9fd8);font-style:normal}   /* celeste de Telecentro */
 .tvm .arw{display:inline}
 .tvm .artop,.tvm .ops{display:inline-flex;justify-content:flex-start;vertical-align:middle;margin:1px 4px 1px 0}
+/* Compu ancha: "dónde verlo" en un solo renglón (columna fija para que los marcadores queden alineados entre filas) */
+@media (min-width:1200px){
+  .g{grid-template-columns:86px minmax(0,1fr) 84px minmax(0,1fr) 370px}
+  .g .tv span.arw{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px}
+  .g .tv span.arw .ops{flex-wrap:nowrap}
+}
+/* Celular: "dónde verlo" centrado en su propio renglón */
+@media (max-width:640px){
+  .g .sub span.tvm{display:block;text-align:center;margin-top:2px}
+  .tvm .artop,.tvm .ops{margin:1px 2px}
+}
 .arw .arsep{font-style:normal}
 .g .tv .arw{flex-direction:column;align-items:flex-end;gap:2px}
 
@@ -1639,17 +1650,17 @@ function opIcons(chs, compact = false){
   return out.join('');
 }
 // Bloque "dónde verlo": canales + íconos de Flow/DirecTV/Claro + plataformas por internet
-function arHTML(g, compact = false){
+function arHTML(g, compact = false, shortNums = compact){
   const a = g.ar; if(!a) return '';
   const extra = compact && a.ch.length ? a.extra.filter(x => x !== 'Disney+') : a.extra;
   // Arriba el canal y las plataformas por internet; abajo los cableoperadores (con su número de canal si lo sabemos)
   const ch = a.ch.length ? `<b class="arch">${esc(a.ch.join(' / '))}</b>` : '';
   const ex = extra.length ? `<span class="arx">${a.ch.length ? '<i class="arsep">+ </i>' : ''}${esc(extra.join(' · '))}</span>` : '';
-  const ops = a.ch.length ? `<span class="ops">${opIcons(a.ch, compact)}</span>` : '';
+  const ops = a.ch.length ? `<span class="ops">${opIcons(a.ch, shortNums)}</span>` : '';
   return `<span class="arw" title="${esc(a.long || AR_TIP)}"><span class="artop">${ch}${ex}</span>${ops}</span>`;
 }
 function tvBadges(g){
-  return arHTML(g);
+  return arHTML(g, false, true);   // en la fila, el número corto (el completo queda en el globito)
 }
 function normGame(ev, lgKey){
   const comp = arr(ev?.competitions)[0] || ev || {};
